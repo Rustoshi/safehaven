@@ -1,7 +1,7 @@
 "use client"
 
 const PREFIX_COLORS: Record<string, { bg: string; text: string }> = {
-  user:            { bg: "bg-blue-100",   text: "text-blue-800"   },
+  user:            { bg: "bg-indigo-100",   text: "text-indigo-800"   },
   loan:            { bg: "bg-indigo-100", text: "text-indigo-800" },
   card:            { bg: "bg-purple-100", text: "text-purple-800" },
   kyc:             { bg: "bg-teal-100",   text: "text-teal-800"   },

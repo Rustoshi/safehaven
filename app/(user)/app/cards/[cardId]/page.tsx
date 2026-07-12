@@ -105,7 +105,7 @@ function TransactionIcon({ type, colors }: { type: string; colors: ReturnType<ty
     case "cashback":
       return <RefreshCw className="h-4 w-4" style={{ color: colors.green }} />
     case "fee":
-      return <AlertTriangle className="h-4 w-4" style={{ color: "#F59E0B" }} />
+      return <AlertTriangle className="h-4 w-4" style={{ color: colors.amber }} />
     default:
       return <ArrowUpRight className="h-4 w-4" style={{ color: colors.textSecondary }} />
   }
@@ -139,6 +139,12 @@ export default function CardDetailsPage() {
   const [showLimitsModal, setShowLimitsModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showStatementModal, setShowStatementModal] = useState(false)
+  const [showPinModal, setShowPinModal] = useState(false)
+
+  // PIN state
+  const [newPin, setNewPin] = useState("")
+  const [confirmPin, setConfirmPin] = useState("")
+  const [pinError, setPinError] = useState("")
 
   // Payment state
   const [payAmount, setPayAmount] = useState("")
@@ -285,6 +291,38 @@ export default function CardDetailsPage() {
     }
   }
 
+  const handleChangePin = async () => {
+    if (!/^\d{4}$/.test(newPin)) {
+      setPinError("PIN must be exactly 4 digits")
+      return
+    }
+    if (newPin !== confirmPin) {
+      setPinError("PINs do not match")
+      return
+    }
+    setActionLoading("pin")
+    setPinError("")
+    try {
+      const res = await fetch(`/api/user/cards/${cardId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "change_pin", newPin }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed to update PIN")
+      if (card) setCard({ ...card, cardPin: data.cardPin })
+      setShowPinModal(false)
+      setNewPin("")
+      setConfirmPin("")
+      setSuccess("Card PIN updated")
+      setTimeout(() => setSuccess(""), 3000)
+    } catch (err) {
+      setPinError(err instanceof Error ? err.message : "Failed to update PIN")
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
   const handleDelete = async () => {
     setActionLoading("delete")
     try {
@@ -332,6 +370,7 @@ export default function CardDetailsPage() {
 
   const isCredit = card.cardType === "credit"
   const isFrozen = card.status === "frozen"
+  const isBlocked = card.status === "blocked"
   const isVisa = card.cardNetwork === "visa"
   const isAmex = card.cardNetwork === "amex"
 
@@ -358,9 +397,9 @@ export default function CardDetailsPage() {
           </div>
         )}
         {error && (
-          <div className="mb-4 p-3 rounded-xl flex items-center gap-2" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)" }}>
-            <AlertTriangle className="h-4 w-4" style={{ color: "#EF4444" }} />
-            <p className="text-[13px]" style={{ color: "#EF4444" }}>{error}</p>
+          <div className="mb-4 p-3 rounded-xl flex items-center gap-2" style={{ background: colors.redBg, border: `1px solid ${colors.red}33` }}>
+            <AlertTriangle className="h-4 w-4" style={{ color: colors.red }} />
+            <p className="text-[13px]" style={{ color: colors.red }}>{error}</p>
           </div>
         )}
 
@@ -452,6 +491,15 @@ export default function CardDetailsPage() {
               <p className="text-[14px] font-semibold">Card Frozen</p>
             </div>
           )}
+
+          {/* Blocked overlay — admin-enforced, user cannot lift */}
+          {isBlocked && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-2xl px-6 text-center" style={{ background: "rgba(0,0,0,0.72)" }}>
+              <Lock className="h-10 w-10 mb-2" style={{ color: colors.red }} />
+              <p className="text-[14px] font-semibold">Card Blocked</p>
+              <p className="text-[12px] mt-1" style={{ color: "rgba(255,255,255,0.7)" }}>Contact support to restore this card</p>
+            </div>
+          )}
         </div>
 
         {/* Balance/Limit Info */}
@@ -469,7 +517,7 @@ export default function CardDetailsPage() {
               <p className="text-[11px]" style={{ color: colors.textTertiary }}>
                 {isCredit ? "Balance Owed" : "Account Balance"}
               </p>
-              <p className="text-[18px] font-semibold mt-0.5" style={{ color: isCredit && card.balance > 0 ? "#EF4444" : colors.green }}>
+              <p className="text-[18px] font-semibold mt-0.5" style={{ color: isCredit && card.balance > 0 ? colors.red : colors.green }}>
                 {currencySymbol}{isCredit ? card.balance.toFixed(2) : accountBalance.toFixed(2)}
               </p>
             </div>
@@ -489,7 +537,7 @@ export default function CardDetailsPage() {
         {/* Primary Action Buttons */}
         <div className="mt-4 grid grid-cols-3 gap-3">
           {/* View Details / Show PIN */}
-          {!isCredit && card.cardPin && (
+          {card.cardPin && (
             <button
               onClick={() => setShowPin(!showPin)}
               className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all active:scale-[0.98]"
@@ -518,27 +566,30 @@ export default function CardDetailsPage() {
             </button>
           )}
 
-          {/* Freeze/Unfreeze */}
+          {/* Freeze/Unfreeze — disabled while an admin block is in force */}
           <button
             onClick={handleFreeze}
-            disabled={actionLoading === "freeze"}
-            className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50"
-            style={{ 
-              background: isFrozen ? colors.blueBg : colors.bgElevated, 
-              border: `1px solid ${isFrozen ? colors.blue + "33" : colors.border}` 
+            disabled={actionLoading === "freeze" || isBlocked}
+            className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
+            style={{
+              background: isBlocked ? colors.redBg : isFrozen ? colors.blueBg : colors.bgElevated,
+              border: `1px solid ${isBlocked ? colors.red + "33" : isFrozen ? colors.blue + "33" : colors.border}`,
+              cursor: isBlocked ? "not-allowed" : undefined,
             }}
           >
-            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: isFrozen ? colors.blue : colors.bgHover }}>
+            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: isBlocked ? colors.red : isFrozen ? colors.blue : colors.bgHover }}>
               {actionLoading === "freeze" ? (
                 <Loader2 className="h-5 w-5 animate-spin" style={{ color: isFrozen ? "white" : colors.textSecondary }} />
+              ) : isBlocked ? (
+                <Lock className="h-5 w-5 text-white" />
               ) : isFrozen ? (
                 <Play className="h-5 w-5 text-white" />
               ) : (
                 <Snowflake className="h-5 w-5" style={{ color: colors.blue }} />
               )}
             </div>
-            <span className="text-[12px] font-medium" style={{ color: isFrozen ? colors.blue : colors.textPrimary }}>
-              {isFrozen ? "Unfreeze" : "Freeze"}
+            <span className="text-[12px] font-medium" style={{ color: isBlocked ? colors.red : isFrozen ? colors.blue : colors.textPrimary }}>
+              {isBlocked ? "Blocked" : isFrozen ? "Unfreeze" : "Freeze"}
             </span>
           </button>
 
@@ -707,12 +758,24 @@ export default function CardDetailsPage() {
               <Settings className="h-5 w-5" style={{ color: colors.textSecondary }} />
               <span className="text-[14px]" style={{ color: colors.textPrimary }}>Set Payment Limits</span>
             </button>
+            {(isFrozen || card.status === "active") && (
+              <button
+                onClick={() => { setNewPin(""); setConfirmPin(""); setPinError(""); setShowPinModal(true) }}
+                className="w-full p-4 flex items-center gap-3 text-left transition-colors"
+                style={{ borderBottom: `1px solid ${colors.border}` }}
+              >
+                <Lock className="h-5 w-5" style={{ color: colors.textSecondary }} />
+                <span className="text-[14px]" style={{ color: colors.textPrimary }}>
+                  {card.cardPin ? "Change Card PIN" : "Set Card PIN"}
+                </span>
+              </button>
+            )}
             <button
               onClick={() => setShowDeleteModal(true)}
               className="w-full p-4 flex items-center gap-3 text-left transition-colors"
             >
-              <Trash2 className="h-5 w-5" style={{ color: "#EF4444" }} />
-              <span className="text-[14px]" style={{ color: "#EF4444" }}>Delete Card</span>
+              <Trash2 className="h-5 w-5" style={{ color: colors.red }} />
+              <span className="text-[14px]" style={{ color: colors.red }}>Delete Card</span>
             </button>
           </div>
         </div>
@@ -778,9 +841,9 @@ export default function CardDetailsPage() {
             </div>
 
             {payError && (
-              <div className="mb-4 p-3 rounded-xl flex items-start gap-2" style={{ background: "rgba(239,68,68,0.1)" }}>
-                <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" style={{ color: "#EF4444" }} />
-                <p className="text-[13px]" style={{ color: "#EF4444" }}>{payError}</p>
+              <div className="mb-4 p-3 rounded-xl flex items-start gap-2" style={{ background: colors.redBg, border: `1px solid ${colors.red}33` }}>
+                <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" style={{ color: colors.red }} />
+                <p className="text-[13px]" style={{ color: colors.red }}>{payError}</p>
               </div>
             )}
 
@@ -852,6 +915,82 @@ export default function CardDetailsPage() {
         </>
       )}
 
+      {/* Change PIN Modal */}
+      {showPinModal && (
+        <>
+          <div className="fixed inset-0 z-50 bg-black/60" onClick={() => setShowPinModal(false)} />
+          <div
+            className="fixed z-50 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-[360px] rounded-2xl p-5"
+            style={{ background: colors.bgElevated, border: `1px solid ${colors.border}` }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-[16px] font-semibold" style={{ color: colors.textPrimary }}>
+                {card.cardPin ? "Change Card PIN" : "Set Card PIN"}
+              </p>
+              <button onClick={() => setShowPinModal(false)} className="p-1">
+                <XCircle className="h-5 w-5" style={{ color: colors.textTertiary }} />
+              </button>
+            </div>
+
+            <p className="text-[13px] mb-4" style={{ color: colors.textSecondary }}>
+              Choose a 4-digit PIN for use at ATMs and point-of-sale terminals.
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-[12px] font-medium mb-1.5 block" style={{ color: colors.textSecondary }}>
+                  New PIN
+                </label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  maxLength={4}
+                  value={newPin}
+                  onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                  placeholder="••••"
+                  className="w-full h-11 px-3 rounded-xl text-[18px] tracking-[0.5em] text-center outline-none"
+                  style={{ background: colors.bgHover, border: `1px solid ${colors.border}`, color: colors.textPrimary }}
+                />
+              </div>
+              <div>
+                <label className="text-[12px] font-medium mb-1.5 block" style={{ color: colors.textSecondary }}>
+                  Confirm PIN
+                </label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  maxLength={4}
+                  value={confirmPin}
+                  onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                  placeholder="••••"
+                  className="w-full h-11 px-3 rounded-xl text-[18px] tracking-[0.5em] text-center outline-none"
+                  style={{ background: colors.bgHover, border: `1px solid ${colors.border}`, color: colors.textPrimary }}
+                />
+              </div>
+            </div>
+
+            {pinError && (
+              <div className="mt-4 p-3 rounded-xl flex items-start gap-2" style={{ background: colors.redBg, border: `1px solid ${colors.red}33` }}>
+                <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" style={{ color: colors.red }} />
+                <p className="text-[13px]" style={{ color: colors.red }}>{pinError}</p>
+              </div>
+            )}
+
+            <button
+              onClick={handleChangePin}
+              disabled={actionLoading === "pin" || newPin.length !== 4 || confirmPin.length !== 4}
+              className="w-full h-11 mt-4 rounded-xl text-[14px] font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-50"
+              style={{ background: colors.blue }}
+            >
+              {actionLoading === "pin" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
+              {actionLoading === "pin" ? "Saving..." : "Save PIN"}
+            </button>
+          </div>
+        </>
+      )}
+
       {/* Delete Modal */}
       {showDeleteModal && (
         <>
@@ -861,16 +1000,16 @@ export default function CardDetailsPage() {
             style={{ background: colors.bgElevated, border: `1px solid ${colors.border}` }}
           >
             <div className="text-center">
-              <div className="w-14 h-14 rounded-full mx-auto flex items-center justify-center mb-4" style={{ background: "rgba(239,68,68,0.1)" }}>
-                <Trash2 className="h-7 w-7" style={{ color: "#EF4444" }} />
+              <div className="w-14 h-14 rounded-full mx-auto flex items-center justify-center mb-4" style={{ background: colors.redBg }}>
+                <Trash2 className="h-7 w-7" style={{ color: colors.red }} />
               </div>
               <p className="text-[17px] font-semibold" style={{ color: colors.textPrimary }}>Delete Card?</p>
               <p className="text-[14px] mt-2" style={{ color: colors.textSecondary }}>
                 This action cannot be undone. The card will be permanently cancelled.
               </p>
               {isCredit && card.balance > 0 && (
-                <div className="mt-3 p-3 rounded-xl" style={{ background: "rgba(239,68,68,0.1)" }}>
-                  <p className="text-[13px]" style={{ color: "#EF4444" }}>
+                <div className="mt-3 p-3 rounded-xl" style={{ background: colors.redBg, border: `1px solid ${colors.red}33` }}>
+                  <p className="text-[13px]" style={{ color: colors.red }}>
                     You must pay off your balance ({currencySymbol}{card.balance.toFixed(2)}) before deleting this card.
                   </p>
                 </div>
@@ -889,7 +1028,7 @@ export default function CardDetailsPage() {
                 onClick={handleDelete}
                 disabled={actionLoading === "delete" || (isCredit && card.balance > 0)}
                 className="flex-1 h-11 rounded-xl text-[14px] font-semibold text-white flex items-center justify-center gap-2 disabled:opacity-50"
-                style={{ background: "#EF4444" }}
+                style={{ background: colors.red }}
               >
                 {actionLoading === "delete" ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 Delete

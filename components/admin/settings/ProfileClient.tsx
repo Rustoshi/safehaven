@@ -76,7 +76,7 @@ export function ProfileClient({ user }: ProfileClientProps) {
   }
 
   const inputClass =
-    "w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-all"
+    "w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-all"
   const labelClass = "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
 
   return (
@@ -92,7 +92,7 @@ export function ProfileClient({ user }: ProfileClientProps) {
       {/* Profile Card */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
         {/* Avatar Section */}
-        <div className="px-6 py-8 bg-gradient-to-r from-blue-500 to-blue-600 flex items-center gap-4">
+        <div className="px-6 py-8 bg-gradient-to-r from-indigo-500 to-indigo-600 flex items-center gap-4">
           <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur flex items-center justify-center text-white text-2xl font-bold">
             {user.firstName[0]}{user.lastName[0]}
           </div>
@@ -100,7 +100,7 @@ export function ProfileClient({ user }: ProfileClientProps) {
             <h2 className="text-xl font-semibold text-white">
               {user.firstName} {user.lastName}
             </h2>
-            <p className="text-blue-100">{user.email}</p>
+            <p className="text-indigo-100">{user.email}</p>
             <span className="inline-block mt-2 px-3 py-1 text-xs font-medium bg-white/20 text-white rounded-full">
               Administrator
             </span>
@@ -173,7 +173,7 @@ export function ProfileClient({ user }: ProfileClientProps) {
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

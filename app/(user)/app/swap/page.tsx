@@ -251,7 +251,7 @@ export default function SwapPage() {
               onClick={() => router.push("/app/dashboard")}
               style={{
                 width: "100%", padding: "14px 0", borderRadius: 14, border: "none",
-                background: colors.isDark ? "linear-gradient(135deg, #3B9EFF 0%, #2563EB 100%)" : "linear-gradient(135deg, #0066CC 0%, #0052A3 100%)",
+                background: "linear-gradient(135deg, #1A2CCE 0%, #1522A5 100%)",
                 color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer",
               }}
             >
@@ -516,11 +516,11 @@ export default function SwapPage() {
               style={{
                 position: "absolute", top: "-20px", zIndex: 2,
                 width: 44, height: 44, borderRadius: 14,
-                background: colors.isDark ? "linear-gradient(135deg, #3B9EFF 0%, #2563EB 100%)" : "linear-gradient(135deg, #0066CC 0%, #0052A3 100%)",
+                background: "linear-gradient(135deg, #1A2CCE 0%, #1522A5 100%)",
                 border: `3px solid ${colors.bgBase}`,
                 cursor: "pointer",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: colors.isDark ? "0 4px 20px rgba(59,158,255,0.35)" : "0 4px 20px rgba(0,102,204,0.25)",
+                boxShadow: "0 4px 20px rgba(26,44,206,0.25)",
                 transition: "transform 200ms ease",
               }}
               onMouseDown={(e) => (e.currentTarget.style.transform = "rotate(180deg) scale(0.9)")}
@@ -608,12 +608,12 @@ export default function SwapPage() {
           style={{
             width: "100%", padding: "16px 0", borderRadius: 16, border: "none", marginTop: 20,
             background: canSwap
-              ? (colors.isDark ? "linear-gradient(135deg, #3B9EFF 0%, #2563EB 100%)" : "linear-gradient(135deg, #0066CC 0%, #0052A3 100%)")
+              ? "linear-gradient(135deg, #1A2CCE 0%, #1522A5 100%)"
               : colors.bgHover,
             color: canSwap ? "#fff" : colors.textMuted,
             fontSize: 16, fontWeight: 700, cursor: canSwap ? "pointer" : "default",
             display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-            boxShadow: canSwap ? (colors.isDark ? "0 8px 32px rgba(59,158,255,0.25)" : "0 8px 32px rgba(0,102,204,0.2)") : "none",
+            boxShadow: canSwap ? "0 8px 32px rgba(26,44,206,0.2)" : "none",
             transition: "all 200ms ease",
           }}
         >

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link                    from "next/link"
-import { Sheet, SheetHeader, SheetTitle, SheetBody } from "@/components/ui/sheet"
+import { Sheet, SheetHeader, SheetTitle, SheetBody, SheetClose } from "@/components/ui/sheet"
 import { Button }              from "@/components/ui/button"
 import { useToast }            from "@/components/ui/use-toast"
 import { CheckCircle2, XCircle, Clock, ExternalLink, ChevronDown, ChevronRight, AlertTriangle } from "lucide-react"
@@ -210,6 +210,7 @@ export function KycReviewDrawer({ userId, open, onClose, onAction }: Props) {
       <Sheet open={open} onClose={onClose} width="680px">
           <SheetHeader>
             <SheetTitle>KYC Review</SheetTitle>
+            <SheetClose onClose={onClose} />
           </SheetHeader>
 
           {loading || !detail ? (
@@ -217,10 +218,10 @@ export function KycReviewDrawer({ userId, open, onClose, onAction }: Props) {
               {loading ? "Loading…" : "No data"}
             </div>
           ) : (
-            <SheetBody className="space-y-6">
+            <SheetBody className="space-y-6 px-4 sm:px-6">
               {/* User card */}
               <div className="flex items-start gap-4">
-                <div className="w-14 h-14 rounded-full bg-[#0F4C81] flex items-center justify-center text-white text-xl font-bold flex-shrink-0">
+                <div className="w-14 h-14 rounded-full bg-[#1A2CCE] flex items-center justify-center text-white text-xl font-bold flex-shrink-0">
                   {firstName.charAt(0)}{lastName.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -230,7 +231,7 @@ export function KycReviewDrawer({ userId, open, onClose, onAction }: Props) {
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${KYC_STATUS_STYLES[kycStatus] ?? "bg-gray-100 text-gray-600"}`}>
                       {kycStatus}
                     </span>
-                    <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                    <span className="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-medium">
                       Tier {kycTier}
                     </span>
                     <span className="text-xs text-gray-400">Account created {userCreated}</span>
@@ -238,7 +239,7 @@ export function KycReviewDrawer({ userId, open, onClose, onAction }: Props) {
                 </div>
                 <div className="flex flex-col gap-1 flex-shrink-0">
                   <Link href={`/admin/users/${userId}`} target="_blank"
-                    className="flex items-center gap-1 text-xs text-blue-600 hover:underline">
+                    className="flex items-center gap-1 text-xs text-indigo-600 hover:underline">
                     <ExternalLink className="w-3 h-3" /> Full profile
                   </Link>
                   {kycStatus !== "verified" && (
@@ -295,7 +296,7 @@ export function KycReviewDrawer({ userId, open, onClose, onAction }: Props) {
                   <div className="mt-2">
                     <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-[#00C896] rounded-full transition-all"
+                        className="h-full bg-[#12B76A] rounded-full transition-all"
                         style={{ width: `${required.length > 0 ? (approvedCount / Math.max(1, required.length > 3 ? required.length - 2 : required.length)) * 100 : 0}%` }}
                       />
                     </div>
@@ -305,16 +306,18 @@ export function KycReviewDrawer({ userId, open, onClose, onAction }: Props) {
 
               {/* Bulk action bar */}
               {pendingCount > 0 && (
-                <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                <div className="flex flex-wrap items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
                   <Clock className="w-4 h-4 text-amber-500 flex-shrink-0" />
-                  <span className="text-sm text-amber-700 flex-1">{pendingCount} document{pendingCount !== 1 ? "s" : ""} awaiting review</span>
-                  <Button size="sm" onClick={handleBulkApprove} disabled={bulkLoading}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs">
-                    {bulkLoading ? "Approving…" : "Approve all pending"}
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => setReqDocsOpen(true)} className="text-xs">
-                    Request documents
-                  </Button>
+                  <span className="text-sm text-amber-700 flex-1 min-w-[8rem]">{pendingCount} document{pendingCount !== 1 ? "s" : ""} awaiting review</span>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <Button size="sm" onClick={handleBulkApprove} disabled={bulkLoading}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs flex-1 sm:flex-none">
+                      {bulkLoading ? "Approving…" : "Approve all pending"}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setReqDocsOpen(true)} className="text-xs flex-1 sm:flex-none">
+                      Request documents
+                    </Button>
+                  </div>
                 </div>
               )}
 

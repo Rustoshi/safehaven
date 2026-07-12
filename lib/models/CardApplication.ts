@@ -10,6 +10,7 @@ export type CardStatus =
   | "rejected"
   | "active"
   | "frozen"
+  | "blocked"
   | "cancelled"
 
 export interface ICardBillingAddress {
@@ -79,7 +80,7 @@ const CardApplicationSchema = new Schema<ICardApplication>(
     balance:         { type: Number, default: 0, min: 0 },
     status:          {
       type: String,
-      enum: ["pending", "approved", "rejected", "active", "frozen", "cancelled"],
+      enum: ["pending", "approved", "rejected", "active", "frozen", "blocked", "cancelled"],
       default: "pending",
     },
     cardNumber:      { type: String },

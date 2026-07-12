@@ -11,14 +11,14 @@ interface UserAvatarProps {
 
 // 8 deterministic background colours — picked by name hash
 const PALETTE = [
-  "#0F4C81", // brand blue
+  "#1A2CCE", // brand indigo
   "#00887A", // teal
   "#7C3AED", // violet
   "#B45309", // amber
   "#065F46", // emerald dark
   "#9D174D", // pink
   "#1D4ED8", // indigo
-  "#DC2626", // red
+  "#F04438", // red
 ]
 
 function hashName(name: string): number {

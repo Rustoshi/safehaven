@@ -16,7 +16,7 @@ export default function AdminNotFound() {
       <Link
         href="/admin/dashboard"
         className="mt-4 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90"
-        style={{ backgroundColor: "#0F4C81" }}
+        style={{ backgroundColor: "#1A2CCE" }}
       >
         <LayoutDashboard className="h-4 w-4" />
         Back to Dashboard

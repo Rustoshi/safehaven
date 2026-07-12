@@ -230,7 +230,7 @@ export function DepositRequestsClient({ initialStats, initialData, methods }: Pr
 
         {/* New requests banner */}
         {newBanner > 0 && (
-          <div className="flex items-center justify-between rounded-lg border border-[#0F4C81]/20 bg-[#0F4C81]/5 px-4 py-2.5 text-sm text-[#0F4C81]">
+          <div className="flex items-center justify-between rounded-lg border border-[#1A2CCE]/20 bg-[#1A2CCE]/5 px-4 py-2.5 text-sm text-[#1A2CCE]">
             <span>
               <strong>{newBanner}</strong> new deposit request{newBanner !== 1 ? "s" : ""} arrived since your last view.
             </span>
@@ -246,7 +246,7 @@ export function DepositRequestsClient({ initialStats, initialData, methods }: Pr
               onClick={() => changeTab(key)}
               className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px
                 ${activeTab === key
-                  ? "border-[#0F4C81] text-[#0F4C81]"
+                  ? "border-[#1A2CCE] text-[#1A2CCE]"
                   : "border-transparent text-slate-500 hover:text-slate-700"
                 }`}
             >
@@ -293,14 +293,14 @@ export function DepositRequestsClient({ initialStats, initialData, methods }: Pr
             type="date"
             value={dateFrom}
             onChange={(e) => { setDateFrom(e.target.value); setPage(1) }}
-            className="h-9 rounded-lg border border-slate-200 px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/20"
+            className="h-9 rounded-lg border border-slate-200 px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#1A2CCE]/20"
             title="From date"
           />
           <input
             type="date"
             value={dateTo}
             onChange={(e) => { setDateTo(e.target.value); setPage(1) }}
-            className="h-9 rounded-lg border border-slate-200 px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/20"
+            className="h-9 rounded-lg border border-slate-200 px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#1A2CCE]/20"
             title="To date"
           />
 
@@ -322,8 +322,8 @@ export function DepositRequestsClient({ initialStats, initialData, methods }: Pr
 
         {/* Bulk actions bar */}
         {selected.size > 0 && (
-          <div className="flex items-center gap-3 rounded-lg border border-[#0F4C81]/20 bg-[#0F4C81]/5 px-4 py-2.5">
-            <span className="text-sm font-medium text-[#0F4C81]">{selected.size} selected</span>
+          <div className="flex items-center gap-3 rounded-lg border border-[#1A2CCE]/20 bg-[#1A2CCE]/5 px-4 py-2.5">
+            <span className="text-sm font-medium text-[#1A2CCE]">{selected.size} selected</span>
             <div className="flex-1" />
             <Button
               variant="outline"
@@ -376,7 +376,7 @@ export function DepositRequestsClient({ initialStats, initialData, methods }: Pr
                 {data.requests.map((r) => (
                   <tr
                     key={r.id}
-                    className={`transition-colors hover:bg-slate-50 ${selected.has(r.id) ? "bg-blue-50/40" : ""}`}
+                    className={`transition-colors hover:bg-slate-50 ${selected.has(r.id) ? "bg-indigo-50/40" : ""}`}
                   >
                     <td className="px-4 py-3">
                       <input
@@ -455,7 +455,7 @@ export function DepositRequestsClient({ initialStats, initialData, methods }: Pr
                     variant={page === p ? "default" : "outline"}
                     size="sm"
                     onClick={() => setPage(p)}
-                    className={page === p ? "bg-[#0F4C81] text-white border-[#0F4C81]" : ""}
+                    className={page === p ? "bg-[#1A2CCE] text-white border-[#1A2CCE]" : ""}
                   >
                     {p}
                   </Button>

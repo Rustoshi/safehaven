@@ -24,19 +24,19 @@ type View = "hub" | "new-ticket" | "tickets"
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const STATUS_CFG: Record<string, { color: string; bg: string; label: string; Icon: typeof Clock }> = {
-  open:        { color: "#F59E0B", bg: "rgba(245,158,11,0.12)", label: "Open", Icon: Clock },
-  in_progress: { color: "#3B9EFF", bg: "rgba(59,158,255,0.12)", label: "In Progress", Icon: Loader2 },
-  resolved:    { color: "#00C896", bg: "rgba(0,200,150,0.12)",  label: "Resolved", Icon: CheckCircle2 },
-  closed:      { color: "rgba(255,255,255,0.4)", bg: "rgba(255,255,255,0.06)", label: "Closed", Icon: CheckCircle2 },
+  open:        { color: "#F79009", bg: "rgba(247,144,9,0.12)", label: "Open", Icon: Clock },
+  in_progress: { color: "#1A2CCE", bg: "rgba(26,44,206,0.10)", label: "In Progress", Icon: Loader2 },
+  resolved:    { color: "#12B76A", bg: "rgba(18,183,106,0.12)",  label: "Resolved", Icon: CheckCircle2 },
+  closed:      { color: "#667085", bg: "#F2F4F7", label: "Closed", Icon: CheckCircle2 },
 }
 
 const CATEGORIES = [
-  { id: "account",     label: "Account",      icon: Shield,          color: "#3B9EFF", bg: "rgba(59,158,255,0.12)" },
-  { id: "transaction", label: "Transactions",  icon: ArrowLeftRight,  color: "#00C896", bg: "rgba(0,200,150,0.12)" },
-  { id: "card",        label: "Cards",         icon: CreditCard,      color: "#F59E0B", bg: "rgba(245,158,11,0.12)" },
-  { id: "security",    label: "Security",      icon: Shield,          color: "#EF4444", bg: "rgba(239,68,68,0.12)" },
+  { id: "account",     label: "Account",      icon: Shield,          color: "#1A2CCE", bg: "rgba(26,44,206,0.10)" },
+  { id: "transaction", label: "Transactions",  icon: ArrowLeftRight,  color: "#12B76A", bg: "rgba(18,183,106,0.12)" },
+  { id: "card",        label: "Cards",         icon: CreditCard,      color: "#F79009", bg: "rgba(247,144,9,0.12)" },
+  { id: "security",    label: "Security",      icon: Shield,          color: "#F04438", bg: "rgba(240,68,56,0.12)" },
   { id: "app",         label: "App & Tech",    icon: Smartphone,      color: "#8B5CF6", bg: "rgba(139,92,246,0.12)" },
-  { id: "other",       label: "Other",         icon: HelpCircle,      color: "rgba(255,255,255,0.5)", bg: "rgba(255,255,255,0.06)" },
+  { id: "other",       label: "Other",         icon: HelpCircle,      color: "#667085", bg: "#F2F4F7" },
 ]
 
 const FAQS = [
@@ -134,7 +134,7 @@ export default function SupportPage() {
               width: 72, height: 72, borderRadius: "50%", margin: "0 auto 20px",
               background: colors.isDark
                 ? "linear-gradient(135deg, rgba(0,200,150,0.2) 0%, rgba(0,200,150,0.05) 100%)"
-                : "linear-gradient(135deg, rgba(0,200,150,0.15) 0%, rgba(0,200,150,0.05) 100%)",
+                : "linear-gradient(135deg, rgba(18,183,106,0.15) 0%, rgba(18,183,106,0.05) 100%)",
               border: `2px solid ${colors.green}4D`,
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>
@@ -155,7 +155,7 @@ export default function SupportPage() {
                 width: "100%", padding: "14px 0", borderRadius: 14, border: "none",
                 background: colors.isDark
                   ? "linear-gradient(135deg, #3B9EFF 0%, #2563EB 100%)"
-                  : "linear-gradient(135deg, #0066CC 0%, #0052A3 100%)",
+                  : "linear-gradient(135deg, #1A2CCE 0%, #1622A8 100%)",
                 color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 10,
               }}
             >
@@ -301,12 +301,12 @@ export default function SupportPage() {
             style={{
               width: "100%", padding: "15px 0", borderRadius: 14, border: "none", marginTop: 24,
               background: canSubmit
-                ? (colors.isDark ? "linear-gradient(135deg, #3B9EFF 0%, #2563EB 100%)" : "linear-gradient(135deg, #0066CC 0%, #0052A3 100%)")
+                ? (colors.isDark ? "linear-gradient(135deg, #3B9EFF 0%, #2563EB 100%)" : "linear-gradient(135deg, #1A2CCE 0%, #1622A8 100%)")
                 : colors.bgHover,
               color: canSubmit ? "#fff" : colors.textMuted,
               fontSize: 15, fontWeight: 700, cursor: canSubmit ? "pointer" : "default",
               display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-              boxShadow: canSubmit ? (colors.isDark ? "0 8px 32px rgba(59,158,255,0.2)" : "0 8px 32px rgba(0,102,204,0.15)") : "none",
+              boxShadow: canSubmit ? (colors.isDark ? "0 8px 32px rgba(59,158,255,0.2)" : "0 8px 32px rgba(26,44,206,0.15)") : "none",
               transition: "all 200ms ease",
             }}
           >
@@ -466,7 +466,7 @@ export default function SupportPage() {
             width: 64, height: 64, borderRadius: 20, margin: "0 auto 14px",
             background: colors.isDark
               ? "linear-gradient(135deg, rgba(59,158,255,0.15) 0%, rgba(139,92,246,0.1) 100%)"
-              : "linear-gradient(135deg, rgba(59,158,255,0.12) 0%, rgba(139,92,246,0.08) 100%)",
+              : "linear-gradient(135deg, rgba(26,44,206,0.10) 0%, rgba(139,92,246,0.08) 100%)",
             border: `1px solid ${colors.blue}26`,
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
@@ -486,7 +486,7 @@ export default function SupportPage() {
             style={{
               background: colors.isDark
                 ? "linear-gradient(180deg, rgba(59,158,255,0.08) 0%, rgba(59,158,255,0.02) 100%)"
-                : "linear-gradient(180deg, rgba(59,158,255,0.1) 0%, rgba(59,158,255,0.03) 100%)",
+                : "linear-gradient(180deg, rgba(26,44,206,0.08) 0%, rgba(26,44,206,0.03) 100%)",
               border: `1px solid ${colors.blue}26`,
               borderRadius: 20, padding: "24px 16px", cursor: "pointer",
               display: "flex", flexDirection: "column", alignItems: "center", gap: 10,
@@ -513,7 +513,7 @@ export default function SupportPage() {
             style={{
               background: colors.isDark
                 ? "linear-gradient(180deg, rgba(0,200,150,0.08) 0%, rgba(0,200,150,0.02) 100%)"
-                : "linear-gradient(180deg, rgba(0,200,150,0.1) 0%, rgba(0,200,150,0.03) 100%)",
+                : "linear-gradient(180deg, rgba(18,183,106,0.08) 0%, rgba(18,183,106,0.03) 100%)",
               border: `1px solid ${colors.green}26`,
               borderRadius: 20, padding: "24px 16px",
               display: "flex", flexDirection: "column", alignItems: "center", gap: 10,
@@ -547,16 +547,16 @@ export default function SupportPage() {
             onClick={() => setView("tickets")}
             style={{
               width: "100%", display: "flex", alignItems: "center", gap: 12,
-              background: colors.yellowBg || "rgba(245,158,11,0.06)", border: `1px solid ${colors.yellow || "#F59E0B"}1F`,
+              background: colors.yellowBg || "rgba(247,144,9,0.06)", border: `1px solid ${colors.yellow || "#F79009"}1F`,
               borderRadius: 14, padding: "12px 16px", cursor: "pointer", marginBottom: 24,
               textAlign: "left",
             }}
           >
             <div style={{
               width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-              background: colors.yellowBg || "rgba(245,158,11,0.12)", display: "flex", alignItems: "center", justifyContent: "center",
+              background: colors.yellowBg || "rgba(247,144,9,0.12)", display: "flex", alignItems: "center", justifyContent: "center",
             }}>
-              <Clock style={{ width: 15, height: 15, color: colors.yellow || "#F59E0B" }} />
+              <Clock style={{ width: 15, height: 15, color: colors.yellow || "#F79009" }} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ fontSize: 13, fontWeight: 600, color: colors.textPrimary, margin: 0 }}>

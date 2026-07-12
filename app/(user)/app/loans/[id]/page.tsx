@@ -60,20 +60,20 @@ const LOAN_TYPE_ICONS: Record<string, React.ElementType> = {
 }
 
 const LOAN_TYPE_COLORS: Record<string, { color: string; bg: string }> = {
-  personal:  { color: "#3B9EFF", bg: "rgba(59,158,255,0.12)" },
-  auto:      { color: "#F59E0B", bg: "rgba(245,158,11,0.12)" },
-  home:      { color: "#00C896", bg: "rgba(0,200,150,0.12)" },
-  education: { color: "#A78BFA", bg: "rgba(167,139,250,0.12)" },
-  business:  { color: "#F472B6", bg: "rgba(244,114,182,0.12)" },
+  personal:  { color: "#1A2CCE", bg: "#EEF0FE" },
+  auto:      { color: "#F79009", bg: "#FFFAEB" },
+  home:      { color: "#12B76A", bg: "#ECFDF3" },
+  education: { color: "#7A5AF8", bg: "#F4F3FF" },
+  business:  { color: "#DD2590", bg: "#FDF2FA" },
 }
 
 const STATUS_CFG: Record<string, { color: string; bg: string; label: string }> = {
-  pending:   { color: "#F59E0B", bg: "rgba(245,158,11,0.12)", label: "Under Review" },
-  approved:  { color: "#00C896", bg: "rgba(0,200,150,0.12)",  label: "Approved" },
-  active:    { color: "#00C896", bg: "rgba(0,200,150,0.12)",  label: "Active" },
-  rejected:  { color: "#EF4444", bg: "rgba(239,68,68,0.12)",  label: "Rejected" },
-  closed:    { color: "#3B9EFF", bg: "rgba(59,158,255,0.12)", label: "Paid Off" },
-  defaulted: { color: "#EF4444", bg: "rgba(239,68,68,0.12)",  label: "Defaulted" },
+  pending:   { color: "#F79009", bg: "#FFFAEB", label: "Under Review" },
+  approved:  { color: "#12B76A", bg: "#ECFDF3", label: "Approved" },
+  active:    { color: "#12B76A", bg: "#ECFDF3", label: "Active" },
+  rejected:  { color: "#F04438", bg: "#FEF3F2", label: "Rejected" },
+  closed:    { color: "#1A2CCE", bg: "#EEF0FE", label: "Paid Off" },
+  defaulted: { color: "#F04438", bg: "#FEF3F2", label: "Defaulted" },
 }
 
 // Currency formatting moved to useCurrency hook
@@ -196,8 +196,10 @@ export default function LoanDetailPage() {
   const cfg = STATUS_CFG[loan?.status || "pending"] || STATUS_CFG.pending
   const paidPct = loan && loan.amount > 0 ? Math.min((loan.totalPaid / loan.amount) * 100, 100) : 0
 
+  const cardShadow = "0 1px 3px rgba(16,24,40,0.08), 0 1px 2px rgba(16,24,40,0.04)"
+
   return (
-    <div style={{ background: "#0A1628", minHeight: "100vh" }}>
+    <div style={{ background: "#F5F6F8", minHeight: "100vh" }}>
       <UserHeader title="Loan Details" showBack onBack={() => router.push("/app/loans")} />
 
       <div className="px-4 py-5 lg:px-6 max-w-[800px] mx-auto space-y-5">
@@ -208,12 +210,12 @@ export default function LoanDetailPage() {
           </div>
         ) : error && !loan ? (
           <div className="py-20 text-center">
-            <AlertCircle className="h-10 w-10 mx-auto mb-3" style={{ color: "#EF4444" }} />
-            <p className="text-[15px] text-white font-semibold">{error}</p>
+            <AlertCircle className="h-10 w-10 mx-auto mb-3" style={{ color: "#F04438" }} />
+            <p className="text-[15px] font-semibold" style={{ color: "#101828" }}>{error}</p>
             <button
               onClick={() => router.push("/app/loans")}
-              className="mt-4 h-10 rounded-xl px-6 text-[14px] font-medium text-white"
-              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}
+              className="mt-4 h-10 rounded-xl px-6 text-[14px] font-medium"
+              style={{ background: "#F9FAFB", border: "1px solid #EAECF0", color: "#344054" }}
             >
               Back to Loans
             </button>
@@ -221,7 +223,7 @@ export default function LoanDetailPage() {
         ) : loan ? (
           <>
             {/* ── Header Card ──────────────────────────────────────── */}
-            <div className="rounded-2xl overflow-hidden" style={{ background: "#0D1F3C", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <div className="rounded-2xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #EAECF0", boxShadow: cardShadow }}>
               <div className="p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
@@ -229,8 +231,8 @@ export default function LoanDetailPage() {
                       <TypeIcon className="h-5 w-5" style={{ color: tc.color }} />
                     </div>
                     <div>
-                      <p className="text-[16px] font-semibold text-white">{loan.purpose}</p>
-                      <p className="text-[12px] capitalize" style={{ color: "rgba(255,255,255,0.4)" }}>{loan.loanType} loan</p>
+                      <p className="text-[16px] font-semibold" style={{ color: "#101828" }}>{loan.purpose}</p>
+                      <p className="text-[12px] capitalize" style={{ color: "#667085" }}>{loan.loanType} loan</p>
                     </div>
                   </div>
                   <span className="rounded-full px-3 py-1 text-[11px] font-semibold" style={{ background: cfg.bg, color: cfg.color }}>
@@ -242,18 +244,18 @@ export default function LoanDetailPage() {
                 {(loan.status === "active" || loan.status === "closed") && (
                   <>
                     <div className="text-center py-4">
-                      <p className="text-[11px] uppercase tracking-wide" style={{ color: "rgba(255,255,255,0.35)" }}>Outstanding Balance</p>
-                      <p className="text-[32px] font-bold text-white tabular-nums mt-1">{fmt(loan.outstandingBalance)}</p>
-                      <p className="text-[13px]" style={{ color: "rgba(255,255,255,0.4)" }}>of {fmtShort(loan.amount)} borrowed</p>
+                      <p className="text-[11px] uppercase tracking-wide" style={{ color: "#98A2B3" }}>Outstanding Balance</p>
+                      <p className="text-[32px] font-bold tabular-nums mt-1" style={{ color: "#101828" }}>{fmt(loan.outstandingBalance)}</p>
+                      <p className="text-[13px]" style={{ color: "#667085" }}>of {fmtShort(loan.amount)} borrowed</p>
                     </div>
 
                     {/* Progress */}
-                    <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
-                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${paidPct}%`, background: "#00C896" }} />
+                    <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "#EAECF0" }}>
+                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${paidPct}%`, background: "#12B76A" }} />
                     </div>
                     <div className="flex items-center justify-between mt-2">
-                      <p className="text-[11px] tabular-nums" style={{ color: "#00C896" }}>{paidPct.toFixed(1)}% repaid</p>
-                      <p className="text-[11px] tabular-nums" style={{ color: "rgba(255,255,255,0.4)" }}>{fmt(loan.totalPaid)} paid</p>
+                      <p className="text-[11px] tabular-nums" style={{ color: "#12B76A" }}>{paidPct.toFixed(1)}% repaid</p>
+                      <p className="text-[11px] tabular-nums" style={{ color: "#667085" }}>{fmt(loan.totalPaid)} paid</p>
                     </div>
                   </>
                 )}
@@ -261,16 +263,16 @@ export default function LoanDetailPage() {
                 {/* Pending / rejected amount */}
                 {(loan.status === "pending" || loan.status === "rejected") && (
                   <div className="text-center py-4">
-                    <p className="text-[11px] uppercase tracking-wide" style={{ color: "rgba(255,255,255,0.35)" }}>Requested Amount</p>
-                    <p className="text-[32px] font-bold text-white tabular-nums mt-1">{fmtShort(loan.amount)}</p>
-                    <p className="text-[13px]" style={{ color: "rgba(255,255,255,0.4)" }}>{loan.termMonths} months</p>
+                    <p className="text-[11px] uppercase tracking-wide" style={{ color: "#98A2B3" }}>Requested Amount</p>
+                    <p className="text-[32px] font-bold tabular-nums mt-1" style={{ color: "#101828" }}>{fmtShort(loan.amount)}</p>
+                    <p className="text-[13px]" style={{ color: "#667085" }}>{loan.termMonths} months</p>
                   </div>
                 )}
               </div>
 
               {/* Stats row */}
               {loan.status === "active" && (
-                <div className="grid grid-cols-3 divide-x" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.06)" }}>
+                <div className="grid grid-cols-3 divide-x" style={{ borderTop: "1px solid #EAECF0", borderColor: "#EAECF0" }}>
                   <StatCell label="Monthly" value={fmt(loan.monthlyPayment)} />
                   <StatCell label="Rate" value={loan.interestRate ? `${loan.interestRate}% APR` : "—"} />
                   <StatCell label="Next Due" value={loan.nextPaymentDate ? new Date(loan.nextPaymentDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"} />
@@ -284,22 +286,22 @@ export default function LoanDetailPage() {
                 <button
                   onClick={() => openPayment(loan.monthlyPayment)}
                   className="w-full h-12 rounded-xl text-[15px] font-semibold text-white transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-                  style={{ background: "#00C896" }}
+                  style={{ background: "#12B76A" }}
                 >
                   <CreditCard className="h-4 w-4" /> Make a Payment
                 </button>
                 <div className="flex gap-2">
                   <button
                     onClick={() => openPayment(loan.monthlyPayment)}
-                    className="flex-1 h-10 rounded-xl text-[13px] font-medium text-white transition-all"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+                    className="flex-1 h-10 rounded-xl text-[13px] font-medium transition-all"
+                    style={{ background: "#F9FAFB", border: "1px solid #EAECF0", color: "#344054" }}
                   >
                     Monthly ({fmt(loan.monthlyPayment)})
                   </button>
                   <button
                     onClick={() => openPayment(loan.outstandingBalance)}
-                    className="flex-1 h-10 rounded-xl text-[13px] font-medium text-white transition-all"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+                    className="flex-1 h-10 rounded-xl text-[13px] font-medium transition-all"
+                    style={{ background: "#F9FAFB", border: "1px solid #EAECF0", color: "#344054" }}
                   >
                     Pay in Full ({fmt(loan.outstandingBalance)})
                   </button>
@@ -308,11 +310,11 @@ export default function LoanDetailPage() {
             )}
 
             {/* ── Loan Details Card ───────────────────────────────── */}
-            <div className="rounded-2xl overflow-hidden" style={{ background: "#0D1F3C", border: "1px solid rgba(255,255,255,0.06)" }}>
-              <div className="px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                <p className="text-[12px] font-semibold uppercase tracking-wide" style={{ color: "rgba(255,255,255,0.4)" }}>Loan Details</p>
+            <div className="rounded-2xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #EAECF0", boxShadow: cardShadow }}>
+              <div className="px-4 py-3" style={{ borderBottom: "1px solid #EAECF0" }}>
+                <p className="text-[12px] font-semibold uppercase tracking-wide" style={{ color: "#667085" }}>Loan Details</p>
               </div>
-              <div className="divide-y" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+              <div className="divide-y" style={{ borderColor: "#EAECF0" }}>
                 <DetailRow label="Loan Type" value={loan.loanType.charAt(0).toUpperCase() + loan.loanType.slice(1)} />
                 <DetailRow label="Amount" value={fmtShort(loan.amount)} />
                 <DetailRow label="Term" value={`${loan.termMonths} months`} />
@@ -326,41 +328,41 @@ export default function LoanDetailPage() {
 
             {/* ── Admin Note ──────────────────────────────────────── */}
             {loan.adminNote && (
-              <div className="rounded-2xl p-4" style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.1)" }}>
-                <p className="text-[11px] font-medium uppercase tracking-wide mb-1" style={{ color: "#F59E0B" }}>Note from Admin</p>
-                <p className="text-[13px]" style={{ color: "rgba(255,255,255,0.7)" }}>{loan.adminNote}</p>
+              <div className="rounded-2xl p-4" style={{ background: "#FFFAEB", border: "1px solid #FEDF89" }}>
+                <p className="text-[11px] font-medium uppercase tracking-wide mb-1" style={{ color: "#F79009" }}>Note from Admin</p>
+                <p className="text-[13px]" style={{ color: "#667085" }}>{loan.adminNote}</p>
               </div>
             )}
 
             {/* ── Amortization Schedule ───────────────────────────── */}
             {schedule.length > 0 && (
-              <div className="rounded-2xl overflow-hidden" style={{ background: "#0D1F3C", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <div className="rounded-2xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #EAECF0", boxShadow: cardShadow }}>
                 <button
                   onClick={() => setShowSchedule(!showSchedule)}
                   className="w-full flex items-center justify-between px-4 py-3"
                 >
-                  <p className="text-[12px] font-semibold uppercase tracking-wide" style={{ color: "rgba(255,255,255,0.4)" }}>
+                  <p className="text-[12px] font-semibold uppercase tracking-wide" style={{ color: "#667085" }}>
                     Amortization Schedule
                   </p>
                   {showSchedule
-                    ? <ChevronUp className="h-4 w-4" style={{ color: "rgba(255,255,255,0.3)" }} />
-                    : <ChevronDown className="h-4 w-4" style={{ color: "rgba(255,255,255,0.3)" }} />}
+                    ? <ChevronUp className="h-4 w-4" style={{ color: "#98A2B3" }} />
+                    : <ChevronDown className="h-4 w-4" style={{ color: "#98A2B3" }} />}
                 </button>
                 {showSchedule && (
                   <div className="px-4 pb-4">
                     <div className="grid grid-cols-5 gap-1 mb-1">
                       {["#", "Payment", "Principal", "Interest", "Balance"].map((h) => (
-                        <p key={h} className="text-[9px] font-medium uppercase" style={{ color: "rgba(255,255,255,0.3)" }}>{h}</p>
+                        <p key={h} className="text-[9px] font-medium uppercase" style={{ color: "#98A2B3" }}>{h}</p>
                       ))}
                     </div>
                     <div className="max-h-[300px] overflow-y-auto space-y-0.5">
                       {schedule.map((row) => (
-                        <div key={row.month} className="grid grid-cols-5 gap-1 py-1" style={{ borderTop: "1px solid rgba(255,255,255,0.03)" }}>
-                          <p className="text-[11px] tabular-nums" style={{ color: "rgba(255,255,255,0.4)" }}>{row.month}</p>
-                          <p className="text-[11px] tabular-nums text-white">{fmt(row.payment)}</p>
-                          <p className="text-[11px] tabular-nums text-white">{fmt(row.principal)}</p>
-                          <p className="text-[11px] tabular-nums" style={{ color: "#F59E0B" }}>{fmt(row.interest)}</p>
-                          <p className="text-[11px] tabular-nums text-white">{fmt(row.balance)}</p>
+                        <div key={row.month} className="grid grid-cols-5 gap-1 py-1" style={{ borderTop: "1px solid #F2F4F7" }}>
+                          <p className="text-[11px] tabular-nums" style={{ color: "#667085" }}>{row.month}</p>
+                          <p className="text-[11px] tabular-nums" style={{ color: "#101828" }}>{fmt(row.payment)}</p>
+                          <p className="text-[11px] tabular-nums" style={{ color: "#101828" }}>{fmt(row.principal)}</p>
+                          <p className="text-[11px] tabular-nums" style={{ color: "#F79009" }}>{fmt(row.interest)}</p>
+                          <p className="text-[11px] tabular-nums" style={{ color: "#101828" }}>{fmt(row.balance)}</p>
                         </div>
                       ))}
                     </div>
@@ -371,46 +373,46 @@ export default function LoanDetailPage() {
 
             {/* ── Payment History ──────────────────────────────────── */}
             {(repayments.length > 0 || disbursement) && (
-              <div className="rounded-2xl overflow-hidden" style={{ background: "#0D1F3C", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <div className="rounded-2xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #EAECF0", boxShadow: cardShadow }}>
                 <button
                   onClick={() => setShowHistory(!showHistory)}
                   className="w-full flex items-center justify-between px-4 py-3"
                 >
-                  <p className="text-[12px] font-semibold uppercase tracking-wide" style={{ color: "rgba(255,255,255,0.4)" }}>
+                  <p className="text-[12px] font-semibold uppercase tracking-wide" style={{ color: "#667085" }}>
                     Transaction History ({(disbursement ? 1 : 0) + repayments.length})
                   </p>
                   {showHistory
-                    ? <ChevronUp className="h-4 w-4" style={{ color: "rgba(255,255,255,0.3)" }} />
-                    : <ChevronDown className="h-4 w-4" style={{ color: "rgba(255,255,255,0.3)" }} />}
+                    ? <ChevronUp className="h-4 w-4" style={{ color: "#98A2B3" }} />
+                    : <ChevronDown className="h-4 w-4" style={{ color: "#98A2B3" }} />}
                 </button>
                 {showHistory && (
                   <div className="px-4 pb-4 space-y-2">
                     {disbursement && (
-                      <div className="flex items-center gap-3 py-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: "rgba(0,200,150,0.12)" }}>
-                          <ArrowDownLeft className="h-3.5 w-3.5" style={{ color: "#00C896" }} />
+                      <div className="flex items-center gap-3 py-2" style={{ borderBottom: "1px solid #F2F4F7" }}>
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: "#ECFDF3" }}>
+                          <ArrowDownLeft className="h-3.5 w-3.5" style={{ color: "#12B76A" }} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-medium text-white">Loan Disbursement</p>
-                          <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>
+                          <p className="text-[13px] font-medium" style={{ color: "#101828" }}>Loan Disbursement</p>
+                          <p className="text-[11px]" style={{ color: "#98A2B3" }}>
                             {new Date(disbursement.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                           </p>
                         </div>
-                        <p className="text-[13px] font-semibold" style={{ color: "#00C896" }}>+{fmt(disbursement.amount)}</p>
+                        <p className="text-[13px] font-semibold" style={{ color: "#12B76A" }}>+{fmt(disbursement.amount)}</p>
                       </div>
                     )}
                     {repayments.map((tx) => (
-                      <div key={tx._id} className="flex items-center gap-3 py-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: "rgba(59,158,255,0.12)" }}>
-                          <CreditCard className="h-3.5 w-3.5" style={{ color: "#3B9EFF" }} />
+                      <div key={tx._id} className="flex items-center gap-3 py-2" style={{ borderBottom: "1px solid #F2F4F7" }}>
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: "#EEF0FE" }}>
+                          <CreditCard className="h-3.5 w-3.5" style={{ color: "#1A2CCE" }} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-medium text-white">Loan Repayment</p>
-                          <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>
+                          <p className="text-[13px] font-medium" style={{ color: "#101828" }}>Loan Repayment</p>
+                          <p className="text-[11px]" style={{ color: "#98A2B3" }}>
                             {new Date(tx.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · {tx.reference}
                           </p>
                         </div>
-                        <p className="text-[13px] font-semibold" style={{ color: "#EF4444" }}>-{fmt(tx.amount)}</p>
+                        <p className="text-[13px] font-semibold" style={{ color: "#F04438" }}>-{fmt(tx.amount)}</p>
                       </div>
                     ))}
                   </div>
@@ -426,11 +428,11 @@ export default function LoanDetailPage() {
       {/* ══════════════════════════════════════════════════════════════════ */}
       {showPayment && loan && (
         <>
-          <div className="fixed inset-0 z-50" style={{ background: "rgba(0,0,0,0.7)" }} onClick={() => !paying && setShowPayment(false)} />
+          <div className="fixed inset-0 z-50" style={{ background: "rgba(16,24,40,0.5)" }} onClick={() => !paying && setShowPayment(false)} />
           <div
             className="fixed inset-x-0 bottom-0 z-50 flex flex-col overflow-hidden"
             style={{
-              background: "#0D1F3C",
+              background: "#FFFFFF",
               borderRadius: "24px 24px 0 0",
               maxHeight: "85vh",
               animation: "slideUp 300ms ease-out",
@@ -438,47 +440,47 @@ export default function LoanDetailPage() {
             }}
           >
             <div className="flex justify-center pt-3 pb-1">
-              <div style={{ width: 36, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.2)" }} />
+              <div style={{ width: 36, height: 4, borderRadius: 2, background: "#D0D5DD" }} />
             </div>
 
             {paySuccess ? (
               <div className="px-5 py-8 text-center">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full" style={{ background: "rgba(0,200,150,0.1)" }}>
-                  <CheckCircle2 className="h-8 w-8" style={{ color: "#00C896" }} />
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full" style={{ background: "#ECFDF3" }}>
+                  <CheckCircle2 className="h-8 w-8" style={{ color: "#12B76A" }} />
                 </div>
-                <p className="text-[17px] font-semibold text-white">{paySuccess}</p>
+                <p className="text-[17px] font-semibold" style={{ color: "#101828" }}>{paySuccess}</p>
                 <button
                   onClick={() => setShowPayment(false)}
                   className="mt-5 w-full h-12 rounded-xl text-[15px] font-semibold text-white"
-                  style={{ background: "#3B9EFF" }}
+                  style={{ background: "#1A2CCE" }}
                 >
                   Done
                 </button>
               </div>
             ) : (
               <div className="flex-1 overflow-y-auto px-5 pb-6">
-                <h2 className="text-[17px] font-semibold text-white py-3">Make a Payment</h2>
+                <h2 className="text-[17px] font-semibold py-3" style={{ color: "#101828" }}>Make a Payment</h2>
 
-                <div className="rounded-xl p-3 mb-4" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
+                <div className="rounded-xl p-3 mb-4" style={{ background: "#F9FAFB", border: "1px solid #EAECF0" }}>
                   <div className="flex items-center justify-between">
-                    <span className="text-[12px]" style={{ color: "rgba(255,255,255,0.4)" }}>Outstanding</span>
-                    <span className="text-[13px] font-semibold text-white">{fmt(loan.outstandingBalance)}</span>
+                    <span className="text-[12px]" style={{ color: "#667085" }}>Outstanding</span>
+                    <span className="text-[13px] font-semibold" style={{ color: "#101828" }}>{fmt(loan.outstandingBalance)}</span>
                   </div>
                   <div className="flex items-center justify-between mt-1">
-                    <span className="text-[12px]" style={{ color: "rgba(255,255,255,0.4)" }}>Your Balance</span>
-                    <span className="text-[13px] font-semibold text-white">{fmt(accountBalance)}</span>
+                    <span className="text-[12px]" style={{ color: "#667085" }}>Your Balance</span>
+                    <span className="text-[13px] font-semibold" style={{ color: "#101828" }}>{fmt(accountBalance)}</span>
                   </div>
                 </div>
 
                 {/* Amount */}
                 <div className="mb-4">
-                  <label className="block text-[12px] font-medium uppercase tracking-wide mb-2" style={{ color: "rgba(255,255,255,0.4)" }}>
+                  <label className="block text-[12px] font-medium uppercase tracking-wide mb-2" style={{ color: "#667085" }}>
                     Payment Amount
                   </label>
                   <div className="relative">
-                    <span 
+                    <span
                       className="absolute left-4 top-1/2 -translate-y-1/2 text-[15px] font-medium pointer-events-none"
-                      style={{ color: payAmount ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.3)" }}
+                      style={{ color: payAmount ? "#101828" : "#98A2B3" }}
                     >
                       {currencySymbol}
                     </span>
@@ -489,9 +491,9 @@ export default function LoanDetailPage() {
                       placeholder="0.00"
                       className="w-full h-[52px] pl-8 pr-4 rounded-xl text-[15px] font-medium"
                       style={{
-                        background: "rgba(255,255,255,0.04)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                        color: "#fff",
+                        background: "#F9FAFB",
+                        border: "1px solid #D0D5DD",
+                        color: "#101828",
                         outline: "none",
                       }}
                       step="0.01"
@@ -503,11 +505,11 @@ export default function LoanDetailPage() {
 
                 {/* PIN */}
                 <div className="mb-4">
-                  <label className="block text-[12px] font-medium uppercase tracking-wide mb-2" style={{ color: "rgba(255,255,255,0.4)" }}>
+                  <label className="block text-[12px] font-medium uppercase tracking-wide mb-2" style={{ color: "#667085" }}>
                     Transfer PIN
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "rgba(255,255,255,0.3)" }} />
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "#98A2B3" }} />
                     <input
                       type="password"
                       value={payPin}
@@ -515,9 +517,9 @@ export default function LoanDetailPage() {
                       placeholder="Enter your 4-digit PIN"
                       className="w-full h-[52px] pl-11 pr-4 rounded-xl text-[15px]"
                       style={{
-                        background: "rgba(255,255,255,0.04)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                        color: "#fff",
+                        background: "#F9FAFB",
+                        border: "1px solid #D0D5DD",
+                        color: "#101828",
                         outline: "none",
                       }}
                       maxLength={6}
@@ -526,18 +528,19 @@ export default function LoanDetailPage() {
                 </div>
 
                 {payError && (
-                  <div className="rounded-xl p-3 flex items-start gap-2 mb-4" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)" }}>
-                    <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: "#EF4444" }} />
-                    <p className="text-[13px]" style={{ color: "#EF4444" }}>{payError}</p>
+                  <div className="rounded-xl p-3 flex items-start gap-2 mb-4" style={{ background: "#FEF3F2", border: "1px solid #FECDCA" }}>
+                    <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: "#F04438" }} />
+                    <p className="text-[13px]" style={{ color: "#F04438" }}>{payError}</p>
                   </div>
                 )}
 
                 <button
                   onClick={handlePay}
                   disabled={paying || !payAmount || !payPin}
-                  className="w-full h-12 rounded-xl text-[15px] font-semibold text-white transition-all active:scale-[0.98]"
+                  className="w-full h-12 rounded-xl text-[15px] font-semibold transition-all active:scale-[0.98]"
                   style={{
-                    background: payAmount && payPin ? "#00C896" : "rgba(255,255,255,0.06)",
+                    background: payAmount && payPin ? "#12B76A" : "#EAECF0",
+                    color: payAmount && payPin ? "#FFFFFF" : "#98A2B3",
                     opacity: payAmount && payPin && !paying ? 1 : 0.5,
                   }}
                 >
@@ -557,8 +560,8 @@ export default function LoanDetailPage() {
 function StatCell({ label, value }: { label: string; value: string }) {
   return (
     <div className="py-3 text-center">
-      <p className="text-[10px] uppercase" style={{ color: "rgba(255,255,255,0.35)" }}>{label}</p>
-      <p className="text-[13px] font-semibold text-white mt-0.5 tabular-nums">{value}</p>
+      <p className="text-[10px] uppercase" style={{ color: "#98A2B3" }}>{label}</p>
+      <p className="text-[13px] font-semibold mt-0.5 tabular-nums" style={{ color: "#101828" }}>{value}</p>
     </div>
   )
 }
@@ -566,8 +569,8 @@ function StatCell({ label, value }: { label: string; value: string }) {
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between px-4 py-3">
-      <span className="text-[13px]" style={{ color: "rgba(255,255,255,0.4)" }}>{label}</span>
-      <span className="text-[13px] font-medium text-white">{value}</span>
+      <span className="text-[13px]" style={{ color: "#667085" }}>{label}</span>
+      <span className="text-[13px] font-medium" style={{ color: "#101828" }}>{value}</span>
     </div>
   )
 }

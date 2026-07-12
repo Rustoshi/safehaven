@@ -12,14 +12,21 @@ export async function GET() {
 
     await connectDB()
     const user = await User.findById(session.user.id)
-      .select("preferredCurrency")
+      .select("preferredCurrency kycStatus kycTier firstName lastName email")
       .lean()
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
-    return NextResponse.json({ preferredCurrency: user.preferredCurrency || "USD" })
+    return NextResponse.json({
+      preferredCurrency: user.preferredCurrency || "USD",
+      kycStatus:         user.kycStatus || "unverified",
+      kycTier:           user.kycTier ?? 1,
+      firstName:         user.firstName,
+      lastName:          user.lastName,
+      email:             user.email,
+    })
   } catch (err) {
     console.error("[User Profile API]", err)
     return NextResponse.json({ error: "Failed to load profile" }, { status: 500 })

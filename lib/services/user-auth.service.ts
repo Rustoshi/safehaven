@@ -6,18 +6,32 @@ import User, { type IUser } from "@/lib/models/User"
 import Account from "@/lib/models/Account"
 import Notification from "@/lib/models/Notification"
 import AuditLog from "@/lib/models/AuditLog"
+import PendingRegistration from "@/lib/models/PendingRegistration"
 import { BANK_NAME } from "@/lib/brand"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface RegisterData {
-  firstName: string
-  lastName:  string
-  email:     string
-  password:  string
-  pin:       string
-  phone?:    string
-  currency:  string
+  firstName:     string
+  lastName:      string
+  email:         string
+  /** Plaintext password (validated + hashed here). Provide this OR passwordHash. */
+  password?:     string
+  /** Already-bcrypt-hashed password (used by the OTP flow, which hashes earlier). */
+  passwordHash?: string
+  pin:           string
+  phone?:        string
+  currency:      string
+}
+
+// ── Email-verification OTP config ─────────────────────────────────────────────
+
+const OTP_TTL_MS              = 10 * 60 * 1000 // code valid for 10 minutes
+const OTP_MAX_ATTEMPTS        = 5
+const OTP_RESEND_COOLDOWN_MS  = 30 * 1000
+
+function generateOtp(): string {
+  return crypto.randomInt(0, 1_000_000).toString().padStart(6, "0")
 }
 
 // ── Validation helpers ────────────────────────────────────────────────────────
@@ -143,7 +157,6 @@ export async function registerUser(
   // Validate inputs
   validateName(data.firstName, "First name")
   validateName(data.lastName, "Last name")
-  validatePassword(data.password)
 
   if (data.phone && !PHONE_REGEX.test(data.phone)) {
     throw new Error("Phone number must be in international format (e.g. +1234567890).")
@@ -161,8 +174,16 @@ export async function registerUser(
     throw new Error("PIN must be exactly 4 digits.")
   }
 
-  // Hash password
-  const passwordHash = await bcrypt.hash(data.password, 12)
+  // Resolve password hash — either provided pre-hashed (OTP flow) or hash now.
+  let passwordHash: string
+  if (data.passwordHash) {
+    passwordHash = data.passwordHash
+  } else if (data.password) {
+    validatePassword(data.password)
+    passwordHash = await bcrypt.hash(data.password, 12)
+  } else {
+    throw new Error("A password is required.")
+  }
 
   // Generate tokens / codes
   const referralCode = generateReferralCode(data.firstName)
@@ -231,6 +252,144 @@ export async function registerUser(
   )
 
   return { user }
+}
+
+// ── Email-verification OTP flow ───────────────────────────────────────────────
+
+/**
+ * Step 1 of signup — validate the submitted data, ensure the email is free,
+ * hash the password, and stash everything in a PendingRegistration together
+ * with a fresh OTP. Returns the plaintext OTP so the caller can email it.
+ * The real User is NOT created here.
+ */
+export async function startEmailVerification(
+  data: RegisterData
+): Promise<{ otp: string; firstName: string; email: string }> {
+  await connectDB()
+
+  validateName(data.firstName, "First name")
+  validateName(data.lastName, "Last name")
+  if (!data.password) throw new Error("A password is required.")
+  validatePassword(data.password)
+
+  if (data.phone && !PHONE_REGEX.test(data.phone)) {
+    throw new Error("Phone number must be in international format (e.g. +1234567890).")
+  }
+  if (!/^\d{4}$/.test(data.pin)) {
+    throw new Error("PIN must be exactly 4 digits.")
+  }
+
+  const emailLower = data.email.toLowerCase().trim()
+  const existingUser = await User.findOne({ email: emailLower }).lean()
+  if (existingUser) {
+    throw new Error("An account with this email already exists.")
+  }
+
+  const passwordHash = await bcrypt.hash(data.password, 12)
+  const otp     = generateOtp()
+  const otpHash = await bcrypt.hash(otp, 10)
+
+  await PendingRegistration.findOneAndUpdate(
+    { email: emailLower },
+    {
+      email:   emailLower,
+      otpHash,
+      payload: {
+        firstName: data.firstName.trim(),
+        lastName:  data.lastName.trim(),
+        passwordHash,
+        pin:       data.pin,
+        phone:     data.phone?.trim() || undefined,
+        currency:  data.currency.toUpperCase(),
+      },
+      attempts:   0,
+      lastSentAt: new Date(),
+      expiresAt:  new Date(Date.now() + OTP_TTL_MS),
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  )
+
+  return { otp, firstName: data.firstName.trim(), email: emailLower }
+}
+
+/**
+ * Step 2 of signup — confirm the OTP and, on success, actually create the User.
+ * The pending record is consumed (deleted) on success.
+ */
+export async function verifyRegistrationOtp(
+  email: string,
+  otp:   string
+): Promise<{ user: IUser }> {
+  await connectDB()
+
+  const emailLower = email.toLowerCase().trim()
+  const pending = await PendingRegistration.findOne({ email: emailLower })
+
+  if (!pending) {
+    throw new Error("Your verification code has expired. Please start again.")
+  }
+  if (pending.expiresAt.getTime() < Date.now()) {
+    await PendingRegistration.deleteOne({ _id: pending._id })
+    throw new Error("Your verification code has expired. Please request a new one.")
+  }
+  if (pending.attempts >= OTP_MAX_ATTEMPTS) {
+    await PendingRegistration.deleteOne({ _id: pending._id })
+    throw new Error("Too many incorrect attempts. Please start again.")
+  }
+
+  const match = await bcrypt.compare(otp, pending.otpHash)
+  if (!match) {
+    pending.attempts += 1
+    await pending.save()
+    const left = OTP_MAX_ATTEMPTS - pending.attempts
+    throw new Error(
+      left > 0
+        ? `Incorrect code. ${left} attempt${left === 1 ? "" : "s"} left.`
+        : "Too many incorrect attempts. Please start again."
+    )
+  }
+
+  // OTP is valid — create the user from the stashed (pre-hashed) payload.
+  const { user } = await registerUser({
+    firstName:    pending.payload.firstName,
+    lastName:     pending.payload.lastName,
+    email:        emailLower,
+    passwordHash: pending.payload.passwordHash,
+    pin:          pending.payload.pin,
+    phone:        pending.payload.phone,
+    currency:     pending.payload.currency,
+  })
+
+  await PendingRegistration.deleteOne({ _id: pending._id })
+  return { user }
+}
+
+/**
+ * Resend a fresh OTP for an in-progress signup. Enforces a short cooldown and
+ * resets the attempt counter. Returns null (silently) if there is no pending
+ * registration for the email, so callers can respond without leaking existence.
+ */
+export async function resendRegistrationOtp(
+  email: string
+): Promise<{ otp: string; firstName: string } | null> {
+  await connectDB()
+
+  const emailLower = email.toLowerCase().trim()
+  const pending = await PendingRegistration.findOne({ email: emailLower })
+  if (!pending) return null
+
+  if (Date.now() - pending.lastSentAt.getTime() < OTP_RESEND_COOLDOWN_MS) {
+    throw new Error("Please wait a moment before requesting another code.")
+  }
+
+  const otp = generateOtp()
+  pending.otpHash    = await bcrypt.hash(otp, 10)
+  pending.expiresAt  = new Date(Date.now() + OTP_TTL_MS)
+  pending.attempts   = 0
+  pending.lastSentAt = new Date()
+  await pending.save()
+
+  return { otp, firstName: pending.payload.firstName }
 }
 
 // ── verifyEmail ───────────────────────────────────────────────────────────────

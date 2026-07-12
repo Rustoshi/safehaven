@@ -2,6 +2,7 @@ import nodemailer from "nodemailer"
 import { renderWelcomeEmail } from "./templates/WelcomeEmail"
 import { renderPasswordResetEmail } from "./templates/PasswordResetEmail"
 import { renderEmailVerificationSuccessEmail } from "./templates/EmailVerificationSuccessEmail"
+import { renderOtpEmail } from "./templates/OtpEmail"
 import { BANK_NAME } from "@/lib/brand"
 
 // ── Configuration ─────────────────────────────────────────────────────────────
@@ -117,6 +118,22 @@ export async function sendEmailVerifiedEmail(
   return sendEmail({
     to,
     subject: `Your ${BANK_NAME} email has been verified`,
+    html,
+  })
+}
+
+// ── sendOtpEmail (email verification during signup) ───────────────────────────
+
+export async function sendOtpEmail(
+  to:        string,
+  firstName: string,
+  otp:       string
+): Promise<boolean> {
+  const html = renderOtpEmail({ firstName, otp })
+
+  return sendEmail({
+    to,
+    subject: `${otp} is your ${BANK_NAME} verification code`,
     html,
   })
 }

@@ -106,7 +106,7 @@ export function BulkRejectModal({ open, onClose, onSuccess, requests }: Props) {
               </p>
               <div className="h-1.5 w-full rounded-full bg-slate-200">
                 <div
-                  className="h-full rounded-full bg-[#0F4C81] transition-all"
+                  className="h-full rounded-full bg-[#1A2CCE] transition-all"
                   style={{ width: `${(progress / requests.length) * 100}%` }}
                 />
               </div>

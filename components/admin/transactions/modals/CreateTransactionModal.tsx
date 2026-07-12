@@ -50,7 +50,7 @@ const TX_TYPES = [
     value: "refund" as const,
     label: "Refund",
     hint:  "Credits a refund to the account",
-    color: "text-blue-700",
+    color: "text-indigo-700",
   },
 ] as const
 
@@ -211,7 +211,7 @@ export function CreateTransactionModal({
           {([1, 2, 3] as const).map((s) => (
             <div key={s} className="flex items-center gap-1.5">
               <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold
-                ${step === s ? "bg-[#0F4C81] text-white" : step > s ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-400"}`}>
+                ${step === s ? "bg-[#1A2CCE] text-white" : step > s ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-400"}`}>
                 {step > s ? <Check className="h-3 w-3" /> : s}
               </div>
               <span className={`text-xs ${step === s ? "text-slate-700" : "text-slate-400"}`}>
@@ -252,7 +252,7 @@ export function CreateTransactionModal({
                     onClick={() => selectUser(u)}
                     className={`w-full text-left rounded-lg border px-3 py-2.5 text-sm transition-colors
                       ${selUser?.id === u.id
-                        ? "border-[#0F4C81] bg-[#0F4C81]/5"
+                        ? "border-[#1A2CCE] bg-[#1A2CCE]/5"
                         : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                       }`}
                   >
@@ -276,7 +276,7 @@ export function CreateTransactionModal({
                       onClick={() => setSelAccount(a)}
                       className={`w-full text-left rounded-lg border px-3 py-2.5 text-sm transition-colors
                         ${selAccount?.id === a.id
-                          ? "border-[#0F4C81] bg-[#0F4C81]/5"
+                          ? "border-[#1A2CCE] bg-[#1A2CCE]/5"
                           : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                         }`}
                     >
@@ -329,7 +329,7 @@ export function CreateTransactionModal({
                       onClick={() => setTxType(t.value)}
                       className={`rounded-lg border p-2.5 text-left transition-colors
                         ${txType === t.value
-                          ? "border-[#0F4C81] bg-[#0F4C81]/5"
+                          ? "border-[#1A2CCE] bg-[#1A2CCE]/5"
                           : "border-slate-200 hover:border-slate-300"
                         }`}
                     >
@@ -462,7 +462,7 @@ export function CreateTransactionModal({
             <Button
               onClick={proceedToStep2}
               disabled={!selAccount}
-              className="bg-[#0F4C81] hover:bg-[#0F4C81]/90 text-white"
+              className="bg-[#1A2CCE] hover:bg-[#1A2CCE]/90 text-white"
             >
               Next <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
@@ -474,7 +474,7 @@ export function CreateTransactionModal({
                 if (validateStep2()) setStep(3)
               }}
               disabled={afterBal < 0}
-              className="bg-[#0F4C81] hover:bg-[#0F4C81]/90 text-white"
+              className="bg-[#1A2CCE] hover:bg-[#1A2CCE]/90 text-white"
             >
               Review <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
@@ -484,7 +484,7 @@ export function CreateTransactionModal({
             <Button
               onClick={handleSubmit}
               disabled={submitting || afterBal < 0}
-              className="bg-[#0F4C81] hover:bg-[#0F4C81]/90 text-white"
+              className="bg-[#1A2CCE] hover:bg-[#1A2CCE]/90 text-white"
             >
               {submitting ? "Creating…" : "Confirm & create"}
             </Button>

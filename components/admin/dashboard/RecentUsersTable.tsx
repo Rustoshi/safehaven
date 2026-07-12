@@ -10,7 +10,7 @@ function Avatar({ firstName, lastName }: { firstName: string; lastName: string }
   return (
     <span
       className="inline-flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-semibold text-white"
-      style={{ backgroundColor: "#0F4C81" }}
+      style={{ backgroundColor: "#1A2CCE" }}
     >
       {initials}
     </span>

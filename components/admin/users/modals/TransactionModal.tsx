@@ -1,22 +1,18 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import { useForm }        from "react-hook-form"
 import { zodResolver }    from "@hookform/resolvers/zod"
 import { z }              from "zod"
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
-} from "@/components/ui/dialog"
-import { Input }          from "@/components/ui/input"
-import { Label }          from "@/components/ui/label"
-import { Button }         from "@/components/ui/button"
-import { Select, SelectItem } from "@/components/ui/select"
-import { Checkbox }       from "@/components/ui/checkbox"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { toast }          from "@/components/ui/use-toast"
-import { cn }             from "@/lib/utils"
 import { formatCurrency } from "@/lib/utils/currency"
-import { ArrowDownCircle, ArrowUpCircle, Calendar, Mail } from "lucide-react"
+import { ArrowDownCircle, ArrowUpCircle, Calendar, Mail, AlertTriangle } from "lucide-react"
 import type { AccountData, UserDetail } from "@/lib/services/user.service"
+import {
+  DASH, ModalHeader, Field, TextInput, NativeSelect, SectionCard, InfoBox,
+  PrimaryButton, GhostButton, ModalFooter,
+} from "./_ui"
 
 const TRANSFER_SCOPES = [
   { value: "local_transfer", label: "Local Transfer" },
@@ -115,6 +111,8 @@ export function TransactionModal({ open, onClose, onSuccess, user, preselect, mo
 
   const watchAccountId = watch("accountId")
   const watchAmount    = watch("amount")
+  const watchScope     = watch("transferScope")
+  const watchEmail     = watch("sendEmail")
   const accounts = user.accounts || []
   const selectedAccount = accounts.find((a) => a.id === watchAccountId)
   const isBitcoin       = selectedAccount?.walletType === "bitcoin"
@@ -182,216 +180,145 @@ export function TransactionModal({ open, onClose, onSuccess, user, preselect, mo
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-6 sm:p-8">
-        <DialogHeader className="mb-6">
-          <div className="flex items-center gap-3">
-            <div className={cn(
-              "flex h-12 w-12 items-center justify-center rounded-full",
-              isCredit ? "bg-emerald-100" : "bg-red-100"
-            )}>
-              {isCredit
-                ? <ArrowDownCircle className="h-6 w-6 text-emerald-600" />
-                : <ArrowUpCircle className="h-6 w-6 text-red-600" />
-              }
-            </div>
-            <div>
-              <DialogTitle className="text-xl">{isCredit ? "Credit Account" : "Debit Account"}</DialogTitle>
-              <DialogDescription className="text-sm">
-                {isCredit
-                  ? "Add funds to the user's account"
-                  : "Remove funds from the user's account"
-                }
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
+      <DialogContent className="max-w-lg p-6 sm:p-7" style={{ fontFamily: DASH.font }}>
+        <DialogTitle className="sr-only">{isCredit ? "Credit Account" : "Debit Account"}</DialogTitle>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          {/* Account Selection */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-700">Account</Label>
-            <Select value={watchAccountId} onValueChange={(v) => setValue("accountId", v)}>
-              {(user.accounts || []).map((a) => (
-                <SelectItem key={a.id} value={a.id}>
+        <ModalHeader
+          icon={isCredit ? ArrowDownCircle : ArrowUpCircle}
+          tone={isCredit ? "success" : "danger"}
+          title={isCredit ? "Credit account" : "Debit account"}
+          description={isCredit ? "Add funds to the user's account" : "Remove funds from the user's account"}
+        />
+
+        <form onSubmit={handleSubmit(onSubmit)} style={{ display: "flex", flexDirection: "column", gap: 18, marginTop: 22 }}>
+          {/* Account */}
+          <Field label="Account" error={errors.accountId?.message}>
+            <NativeSelect
+              value={watchAccountId}
+              onChange={(e) => setValue("accountId", e.target.value)}
+            >
+              {accounts.length === 0 && <option value="">No accounts</option>}
+              {accounts.map((a) => (
+                <option key={a.id} value={a.id}>
                   {fmtAccountLabel(a, userCurrency)} — {fmtBalance(a, userCurrency)}
-                </SelectItem>
+                </option>
               ))}
-            </Select>
-            {errors.accountId && <p className="text-xs text-red-500">{errors.accountId.message}</p>}
-          </div>
+            </NativeSelect>
+          </Field>
 
           {/* Amount */}
-          <div className="space-y-2">
-            <Label htmlFor="tx-amount" className="text-sm font-medium text-gray-700">
-              Amount {isBitcoin ? "(BTC)" : `(${userCurrency})`}
-            </Label>
-            <Input
+          <Field
+            label={`Amount ${isBitcoin ? "(BTC)" : `(${userCurrency})`}`}
+            htmlFor="tx-amount"
+            error={errors.amount?.message}
+          >
+            <TextInput
               id="tx-amount"
               type="number"
               step={isBitcoin ? "0.00000001" : "0.01"}
               min="0"
               placeholder={isBitcoin ? "e.g. 0.005" : "e.g. 100.00"}
-              className="bg-white text-gray-900 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent h-11"
               {...register("amount")}
             />
-            {errors.amount && <p className="text-xs text-red-500">{errors.amount.message}</p>}
-          </div>
+          </Field>
 
           {/* Sender */}
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-4">
-            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">From (Sender)</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="tx-sender-name" className="text-xs font-medium text-gray-700">Name</Label>
-                <Input
-                  id="tx-sender-name"
-                  type="text"
-                  placeholder="Sender name"
-                  className="bg-white text-gray-900 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent h-11"
-                  {...register("senderName")}
-                />
-                {errors.senderName && <p className="text-xs text-red-500">{errors.senderName.message}</p>}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="tx-sender-bank" className="text-xs font-medium text-gray-700">Bank <span className="text-gray-400 font-normal">(optional)</span></Label>
-                <Input
-                  id="tx-sender-bank"
-                  type="text"
-                  placeholder="Bank name"
-                  className="bg-white text-gray-900 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent h-11"
-                  {...register("senderBank")}
-                />
-              </div>
+          <SectionCard title="From (sender)">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <Field label="Name" htmlFor="tx-sender-name" error={errors.senderName?.message}>
+                <TextInput id="tx-sender-name" placeholder="Sender name" {...register("senderName")} />
+              </Field>
+              <Field label="Bank" htmlFor="tx-sender-bank" optional>
+                <TextInput id="tx-sender-bank" placeholder="Bank name" {...register("senderBank")} />
+              </Field>
             </div>
-          </div>
+          </SectionCard>
 
           {/* Receiver */}
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-4">
-            <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">To (Receiver)</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="tx-receiver-name" className="text-xs font-medium text-gray-700">Name</Label>
-                <Input
-                  id="tx-receiver-name"
-                  type="text"
-                  placeholder="Receiver name"
-                  className="bg-white text-gray-900 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent h-11"
-                  {...register("receiverName")}
-                />
-                {errors.receiverName && <p className="text-xs text-red-500">{errors.receiverName.message}</p>}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="tx-receiver-bank" className="text-xs font-medium text-gray-700">Bank <span className="text-gray-400 font-normal">(optional)</span></Label>
-                <Input
-                  id="tx-receiver-bank"
-                  type="text"
-                  placeholder="Bank name"
-                  className="bg-white text-gray-900 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent h-11"
-                  {...register("receiverBank")}
-                />
-              </div>
+          <SectionCard title="To (receiver)">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <Field label="Name" htmlFor="tx-receiver-name" error={errors.receiverName?.message}>
+                <TextInput id="tx-receiver-name" placeholder="Receiver name" {...register("receiverName")} />
+              </Field>
+              <Field label="Bank" htmlFor="tx-receiver-bank" optional>
+                <TextInput id="tx-receiver-bank" placeholder="Bank name" {...register("receiverBank")} />
+              </Field>
             </div>
-          </div>
+          </SectionCard>
 
-          {/* Transfer Scope */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-700">Transfer Scope</Label>
-            <Select
-              value={watch("transferScope")}
-              onValueChange={(v) => setValue("transferScope", v)}
-            >
+          {/* Scope */}
+          <Field label="Transfer scope" error={errors.transferScope?.message}>
+            <NativeSelect value={watchScope} onChange={(e) => setValue("transferScope", e.target.value)}>
               {TRANSFER_SCOPES.map((scope) => (
-                <SelectItem key={scope.value} value={scope.value}>
-                  {scope.label}
-                </SelectItem>
+                <option key={scope.value} value={scope.value}>{scope.label}</option>
               ))}
-            </Select>
-            {errors.transferScope && <p className="text-xs text-red-500">{errors.transferScope.message}</p>}
-          </div>
+            </NativeSelect>
+          </Field>
 
           {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="tx-desc" className="text-sm font-medium text-gray-700">Description <span className="text-gray-400 font-normal text-xs">(optional)</span></Label>
-            <Input
-              id="tx-desc"
-              placeholder="Transaction description..."
-              className="bg-white text-gray-900 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent h-11"
-              {...register("description")}
-            />
-            {errors.description && <p className="text-xs text-red-500">{errors.description.message}</p>}
-          </div>
+          <Field label="Description" htmlFor="tx-desc" optional error={errors.description?.message}>
+            <TextInput id="tx-desc" placeholder="Transaction description…" {...register("description")} />
+          </Field>
 
-          {/* Transaction Date */}
-          <div className="space-y-2">
-            <Label htmlFor="tx-date" className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
-              <Calendar className="h-3.5 w-3.5" />
-              Date & Time
-            </Label>
-            <Input
-              id="tx-date"
-              type="datetime-local"
-              className="bg-white text-gray-900 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent h-11"
-              {...register("transactionDate")}
-            />
-            <p className="text-[11px] text-gray-400">Can be backdated if needed</p>
-            {errors.transactionDate && <p className="text-xs text-red-500">{errors.transactionDate.message}</p>}
-          </div>
+          {/* Date */}
+          <Field
+            label="Date & time"
+            htmlFor="tx-date"
+            hint="Can be backdated if needed"
+            error={errors.transactionDate?.message}
+          >
+            <div style={{ position: "relative" }}>
+              <Calendar size={15} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: DASH.textMuted, pointerEvents: "none" }} />
+              <TextInput id="tx-date" type="datetime-local" style={{ paddingLeft: 40 }} {...register("transactionDate")} />
+            </div>
+          </Field>
 
-          {/* Send Email Option */}
-          <div className="flex items-center gap-3 rounded-md border border-gray-200 bg-gray-50 px-4 py-3">
-            <Checkbox
+          {/* Send email */}
+          <label
+            htmlFor="tx-email"
+            style={{
+              display: "flex", alignItems: "center", gap: 12, cursor: "pointer",
+              padding: "12px 14px", borderRadius: DASH.radiusInner,
+              backgroundColor: DASH.surface2, border: `1px solid ${DASH.border}`,
+            }}
+          >
+            <input
               id="tx-email"
-              checked={watch("sendEmail")}
-              onCheckedChange={(v) => setValue("sendEmail", !!v)}
+              type="checkbox"
+              checked={watchEmail}
+              onChange={(e) => setValue("sendEmail", e.target.checked)}
+              style={{ width: 18, height: 18, accentColor: DASH.primary, cursor: "pointer" }}
             />
-            <Label htmlFor="tx-email" className="flex items-center gap-1.5 cursor-pointer text-sm font-normal text-gray-700">
-              <Mail className="h-3.5 w-3.5 text-gray-500" />
+            <span style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13.5, color: DASH.text }}>
+              <Mail size={15} style={{ color: DASH.textMuted }} />
               Send email notification to user
-            </Label>
-          </div>
+            </span>
+          </label>
 
           {/* Preview */}
           {selectedAccount && amountNum > 0 && (
-            <div className={cn(
-              "rounded-lg border p-4 text-sm",
-              insufficientFunds
-                ? "border-red-300 bg-red-50 text-red-800"
-                : isCredit
-                  ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                  : "border-amber-200 bg-amber-50 text-amber-800"
-            )}>
-              {insufficientFunds ? (
-                <span className="font-medium">⚠️ Insufficient funds for this debit</span>
-              ) : (
-                <>
-                  This will <strong>{isCredit ? "credit" : "debit"}</strong>{" "}
-                  <strong>{fmtAccountLabel(selectedAccount, userCurrency)}</strong>{" "}
-                  by <strong>{amountNum.toFixed(isBitcoin ? 8 : 2)} {isBitcoin ? "BTC" : userCurrency}</strong>.
-                  {newBalance && (
-                    <> New balance: <strong>{newBalance}</strong>.</>
-                  )}
-                </>
-              )}
-            </div>
+            insufficientFunds ? (
+              <InfoBox tone="danger" icon={AlertTriangle} title="Insufficient funds for this debit" />
+            ) : (
+              <InfoBox tone={isCredit ? "success" : "warning"}>
+                This will <strong>{isCredit ? "credit" : "debit"}</strong>{" "}
+                <strong>{fmtAccountLabel(selectedAccount, userCurrency)}</strong>{" "}
+                by <strong>{amountNum.toFixed(isBitcoin ? 8 : 2)} {isBitcoin ? "BTC" : userCurrency}</strong>.
+                {newBalance && <> New balance: <strong>{newBalance}</strong>.</>}
+              </InfoBox>
+            )
           )}
 
-          <DialogFooter className="flex-col gap-3 sm:flex-row pt-5 border-t border-gray-200 mt-6">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting} className="h-11">
-              Cancel
-            </Button>
-            <Button
+          <ModalFooter>
+            <GhostButton type="button" onClick={onClose} disabled={isSubmitting}>Cancel</GhostButton>
+            <PrimaryButton
               type="submit"
-              disabled={isSubmitting || insufficientFunds}
-              className={cn(
-                "h-11",
-                isCredit
-                  ? "bg-emerald-600 hover:bg-emerald-700"
-                  : "bg-red-600 hover:bg-red-700"
-              )}
+              tone={isCredit ? "success" : "danger"}
+              disabled={isSubmitting || !!insufficientFunds}
             >
-              {isSubmitting ? "Processing…" : isCredit ? "Credit Account" : "Debit Account"}
-            </Button>
-          </DialogFooter>
+              {isSubmitting ? "Processing…" : isCredit ? "Credit account" : "Debit account"}
+            </PrimaryButton>
+          </ModalFooter>
         </form>
       </DialogContent>
     </Dialog>

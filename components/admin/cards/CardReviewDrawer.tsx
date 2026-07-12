@@ -254,7 +254,7 @@ export function CardReviewDrawer({ cardId, onClose, onAction }: Props) {
             {/* Applicant */}
             <div className="bg-gray-50 rounded-xl p-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#0F4C81] text-white flex items-center justify-center font-semibold text-sm">
+                <div className="w-10 h-10 rounded-full bg-[#1A2CCE] text-white flex items-center justify-center font-semibold text-sm">
                   {card.userFirstName?.[0]}{card.userLastName?.[0]}
                 </div>
                 <div className="flex-1">
@@ -316,13 +316,13 @@ export function CardReviewDrawer({ cardId, onClose, onAction }: Props) {
                   <label key={key} className={[
                     "flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all",
                     cardType === key
-                      ? "border-[#0F4C81] bg-[#0F4C81]/5 ring-1 ring-[#0F4C81]/30"
+                      ? "border-[#1A2CCE] bg-[#1A2CCE]/5 ring-1 ring-[#1A2CCE]/30"
                       : "border-gray-200 hover:border-gray-300",
                   ].join(" ")}>
                     <input type="radio" name="cardType" value={key}
                       checked={cardType === key}
                       onChange={() => setCardType(key)}
-                      className="mt-0.5 accent-[#0F4C81]"
+                      className="mt-0.5 accent-[#1A2CCE]"
                     />
                     <div>
                       <p className="text-sm font-medium text-gray-800">{info.label}</p>
@@ -349,7 +349,7 @@ export function CardReviewDrawer({ cardId, onClose, onAction }: Props) {
                         className={[
                           "text-xs px-2 py-0.5 rounded border",
                           creditLimit === String(p)
-                            ? "bg-[#0F4C81] text-white border-[#0F4C81]"
+                            ? "bg-[#1A2CCE] text-white border-[#1A2CCE]"
                             : "bg-white text-gray-600 border-gray-200 hover:border-gray-400",
                         ].join(" ")}>
                         {fmt(p)}

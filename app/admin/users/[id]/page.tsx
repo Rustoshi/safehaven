@@ -28,7 +28,7 @@ export default async function UserDetailPage({ params }: Props) {
         <p className="mt-3 text-lg font-medium text-slate-600">User not found</p>
         <a
           href="/admin/users"
-          className="mt-6 rounded-lg bg-[#0F4C81] px-5 py-2 text-sm font-medium text-white hover:bg-[#0F4C81]/90"
+          className="mt-6 rounded-lg bg-[#1A2CCE] px-5 py-2 text-sm font-medium text-white hover:bg-[#1A2CCE]/90"
         >
           Back to users
         </a>

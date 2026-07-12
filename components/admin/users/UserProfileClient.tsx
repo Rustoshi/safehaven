@@ -81,7 +81,7 @@ function KycCard({ doc, userId }: { doc: KycDocData; userId: string }) {
         {doc.docUrl && (
           <button
             onClick={() => setLightbox(true)}
-            className="flex items-center gap-1 text-xs text-[#0F4C81] hover:underline"
+            className="flex items-center gap-1 text-xs text-[#1A2CCE] hover:underline"
           >
             View document <ExternalLink className="h-3 w-3" />
           </button>
@@ -146,7 +146,7 @@ function AuditTrailTab({ userId }: { userId: string }) {
 
   if (loading) return (
     <div className="flex items-center justify-center py-16">
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-[#0F4C81]" />
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-[#1A2CCE]" />
     </div>
   )
   if (error) return (
@@ -160,7 +160,7 @@ function AuditTrailTab({ userId }: { userId: string }) {
     <div className="space-y-3">
       {logs.map((entry) => (
         <div key={entry.id} className="flex gap-4 rounded-lg border border-slate-100 bg-slate-50 p-4">
-          <div className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-[#0F4C81]/10 text-[#0F4C81]">
+          <div className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-[#1A2CCE]/10 text-[#1A2CCE]">
             <AlertTriangle className="h-3.5 w-3.5" />
           </div>
           <div className="flex-1 min-w-0">
@@ -448,7 +448,7 @@ export function UserProfileClient({ user: initialUser }: Props) {
               emptyMessage="No transactions yet."
             />
             <div className="mt-3 text-right">
-              <Link href={`/admin/transactions?userId=${user.id}`} className="text-sm text-[#0F4C81] hover:underline">
+              <Link href={`/admin/transactions?userId=${user.id}`} className="text-sm text-[#1A2CCE] hover:underline">
                 View all transactions →
               </Link>
             </div>
@@ -473,7 +473,7 @@ export function UserProfileClient({ user: initialUser }: Props) {
               emptyMessage="No deposit requests."
             />
             <div className="mt-3 text-right">
-              <Link href={`/admin/deposits?userId=${user.id}`} className="text-sm text-[#0F4C81] hover:underline">
+              <Link href={`/admin/deposits?userId=${user.id}`} className="text-sm text-[#1A2CCE] hover:underline">
                 View all →
               </Link>
             </div>

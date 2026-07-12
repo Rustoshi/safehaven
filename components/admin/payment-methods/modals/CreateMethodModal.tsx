@@ -316,33 +316,33 @@ export function CreateMethodModal({ open, onOpenChange, onSuccess, existing }: P
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6" style={{ background: "#FFFFFF", color: "#0F172A" }}>
-        <DialogHeader className="pb-4 border-b" style={{ borderColor: "#E2E8F0" }}>
-          <DialogTitle style={{ color: "#0F172A" }}>{isEdit ? "Edit payment method" : "New payment method"}</DialogTitle>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-4 sm:p-6" style={{ background: "#FFFFFF", color: "#101828" }}>
+        <DialogHeader className="pb-4 border-b" style={{ borderColor: "#EAECF0" }}>
+          <DialogTitle style={{ color: "#101828" }}>{isEdit ? "Edit payment method" : "New payment method"}</DialogTitle>
         </DialogHeader>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
           {/* ── LEFT COLUMN ── */}
           <div className="space-y-4">
             <div>
-              <Label className="mb-1.5 block text-sm" style={{ color: "#0F172A" }}>Name</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Bank Transfer" style={{ background: "#FFFFFF", color: "#0F172A", borderColor: "#E2E8F0" }} />
+              <Label className="mb-1.5 block text-sm" style={{ color: "#101828" }}>Name</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Bank Transfer" style={{ background: "#FFFFFF", color: "#101828", borderColor: "#EAECF0" }} />
             </div>
 
             <div>
-              <Label className="mb-1.5 block text-sm flex items-center gap-1" style={{ color: "#0F172A" }}>
+              <Label className="mb-1.5 block text-sm flex items-center gap-1" style={{ color: "#101828" }}>
                 Slug
                 {isEdit && <Lock className="w-3 h-3 text-gray-400" />}
               </Label>
               {isEdit ? (
-                <Input value={slug} disabled style={{ background: "#F8FAFC", color: "#94A3B8", borderColor: "#E2E8F0" }} />
+                <Input value={slug} disabled style={{ background: "#F5F6F8", color: "#98A2B3", borderColor: "#EAECF0" }} />
               ) : (
                 <div className="relative">
                   <Input
                     value={slug}
                     onChange={(e) => { setSlug(e.target.value); setSlugDirty(true) }}
                     placeholder="bank-transfer"
-                    style={{ background: "#FFFFFF", color: "#0F172A", borderColor: "#E2E8F0" }}
+                    style={{ background: "#FFFFFF", color: "#101828", borderColor: "#EAECF0" }}
                   />
                   {slugStatus === "checking" && (
                     <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 animate-spin text-gray-400" />
@@ -355,22 +355,22 @@ export function CreateMethodModal({ open, onOpenChange, onSuccess, existing }: P
             </div>
 
             <div>
-              <Label className="mb-1.5 block text-sm" style={{ color: "#0F172A" }}>Type</Label>
+              <Label className="mb-1.5 block text-sm" style={{ color: "#101828" }}>Type</Label>
               <select value={type} onChange={(e) => setType(e.target.value)}
                 className="w-full h-9 px-3 text-sm border rounded-md"
-                style={{ background: "#FFFFFF", color: "#0F172A", borderColor: "#E2E8F0" }}>
+                style={{ background: "#FFFFFF", color: "#101828", borderColor: "#EAECF0" }}>
                 {TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
 
             <div>
-              <Label className="mb-1.5 block text-sm" style={{ color: "#0F172A" }}>Icon (Lucide icon name, optional)</Label>
-              <Input value={icon} onChange={(e) => setIcon(e.target.value)} placeholder="Landmark" style={{ background: "#FFFFFF", color: "#0F172A", borderColor: "#E2E8F0" }} />
+              <Label className="mb-1.5 block text-sm" style={{ color: "#101828" }}>Icon (Lucide icon name, optional)</Label>
+              <Input value={icon} onChange={(e) => setIcon(e.target.value)} placeholder="Landmark" style={{ background: "#FFFFFF", color: "#101828", borderColor: "#EAECF0" }} />
             </div>
 
             {/* Logo upload */}
             <div>
-              <Label className="mb-1.5 block text-sm" style={{ color: "#0F172A" }}>Logo (optional)</Label>
+              <Label className="mb-1.5 block text-sm" style={{ color: "#101828" }}>Logo (optional)</Label>
               <input
                 ref={logoInputRef}
                 type="file"
@@ -379,12 +379,12 @@ export function CreateMethodModal({ open, onOpenChange, onSuccess, existing }: P
                 className="hidden"
               />
               {logoPreview ? (
-                <div className="relative w-20 h-20 rounded-lg border overflow-hidden group" style={{ borderColor: "#E2E8F0" }}>
+                <div className="relative w-20 h-20 rounded-lg border overflow-hidden group" style={{ borderColor: "#EAECF0" }}>
                   <Image src={logoPreview} alt="Logo preview" fill className="object-contain p-1" />
                   <button
                     onClick={() => { setLogoFile(null); setLogoPreview(""); setLogoUrl(""); setLogoPublicId("") }}
                     className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    style={{ background: "#DC2626" }}
+                    style={{ background: "#F04438" }}
                   >
                     <X className="w-3 h-3 text-white" />
                   </button>
@@ -393,7 +393,7 @@ export function CreateMethodModal({ open, onOpenChange, onSuccess, existing }: P
                 <button
                   onClick={() => logoInputRef.current?.click()}
                   className="w-20 h-20 rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-1 transition-colors"
-                  style={{ borderColor: "#CBD5E1", color: "#64748B", background: "#FFFFFF" }}
+                  style={{ borderColor: "#D0D5DD", color: "#64748B", background: "#FFFFFF" }}
                 >
                   <Upload className="w-5 h-5" />
                   <span className="text-xs">Upload</span>
@@ -403,7 +403,7 @@ export function CreateMethodModal({ open, onOpenChange, onSuccess, existing }: P
             </div>
 
             <div>
-              <Label className="mb-2 block text-sm" style={{ color: "#0F172A" }}>Deposit target</Label>
+              <Label className="mb-2 block text-sm" style={{ color: "#101828" }}>Deposit target</Label>
               <div className="space-y-2">
                 {[
                   { value: "fiat",    label: "Credits fiat account",    desc: "Confirmed deposits added to user's primary fiat account" },
@@ -412,17 +412,17 @@ export function CreateMethodModal({ open, onOpenChange, onSuccess, existing }: P
                   <label key={opt.value} 
                     className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer transition-all"
                     style={depositTarget === opt.value 
-                      ? { borderColor: "#0F4C81", background: "rgba(15, 76, 129, 0.05)" }
-                      : { borderColor: "#E2E8F0", background: "#FFFFFF" }
+                      ? { borderColor: "#1A2CCE", background: "rgba(26, 44, 206, 0.05)" }
+                      : { borderColor: "#EAECF0", background: "#FFFFFF" }
                     }>
                     <input type="radio" name="depositTarget" value={opt.value}
                       checked={depositTarget === opt.value}
                       onChange={() => setDepositTarget(opt.value as "fiat" | "bitcoin")}
                       className="mt-0.5"
-                      style={{ accentColor: "#0F4C81" }}
+                      style={{ accentColor: "#1A2CCE" }}
                     />
                     <div>
-                      <p className="text-sm font-medium" style={{ color: "#0F172A" }}>{opt.label}</p>
+                      <p className="text-sm font-medium" style={{ color: "#101828" }}>{opt.label}</p>
                       <p className="text-xs" style={{ color: "#64748B" }}>{opt.desc}</p>
                     </div>
                   </label>
@@ -435,14 +435,14 @@ export function CreateMethodModal({ open, onOpenChange, onSuccess, existing }: P
           <div className="space-y-4">
             {/* Fee structure */}
             <div>
-              <Label className="mb-2 block text-sm" style={{ color: "#0F172A" }}>Fee structure</Label>
+              <Label className="mb-2 block text-sm" style={{ color: "#101828" }}>Fee structure</Label>
               <div className="flex gap-2 flex-wrap mb-3">
                 {(["none","percent","fixed","both"] as FeeType[]).map((ft) => (
                   <button key={ft} onClick={() => setFeeType(ft)}
                     className="text-xs px-2.5 py-1 rounded border capitalize transition-colors"
                     style={feeType === ft 
-                      ? { background: "#0F4C81", color: "#FFFFFF", borderColor: "#0F4C81" }
-                      : { background: "#FFFFFF", color: "#475569", borderColor: "#E2E8F0" }
+                      ? { background: "#1A2CCE", color: "#FFFFFF", borderColor: "#1A2CCE" }
+                      : { background: "#FFFFFF", color: "#667085", borderColor: "#EAECF0" }
                     }>
                     {ft}
                   </button>
@@ -451,81 +451,81 @@ export function CreateMethodModal({ open, onOpenChange, onSuccess, existing }: P
               {(feeType === "percent" || feeType === "both") && (
                 <div className="mb-2">
                   <Label className="mb-1 block text-xs" style={{ color: "#64748B" }}>Fee percent (%)</Label>
-                  <Input type="number" min={0} step={0.01} value={feePercent} onChange={(e) => setFeePercent(e.target.value)} style={{ background: "#FFFFFF", color: "#0F172A", borderColor: "#E2E8F0" }} />
+                  <Input type="number" min={0} step={0.01} value={feePercent} onChange={(e) => setFeePercent(e.target.value)} style={{ background: "#FFFFFF", color: "#101828", borderColor: "#EAECF0" }} />
                 </div>
               )}
               {(feeType === "fixed" || feeType === "both") && (
                 <div className="mb-2">
                   <Label className="mb-1 block text-xs" style={{ color: "#64748B" }}>Fixed fee ($)</Label>
-                  <Input type="number" min={0} step={0.01} value={feeFixed} onChange={(e) => setFeeFixed(e.target.value)} style={{ background: "#FFFFFF", color: "#0F172A", borderColor: "#E2E8F0" }} />
+                  <Input type="number" min={0} step={0.01} value={feeFixed} onChange={(e) => setFeeFixed(e.target.value)} style={{ background: "#FFFFFF", color: "#101828", borderColor: "#EAECF0" }} />
                 </div>
               )}
-              <p className="text-xs mt-1 rounded p-2" style={{ color: "#64748B", background: "#F8FAFC" }}>{feeExample}</p>
+              <p className="text-xs mt-1 rounded p-2" style={{ color: "#64748B", background: "#F5F6F8" }}>{feeExample}</p>
             </div>
 
             {/* Limits */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="mb-1.5 block text-sm" style={{ color: "#0F172A" }}>Min amount ($)</Label>
-                <Input type="number" min={0} value={minAmount} onChange={(e) => setMinAmount(e.target.value)} style={{ background: "#FFFFFF", color: "#0F172A", borderColor: "#E2E8F0" }} />
+                <Label className="mb-1.5 block text-sm" style={{ color: "#101828" }}>Min amount ($)</Label>
+                <Input type="number" min={0} value={minAmount} onChange={(e) => setMinAmount(e.target.value)} style={{ background: "#FFFFFF", color: "#101828", borderColor: "#EAECF0" }} />
               </div>
               <div>
-                <Label className="mb-1.5 block text-sm" style={{ color: "#0F172A" }}>Max amount ($)</Label>
-                <Input type="number" min={0} value={maxAmount} onChange={(e) => setMaxAmount(e.target.value)} style={{ background: "#FFFFFF", color: "#0F172A", borderColor: "#E2E8F0" }} />
+                <Label className="mb-1.5 block text-sm" style={{ color: "#101828" }}>Max amount ($)</Label>
+                <Input type="number" min={0} value={maxAmount} onChange={(e) => setMaxAmount(e.target.value)} style={{ background: "#FFFFFF", color: "#101828", borderColor: "#EAECF0" }} />
               </div>
             </div>
             <p className="text-xs -mt-2" style={{ color: "#64748B" }}>Leave max at 0 for no upper limit</p>
 
             <div>
-              <Label className="mb-1.5 block text-sm" style={{ color: "#0F172A" }}>Sort order</Label>
-              <Input type="number" min={0} value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} style={{ background: "#FFFFFF", color: "#0F172A", borderColor: "#E2E8F0" }} />
+              <Label className="mb-1.5 block text-sm" style={{ color: "#101828" }}>Sort order</Label>
+              <Input type="number" min={0} value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} style={{ background: "#FFFFFF", color: "#101828", borderColor: "#EAECF0" }} />
             </div>
 
             <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={enableNow} onChange={(e) => setEnableNow(e.target.checked)} className="rounded" style={{ accentColor: "#0F4C81" }} />
-              <span className="text-sm" style={{ color: "#475569" }}>Enable immediately after {isEdit ? "saving" : "creating"}</span>
+              <input type="checkbox" checked={enableNow} onChange={(e) => setEnableNow(e.target.checked)} className="rounded" style={{ accentColor: "#1A2CCE" }} />
+              <span className="text-sm" style={{ color: "#667085" }}>Enable immediately after {isEdit ? "saving" : "creating"}</span>
             </label>
           </div>
         </div>
 
         {/* ── FULL WIDTH: Payment Info Fields ── */}
-        <div className="mt-6 space-y-4 border-t pt-6" style={{ borderColor: "#E2E8F0" }}>
-          <Label className="text-sm font-medium" style={{ color: "#0F172A" }}>Payment Information (shown to users)</Label>
+        <div className="mt-6 space-y-4 border-t pt-6" style={{ borderColor: "#EAECF0" }}>
+          <Label className="text-sm font-medium" style={{ color: "#101828" }}>Payment Information (shown to users)</Label>
           
           {/* Bank Transfer / Wire fields */}
           {(type === "bank_transfer" || type === "wire") && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label className="mb-1 block text-xs" style={{ color: "#64748B" }}>Bank Name</Label>
-                <Input value={paymentInfo.bankName || ""} onChange={(e) => updatePaymentInfo("bankName", e.target.value)} placeholder="Chase Bank" style={{ background: "#FFFFFF", color: "#0F172A", borderColor: "#E2E8F0" }} />
+                <Input value={paymentInfo.bankName || ""} onChange={(e) => updatePaymentInfo("bankName", e.target.value)} placeholder="Chase Bank" style={{ background: "#FFFFFF", color: "#101828", borderColor: "#EAECF0" }} />
               </div>
               <div>
                 <Label className="mb-1 block text-xs" style={{ color: "#64748B" }}>Account Name</Label>
-                <Input value={paymentInfo.accountName || ""} onChange={(e) => updatePaymentInfo("accountName", e.target.value)} placeholder="Company LLC" style={{ background: "#FFFFFF", color: "#0F172A", borderColor: "#E2E8F0" }} />
+                <Input value={paymentInfo.accountName || ""} onChange={(e) => updatePaymentInfo("accountName", e.target.value)} placeholder="Company LLC" style={{ background: "#FFFFFF", color: "#101828", borderColor: "#EAECF0" }} />
               </div>
               <div>
                 <Label className="mb-1 block text-xs" style={{ color: "#64748B" }}>Account Number</Label>
-                <Input value={paymentInfo.accountNumber || ""} onChange={(e) => updatePaymentInfo("accountNumber", e.target.value)} placeholder="1234567890" style={{ background: "#FFFFFF", color: "#0F172A", borderColor: "#E2E8F0" }} />
+                <Input value={paymentInfo.accountNumber || ""} onChange={(e) => updatePaymentInfo("accountNumber", e.target.value)} placeholder="1234567890" style={{ background: "#FFFFFF", color: "#101828", borderColor: "#EAECF0" }} />
               </div>
               <div>
                 <Label className="mb-1 block text-xs" style={{ color: "#64748B" }}>Routing Number</Label>
-                <Input value={paymentInfo.routingNumber || ""} onChange={(e) => updatePaymentInfo("routingNumber", e.target.value)} placeholder="021000021" style={{ background: "#FFFFFF", color: "#0F172A", borderColor: "#E2E8F0" }} />
+                <Input value={paymentInfo.routingNumber || ""} onChange={(e) => updatePaymentInfo("routingNumber", e.target.value)} placeholder="021000021" style={{ background: "#FFFFFF", color: "#101828", borderColor: "#EAECF0" }} />
               </div>
               {type === "wire" && (
                 <>
                   <div>
                     <Label className="mb-1 block text-xs" style={{ color: "#64748B" }}>SWIFT Code</Label>
-                    <Input value={paymentInfo.swiftCode || ""} onChange={(e) => updatePaymentInfo("swiftCode", e.target.value)} placeholder="CHASUS33" style={{ background: "#FFFFFF", color: "#0F172A", borderColor: "#E2E8F0" }} />
+                    <Input value={paymentInfo.swiftCode || ""} onChange={(e) => updatePaymentInfo("swiftCode", e.target.value)} placeholder="CHASUS33" style={{ background: "#FFFFFF", color: "#101828", borderColor: "#EAECF0" }} />
                   </div>
                   <div>
                     <Label className="mb-1 block text-xs" style={{ color: "#64748B" }}>IBAN</Label>
-                    <Input value={paymentInfo.iban || ""} onChange={(e) => updatePaymentInfo("iban", e.target.value)} placeholder="US12345..." style={{ background: "#FFFFFF", color: "#0F172A", borderColor: "#E2E8F0" }} />
+                    <Input value={paymentInfo.iban || ""} onChange={(e) => updatePaymentInfo("iban", e.target.value)} placeholder="US12345..." style={{ background: "#FFFFFF", color: "#101828", borderColor: "#EAECF0" }} />
                   </div>
                 </>
               )}
               <div className="sm:col-span-2">
                 <Label className="mb-1 block text-xs" style={{ color: "#64748B" }}>Bank Address</Label>
-                <Input value={paymentInfo.bankAddress || ""} onChange={(e) => updatePaymentInfo("bankAddress", e.target.value)} placeholder="123 Main St, New York, NY 10001" style={{ background: "#FFFFFF", color: "#0F172A", borderColor: "#E2E8F0" }} />
+                <Input value={paymentInfo.bankAddress || ""} onChange={(e) => updatePaymentInfo("bankAddress", e.target.value)} placeholder="123 Main St, New York, NY 10001" style={{ background: "#FFFFFF", color: "#101828", borderColor: "#EAECF0" }} />
               </div>
             </div>
           )}
@@ -535,15 +535,15 @@ export function CreateMethodModal({ open, onOpenChange, onSuccess, existing }: P
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label className="mb-1 block text-xs" style={{ color: "#64748B" }}>Email</Label>
-                <Input type="email" value={paymentInfo.email || ""} onChange={(e) => updatePaymentInfo("email", e.target.value)} placeholder="payments@company.com" style={{ background: "#FFFFFF", color: "#0F172A", borderColor: "#E2E8F0" }} />
+                <Input type="email" value={paymentInfo.email || ""} onChange={(e) => updatePaymentInfo("email", e.target.value)} placeholder="payments@company.com" style={{ background: "#FFFFFF", color: "#101828", borderColor: "#EAECF0" }} />
               </div>
               <div>
                 <Label className="mb-1 block text-xs" style={{ color: "#64748B" }}>Username / Tag</Label>
-                <Input value={paymentInfo.username || ""} onChange={(e) => updatePaymentInfo("username", e.target.value)} placeholder={type === "cash_app" ? "$cashtag" : "@username"} style={{ background: "#FFFFFF", color: "#0F172A", borderColor: "#E2E8F0" }} />
+                <Input value={paymentInfo.username || ""} onChange={(e) => updatePaymentInfo("username", e.target.value)} placeholder={type === "cash_app" ? "$cashtag" : "@username"} style={{ background: "#FFFFFF", color: "#101828", borderColor: "#EAECF0" }} />
               </div>
               <div>
                 <Label className="mb-1 block text-xs" style={{ color: "#64748B" }}>Phone Number</Label>
-                <Input value={paymentInfo.phoneNumber || ""} onChange={(e) => updatePaymentInfo("phoneNumber", e.target.value)} placeholder="+1 (555) 123-4567" style={{ background: "#FFFFFF", color: "#0F172A", borderColor: "#E2E8F0" }} />
+                <Input value={paymentInfo.phoneNumber || ""} onChange={(e) => updatePaymentInfo("phoneNumber", e.target.value)} placeholder="+1 (555) 123-4567" style={{ background: "#FFFFFF", color: "#101828", borderColor: "#EAECF0" }} />
               </div>
             </div>
           )}
@@ -553,11 +553,11 @@ export function CreateMethodModal({ open, onOpenChange, onSuccess, existing }: P
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="sm:col-span-2">
                 <Label className="mb-1 block text-xs" style={{ color: "#64748B" }}>Wallet Address</Label>
-                <Input value={paymentInfo.walletAddress || ""} onChange={(e) => updatePaymentInfo("walletAddress", e.target.value)} placeholder="bc1q..." style={{ background: "#FFFFFF", color: "#0F172A", borderColor: "#E2E8F0" }} />
+                <Input value={paymentInfo.walletAddress || ""} onChange={(e) => updatePaymentInfo("walletAddress", e.target.value)} placeholder="bc1q..." style={{ background: "#FFFFFF", color: "#101828", borderColor: "#EAECF0" }} />
               </div>
               <div>
                 <Label className="mb-1 block text-xs" style={{ color: "#64748B" }}>Network</Label>
-                <Input value={paymentInfo.network || ""} onChange={(e) => updatePaymentInfo("network", e.target.value)} placeholder={type === "bitcoin" ? "Bitcoin (BTC)" : "ERC-20, TRC-20, etc."} style={{ background: "#FFFFFF", color: "#0F172A", borderColor: "#E2E8F0" }} />
+                <Input value={paymentInfo.network || ""} onChange={(e) => updatePaymentInfo("network", e.target.value)} placeholder={type === "bitcoin" ? "Bitcoin (BTC)" : "ERC-20, TRC-20, etc."} style={{ background: "#FFFFFF", color: "#101828", borderColor: "#EAECF0" }} />
               </div>
             </div>
           )}
@@ -574,8 +574,8 @@ export function CreateMethodModal({ open, onOpenChange, onSuccess, existing }: P
                       onClick={() => toggleBrand(brand)}
                       className="text-xs px-2.5 py-1.5 rounded-full border transition-colors"
                       style={selectedBrands.includes(brand)
-                        ? { background: "#0F4C81", color: "#FFFFFF", borderColor: "#0F4C81" }
-                        : { background: "#FFFFFF", color: "#475569", borderColor: "#E2E8F0" }
+                        ? { background: "#1A2CCE", color: "#FFFFFF", borderColor: "#1A2CCE" }
+                        : { background: "#FFFFFF", color: "#667085", borderColor: "#EAECF0" }
                       }
                     >
                       {brand}
@@ -591,7 +591,7 @@ export function CreateMethodModal({ open, onOpenChange, onSuccess, existing }: P
                   placeholder="How users should submit their gift cards..."
                   rows={2}
                   className="w-full px-3 py-2 text-sm border rounded-md resize-none focus:outline-none"
-                  style={{ background: "#FFFFFF", color: "#0F172A", borderColor: "#E2E8F0" }}
+                  style={{ background: "#FFFFFF", color: "#101828", borderColor: "#EAECF0" }}
                 />
               </div>
             </div>
@@ -599,25 +599,25 @@ export function CreateMethodModal({ open, onOpenChange, onSuccess, existing }: P
         </div>
 
         {/* ── FULL WIDTH: Instructions ── */}
-        <div className="mt-6 space-y-3 border-t pt-6" style={{ borderColor: "#E2E8F0" }}>
+        <div className="mt-6 space-y-3 border-t pt-6" style={{ borderColor: "#EAECF0" }}>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <Label className="text-sm font-medium" style={{ color: "#0F172A" }}>Instructions (markdown)</Label>
+            <Label className="text-sm font-medium" style={{ color: "#101828" }}>Instructions (markdown)</Label>
             <div className="flex gap-2">
               <button onClick={() => setPreview((v) => !v)}
                 className="text-xs px-3 py-1 rounded border transition-colors"
-                style={{ background: "#FFFFFF", color: "#475569", borderColor: "#E2E8F0" }}>
+                style={{ background: "#FFFFFF", color: "#667085", borderColor: "#EAECF0" }}>
                 {preview ? "Edit" : "Preview"}
               </button>
-              <span className="text-xs px-2 py-1" style={{ color: instructions.length > MAX_INSTRUCTIONS ? "#DC2626" : "#94A3B8" }}>
+              <span className="text-xs px-2 py-1" style={{ color: instructions.length > MAX_INSTRUCTIONS ? "#F04438" : "#98A2B3" }}>
                 {instructions.length}/{MAX_INSTRUCTIONS}
               </span>
             </div>
           </div>
 
           {!preview ? (
-            <div className="border rounded-lg overflow-hidden" style={{ borderColor: "#E2E8F0" }}>
+            <div className="border rounded-lg overflow-hidden" style={{ borderColor: "#EAECF0" }}>
               {/* Toolbar */}
-              <div className="flex gap-1 px-2 py-1.5 border-b" style={{ background: "#F8FAFC", borderColor: "#E2E8F0" }}>
+              <div className="flex gap-1 px-2 py-1.5 border-b" style={{ background: "#F5F6F8", borderColor: "#EAECF0" }}>
                 {[
                   { icon: <Bold   className="w-3.5 h-3.5" />, before: "**", after: "**" },
                   { icon: <Italic className="w-3.5 h-3.5" />, before: "*",  after: "*"  },
@@ -639,14 +639,14 @@ export function CreateMethodModal({ open, onOpenChange, onSuccess, existing }: P
                 maxLength={MAX_INSTRUCTIONS}
                 placeholder="Enter instructions shown to users when they select this payment method…"
                 className="w-full px-3 py-2 text-sm resize-y focus:outline-none font-mono"
-                style={{ background: "#FFFFFF", color: "#0F172A" }}
+                style={{ background: "#FFFFFF", color: "#101828" }}
               />
             </div>
           ) : (
-            <div className="border rounded-lg p-4 min-h-[120px] max-h-[200px] overflow-y-auto" style={{ borderColor: "#E2E8F0", background: "#F8FAFC" }}>
+            <div className="border rounded-lg p-4 min-h-[120px] max-h-[200px] overflow-y-auto" style={{ borderColor: "#EAECF0", background: "#F5F6F8" }}>
               <div
                 className="prose prose-sm max-w-none text-sm leading-relaxed"
-                style={{ color: "#475569" }}
+                style={{ color: "#667085" }}
                 dangerouslySetInnerHTML={{ __html: renderMarkdownLite(instructions || "_No content_") }}
               />
             </div>
@@ -654,12 +654,12 @@ export function CreateMethodModal({ open, onOpenChange, onSuccess, existing }: P
         </div>
 
         {/* Footer */}
-        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-6 border-t mt-6" style={{ borderColor: "#E2E8F0" }}>
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-6 border-t mt-6" style={{ borderColor: "#EAECF0" }}>
           <Button 
             variant="outline" 
             onClick={() => onOpenChange(false)} 
             className="w-full sm:w-auto"
-            style={{ background: "#FFFFFF", color: "#475569", borderColor: "#E2E8F0" }}
+            style={{ background: "#FFFFFF", color: "#667085", borderColor: "#EAECF0" }}
           >
             Cancel
           </Button>
@@ -667,7 +667,7 @@ export function CreateMethodModal({ open, onOpenChange, onSuccess, existing }: P
             onClick={submit}
             disabled={!name || (slugStatus === "taken" && !isEdit) || submitting || instructions.length > MAX_INSTRUCTIONS}
             className="w-full sm:w-auto"
-            style={{ background: "#0F4C81", color: "#FFFFFF", borderColor: "#0F4C81" }}
+            style={{ background: "#1A2CCE", color: "#FFFFFF", borderColor: "#1A2CCE" }}
           >
             {submitting
               ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Saving…</>

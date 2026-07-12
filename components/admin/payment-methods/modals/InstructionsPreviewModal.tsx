@@ -51,7 +51,7 @@ export function InstructionsPreviewModal({ method, open, onOpenChange }: Props) 
           {/* Meta pills */}
           <div className="flex flex-wrap gap-2">
             <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-              method.depositTarget === "bitcoin" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"
+              method.depositTarget === "bitcoin" ? "bg-amber-100 text-amber-700" : "bg-indigo-100 text-indigo-700"
             }`}>
               → {method.depositTarget === "bitcoin" ? "Bitcoin wallet" : "Fiat account"}
             </span>

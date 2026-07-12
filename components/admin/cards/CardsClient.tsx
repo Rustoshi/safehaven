@@ -21,7 +21,7 @@ interface InitialData {
   stats: CardStats
 }
 
-const TABS = ["pending", "active", "frozen", "rejected", "cancelled", "all"] as const
+const TABS = ["pending", "active", "frozen", "blocked", "rejected", "cancelled", "all"] as const
 type Tab   = typeof TABS[number]
 
 const CARD_TYPE_TABS = [
@@ -35,7 +35,8 @@ const CARD_TYPE_TABS = [
 const STATUS_PILL: Record<string, string> = {
   pending:   "bg-amber-100  text-amber-700",
   active:    "bg-emerald-100 text-emerald-700",
-  frozen:    "bg-blue-100   text-blue-700",
+  frozen:    "bg-indigo-100   text-indigo-700",
+  blocked:   "bg-rose-100   text-rose-700",
   rejected:  "bg-red-100    text-red-700",
   cancelled: "bg-gray-100   text-gray-500",
   approved:  "bg-emerald-100 text-emerald-700",
@@ -43,7 +44,7 @@ const STATUS_PILL: Record<string, string> = {
 
 const CARD_TYPE_PILL: Record<string, string> = {
   virtual_debit:   "bg-slate-100  text-slate-700",
-  physical_debit:  "bg-blue-100   text-blue-700",
+  physical_debit:  "bg-indigo-100   text-indigo-700",
   virtual_credit:  "bg-amber-100  text-amber-700",
   physical_credit: "bg-orange-100 text-orange-700",
 }
@@ -159,6 +160,7 @@ export function CardsClient({ initialData }: { initialData: InitialData }) {
     { label: "Pending",      value: data.stats.pendingCount,   highlight: data.stats.pendingCount > 0 ? "amber" : "" },
     { label: "Active",       value: data.stats.activeCount,    highlight: "" },
     { label: "Frozen",       value: data.stats.frozenCount,    highlight: data.stats.frozenCount > 0 ? "amber" : "" },
+    { label: "Blocked",      value: data.stats.blockedCount,   highlight: data.stats.blockedCount > 0 ? "rose" : "" },
     { label: "Rejected",     value: data.stats.rejectedCount,  highlight: "" },
     { label: "Cancelled",    value: data.stats.cancelledCount, highlight: "" },
     { label: "Credit issued",value: fmt(data.stats.totalCreditIssued), highlight: "" },
@@ -180,13 +182,19 @@ export function CardsClient({ initialData }: { initialData: InitialData }) {
       )}
 
       {/* Stats bar */}
-      <div className="grid grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-3 lg:grid-cols-7 gap-3">
         {statsBar.map((s) => (
           <div key={s.label} className={[
             "rounded-xl border p-3 text-center",
-            s.highlight === "amber" ? "border-amber-200 bg-amber-50" : "border-gray-200 bg-white",
+            s.highlight === "amber" ? "border-amber-200 bg-amber-50"
+              : s.highlight === "rose" ? "border-rose-200 bg-rose-50"
+              : "border-gray-200 bg-white",
           ].join(" ")}>
-            <p className={`text-lg font-semibold ${s.highlight === "amber" ? "text-amber-700" : "text-gray-900"}`}>
+            <p className={`text-lg font-semibold ${
+              s.highlight === "amber" ? "text-amber-700"
+                : s.highlight === "rose" ? "text-rose-700"
+                : "text-gray-900"
+            }`}>
               {s.value}
             </p>
             <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
@@ -201,7 +209,7 @@ export function CardsClient({ initialData }: { initialData: InitialData }) {
             className={[
               "px-3 py-2 text-sm rounded-t capitalize transition-colors",
               activeTab === tab
-                ? "border-b-2 border-[#0F4C81] text-[#0F4C81] font-medium"
+                ? "border-b-2 border-[#1A2CCE] text-[#1A2CCE] font-medium"
                 : "text-gray-500 hover:text-gray-700",
             ].join(" ")}>
             {tab}
@@ -225,7 +233,7 @@ export function CardsClient({ initialData }: { initialData: InitialData }) {
               className={[
                 "text-xs px-2.5 py-1 rounded-full border transition-colors",
                 cardType === ct.value
-                  ? "bg-[#0F4C81] text-white border-[#0F4C81]"
+                  ? "bg-[#1A2CCE] text-white border-[#1A2CCE]"
                   : "bg-white text-gray-600 border-gray-200 hover:border-gray-400",
               ].join(" ")}>
               {ct.label}
@@ -240,7 +248,7 @@ export function CardsClient({ initialData }: { initialData: InitialData }) {
 
       {/* Table */}
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        {loading && <div className="h-1 bg-[#0F4C81] animate-pulse" />}
+        {loading && <div className="h-1 bg-[#1A2CCE] animate-pulse" />}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
@@ -266,7 +274,7 @@ export function CardsClient({ initialData }: { initialData: InitialData }) {
                   {/* Applicant */}
                   <td className="px-4 py-3 whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-[#0F4C81]/10 text-[#0F4C81] flex items-center justify-center text-xs font-semibold">
+                      <div className="w-7 h-7 rounded-full bg-[#1A2CCE]/10 text-[#1A2CCE] flex items-center justify-center text-xs font-semibold">
                         {card.userName.charAt(0)}
                       </div>
                       <div>
@@ -315,7 +323,7 @@ export function CardsClient({ initialData }: { initialData: InitialData }) {
                   <td className="px-4 py-3">
                     {card.status === "pending" ? (
                       <div className="flex gap-1.5">
-                        <Button size="sm" className="h-7 text-xs bg-[#0F4C81] hover:bg-[#0F4C81]/90"
+                        <Button size="sm" className="h-7 text-xs bg-[#1A2CCE] hover:bg-[#1A2CCE]/90"
                           onClick={() => setReviewId(card.id)}>
                           Review
                         </Button>
@@ -358,6 +366,17 @@ export function CardsClient({ initialData }: { initialData: InitialData }) {
                             const detail = await fetchCardDetail(card.id)
                             setLimitsCard(detail)
                           }}>Update limits</DropdownMenuItem>
+                          <DropdownMenuItem className="text-rose-600" onClick={async () => {
+                            const reason = prompt("Block reason (the user cannot lift this themselves):")
+                            if (!reason) return
+                            try {
+                              await doAction(card.id, "block", "POST", { reason })
+                              toast({ title: "Card blocked" })
+                              fetchData()
+                            } catch (err) {
+                              toast({ title: "Error", description: err instanceof Error ? err.message : "Failed", variant: "destructive" })
+                            }
+                          }}>Block card</DropdownMenuItem>
                           <DropdownMenuItem className="text-red-600" onClick={async () => {
                             const reason = prompt("Cancel reason:")
                             if (!reason) return
@@ -388,6 +407,47 @@ export function CardsClient({ initialData }: { initialData: InitialData }) {
                               toast({ title: "Error", description: err instanceof Error ? err.message : "Failed", variant: "destructive" })
                             }
                           }}>Unfreeze card</DropdownMenuItem>
+                          <DropdownMenuItem className="text-rose-600" onClick={async () => {
+                            const reason = prompt("Block reason (the user cannot lift this themselves):")
+                            if (!reason) return
+                            try {
+                              await doAction(card.id, "block", "POST", { reason })
+                              toast({ title: "Card blocked" })
+                              fetchData()
+                            } catch (err) {
+                              toast({ title: "Error", description: err instanceof Error ? err.message : "Failed", variant: "destructive" })
+                            }
+                          }}>Block card</DropdownMenuItem>
+                          <DropdownMenuItem className="text-red-600" onClick={async () => {
+                            const reason = prompt("Cancel reason:")
+                            if (!reason) return
+                            try {
+                              await doAction(card.id, "cancel", "POST", { reason })
+                              toast({ title: "Card cancelled" })
+                              fetchData()
+                            } catch (err) {
+                              toast({ title: "Error", description: err instanceof Error ? err.message : "Failed", variant: "destructive" })
+                            }
+                          }}>Cancel card</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    ) : card.status === "blocked" ? (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={async () => {
+                            try {
+                              await doAction(card.id, "unblock", "POST")
+                              toast({ title: "Card unblocked" })
+                              fetchData()
+                            } catch (err) {
+                              toast({ title: "Error", description: err instanceof Error ? err.message : "Failed", variant: "destructive" })
+                            }
+                          }}>Unblock card</DropdownMenuItem>
                           <DropdownMenuItem className="text-red-600" onClick={async () => {
                             const reason = prompt("Cancel reason:")
                             if (!reason) return

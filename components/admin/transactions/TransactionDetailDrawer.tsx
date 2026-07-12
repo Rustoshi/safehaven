@@ -45,7 +45,7 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 
 function TypeBadge({ type }: { type: string }) {
   const COLORS: Record<string, string> = {
-    admin_deposit:    "bg-blue-100 text-blue-700 border-blue-200",
+    admin_deposit:    "bg-indigo-100 text-indigo-700 border-indigo-200",
     deposit:          "bg-emerald-100 text-emerald-700 border-emerald-200",
     withdrawal:       "bg-amber-100 text-amber-700 border-amber-200",
     transfer_out:     "bg-orange-100 text-orange-700 border-orange-200",
@@ -229,7 +229,7 @@ export function TransactionDetailDrawer({ transactionId, onClose, onAction }: Pr
                 </div>
               )}
               {detail.originalTransactionId && (
-                <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm text-blue-700 flex items-center justify-between">
+                <div className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2.5 text-sm text-indigo-700 flex items-center justify-between">
                   <span>This is a reversal transaction.</span>
                   <button
                     onClick={() => { setDetail(null); fetchDetail(detail.originalTransactionId!) }}
@@ -291,7 +291,7 @@ export function TransactionDetailDrawer({ transactionId, onClose, onAction }: Pr
                           href={`/admin/users/${detail.user.id}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-[#0F4C81] hover:underline"
+                          className="flex items-center gap-1 text-[#1A2CCE] hover:underline"
                         >
                           {detail.user.firstName} {detail.user.lastName}
                           <ExternalLink className="h-3 w-3" />
@@ -403,7 +403,7 @@ export function TransactionDetailDrawer({ transactionId, onClose, onAction }: Pr
                             <Button
                               onClick={handleStatusSave}
                               disabled={statusSaving}
-                              className="bg-[#0F4C81] hover:bg-[#0F4C81]/90 text-white"
+                              className="bg-[#1A2CCE] hover:bg-[#1A2CCE]/90 text-white"
                             >
                               {statusSaving ? "Saving…" : "Save"}
                             </Button>

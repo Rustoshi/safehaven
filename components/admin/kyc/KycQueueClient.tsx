@@ -203,10 +203,10 @@ export function KycQueueClient({ initialData, initialStats }: Props) {
 
       {/* New submissions banner */}
       {newBanner > 0 && (
-        <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
-          <span className="text-sm text-blue-700">{newBanner} new submission{newBanner !== 1 ? "s" : ""} detected.</span>
+        <div className="flex items-center gap-3 bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-3">
+          <span className="text-sm text-indigo-700">{newBanner} new submission{newBanner !== 1 ? "s" : ""} detected.</span>
           <button onClick={() => { setNewBanner(0); fetch_(activeTab, docTypeFilter, sortBy, page) }}
-            className="text-xs text-blue-600 font-medium hover:underline">Refresh</button>
+            className="text-xs text-indigo-600 font-medium hover:underline">Refresh</button>
         </div>
       )}
 
@@ -237,7 +237,7 @@ export function KycQueueClient({ initialData, initialStats }: Props) {
             <button
               key={d.docType}
               onClick={() => handleFilter(docTypeFilter === d.docType ? "" : d.docType)}
-              className={`px-2 py-0.5 rounded border transition-colors ${docTypeFilter === d.docType ? "bg-[#0F4C81] text-white border-[#0F4C81]" : "border-gray-300 hover:border-gray-500"}`}
+              className={`px-2 py-0.5 rounded border transition-colors ${docTypeFilter === d.docType ? "bg-[#1A2CCE] text-white border-[#1A2CCE]" : "border-gray-300 hover:border-gray-500"}`}
             >
               {DOC_TYPE_ABBR[d.docType]?.abbr ?? d.docType}: {d.pendingCount}
             </button>
@@ -254,7 +254,7 @@ export function KycQueueClient({ initialData, initialStats }: Props) {
           <button
             key={tab}
             onClick={() => handleTabChange(tab)}
-            className={`px-4 py-2 text-sm capitalize transition-colors ${activeTab === tab ? "border-b-2 border-[#0F4C81] text-[#0F4C81] font-medium" : "text-gray-500 hover:text-gray-700"}`}
+            className={`px-4 py-2 text-sm capitalize transition-colors ${activeTab === tab ? "border-b-2 border-[#1A2CCE] text-[#1A2CCE] font-medium" : "text-gray-500 hover:text-gray-700"}`}
           >
             {tab}
           </button>
@@ -271,8 +271,8 @@ export function KycQueueClient({ initialData, initialStats }: Props) {
 
       {/* Bulk action */}
       {selected.size > 0 && (
-        <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
-          <span className="text-sm text-blue-700">
+        <div className="flex items-center gap-3 bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-3">
+          <span className="text-sm text-indigo-700">
             {selectedPendingDocCount} document{selectedPendingDocCount !== 1 ? "s" : ""} from {selected.size} user{selected.size !== 1 ? "s" : ""} selected
           </span>
           <Button size="sm" onClick={handleBulkApprove} className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs">
@@ -304,7 +304,7 @@ export function KycQueueClient({ initialData, initialStats }: Props) {
             <tbody className="divide-y divide-gray-100">
               {items.map((item) => (
                 <tr key={item.userId}
-                  className={`hover:bg-gray-50 transition-colors ${selected.has(item.userId) ? "bg-blue-50" : ""}`}
+                  className={`hover:bg-gray-50 transition-colors ${selected.has(item.userId) ? "bg-indigo-50" : ""}`}
                 >
                   <td className="px-4 py-3">
                     {item.pendingCount > 0 && (
@@ -312,13 +312,13 @@ export function KycQueueClient({ initialData, initialStats }: Props) {
                         type="checkbox"
                         checked={selected.has(item.userId)}
                         onChange={() => toggleSelect(item.userId, item.pendingCount > 0)}
-                        className="accent-[#0F4C81]"
+                        className="accent-[#1A2CCE]"
                       />
                     )}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#0F4C81]/10 flex items-center justify-center text-[#0F4C81] font-semibold text-xs flex-shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-[#1A2CCE]/10 flex items-center justify-center text-[#1A2CCE] font-semibold text-xs flex-shrink-0">
                         {item.userName.charAt(0)}
                       </div>
                       <div className="min-w-0">
@@ -368,7 +368,7 @@ export function KycQueueClient({ initialData, initialStats }: Props) {
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-1.5">
                       <Button size="sm" onClick={() => setReviewId(item.userId)}
-                        className="text-xs bg-[#0F4C81] hover:bg-[#0F4C81]/90 h-7 px-3">
+                        className="text-xs bg-[#1A2CCE] hover:bg-[#1A2CCE]/90 h-7 px-3">
                         Review
                       </Button>
                     </div>

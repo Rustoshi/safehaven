@@ -81,14 +81,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.preferredCurrency = user.preferredCurrency
       }
 
-      // Refresh the preferred currency from the DB when the session is
-      // explicitly updated (e.g. user changes it in settings) so the change
-      // takes effect without requiring a re-login.
+      // Refresh mutable fields from the DB when the session is explicitly
+      // updated (e.g. user changes currency in settings, or KYC status changes)
+      // so the change takes effect without requiring a re-login.
       if (trigger === "update" && token.id) {
         try {
           await connectDB()
-          const fresh = await User.findById(token.id).select("preferredCurrency").lean()
+          const fresh = await User.findById(token.id).select("preferredCurrency kycStatus").lean()
           if (fresh?.preferredCurrency) token.preferredCurrency = fresh.preferredCurrency
+          if (fresh?.kycStatus) token.kycStatus = fresh.kycStatus as typeof token.kycStatus
         } catch {
           // Non-critical — keep the existing token value
         }

@@ -40,7 +40,7 @@ export default function ConverterPage() {
   const toCurrency = currencies.find((c) => c.code === to)
 
   return (
-    <div style={{ background: "#0A1628", minHeight: "100vh" }}>
+    <div style={{ background: "#F5F6F8", minHeight: "100vh" }}>
       <UserHeader title="Currency Converter" />
 
       <div className="px-4 py-5 lg:px-6 max-w-[600px] mx-auto space-y-5">
@@ -52,19 +52,19 @@ export default function ConverterPage() {
         ) : (
           <>
             {/* Converter card */}
-            <div className="rounded-2xl p-5" style={{ background: "#0D1F3C", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <div className="rounded-2xl p-5" style={{ background: "#FFFFFF", border: "1px solid #EAECF0", borderRadius: 16, boxShadow: "0 1px 3px rgba(16,24,40,0.08), 0 1px 2px rgba(16,24,40,0.04)" }}>
               {/* From */}
               <div>
-                <p className="text-[11px] font-medium uppercase tracking-wide mb-2" style={{ color: "rgba(255,255,255,0.4)" }}>From</p>
+                <p className="text-[11px] font-medium uppercase tracking-wide mb-2" style={{ color: "#98A2B3" }}>From</p>
                 <div className="flex gap-3 items-center">
                   <select
                     value={from}
                     onChange={(e) => setFrom(e.target.value)}
-                    className="dark-input flex-shrink-0"
-                    style={{ width: 120, appearance: "none", cursor: "pointer" }}
+                    className="flex-shrink-0"
+                    style={{ width: 120, appearance: "none", cursor: "pointer", background: "#F9FAFB", border: "1px solid #EAECF0", borderRadius: 10, color: "#101828", padding: "10px 12px", fontSize: 14 }}
                   >
                     {currencies.map((c) => (
-                      <option key={c.code} value={c.code} style={{ background: "#0D1F3C" }}>
+                      <option key={c.code} value={c.code} style={{ background: "#FFFFFF", color: "#101828" }}>
                         {c.flag} {c.code}
                       </option>
                     ))}
@@ -73,8 +73,9 @@ export default function ConverterPage() {
                     type="number"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    className="dark-input flex-1 text-right text-[18px] font-semibold tabular-nums"
+                    className="flex-1 text-right text-[18px] font-semibold tabular-nums"
                     placeholder="0"
+                    style={{ background: "#F9FAFB", border: "1px solid #EAECF0", borderRadius: 10, color: "#101828", padding: "10px 12px" }}
                   />
                 </div>
               </div>
@@ -84,30 +85,30 @@ export default function ConverterPage() {
                 <button
                   onClick={swap}
                   className="flex h-10 w-10 items-center justify-center rounded-full transition-all active:scale-90"
-                  style={{ background: "rgba(59,158,255,0.12)", border: "1px solid rgba(59,158,255,0.2)" }}
+                  style={{ background: "#EEF0FE", border: "1px solid #D0D5DD" }}
                 >
-                  <ArrowUpDown className="h-4 w-4" style={{ color: "#3B9EFF" }} />
+                  <ArrowUpDown className="h-4 w-4" style={{ color: "#1A2CCE" }} />
                 </button>
               </div>
 
               {/* To */}
               <div>
-                <p className="text-[11px] font-medium uppercase tracking-wide mb-2" style={{ color: "rgba(255,255,255,0.4)" }}>To</p>
+                <p className="text-[11px] font-medium uppercase tracking-wide mb-2" style={{ color: "#98A2B3" }}>To</p>
                 <div className="flex gap-3 items-center">
                   <select
                     value={to}
                     onChange={(e) => setTo(e.target.value)}
-                    className="dark-input flex-shrink-0"
-                    style={{ width: 120, appearance: "none", cursor: "pointer" }}
+                    className="flex-shrink-0"
+                    style={{ width: 120, appearance: "none", cursor: "pointer", background: "#F9FAFB", border: "1px solid #EAECF0", borderRadius: 10, color: "#101828", padding: "10px 12px", fontSize: 14 }}
                   >
                     {currencies.map((c) => (
-                      <option key={c.code} value={c.code} style={{ background: "#0D1F3C" }}>
+                      <option key={c.code} value={c.code} style={{ background: "#FFFFFF", color: "#101828" }}>
                         {c.flag} {c.code}
                       </option>
                     ))}
                   </select>
                   <div className="flex-1 text-right">
-                    <p className="text-[22px] font-bold tabular-nums text-white">
+                    <p className="text-[22px] font-bold tabular-nums" style={{ color: "#101828" }}>
                       {to === "BTC"
                         ? result.toFixed(8)
                         : result.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -119,16 +120,16 @@ export default function ConverterPage() {
             </div>
 
             {/* Rate info */}
-            <div className="rounded-2xl p-4" style={{ background: "#0D1F3C", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <div className="rounded-2xl p-4" style={{ background: "#FFFFFF", border: "1px solid #EAECF0", borderRadius: 16, boxShadow: "0 1px 3px rgba(16,24,40,0.08), 0 1px 2px rgba(16,24,40,0.04)" }}>
               <div className="flex items-center justify-between">
-                <span className="text-[13px]" style={{ color: "rgba(255,255,255,0.4)" }}>Exchange rate</span>
-                <span className="text-[13px] font-semibold tabular-nums text-white">
+                <span className="text-[13px]" style={{ color: "#667085" }}>Exchange rate</span>
+                <span className="text-[13px] font-semibold tabular-nums" style={{ color: "#101828" }}>
                   1 {from} = {to === "BTC" ? rate.toFixed(8) : rate.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} {to}
                 </span>
               </div>
-              <div className="flex items-center justify-between mt-2 pt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
-                <span className="text-[13px]" style={{ color: "rgba(255,255,255,0.4)" }}>Inverse</span>
-                <span className="text-[13px] font-medium tabular-nums" style={{ color: "rgba(255,255,255,0.6)" }}>
+              <div className="flex items-center justify-between mt-2 pt-2" style={{ borderTop: "1px solid #EAECF0" }}>
+                <span className="text-[13px]" style={{ color: "#667085" }}>Inverse</span>
+                <span className="text-[13px] font-medium tabular-nums" style={{ color: "#667085" }}>
                   1 {to} = {rates[to]?.[from]
                     ? (from === "BTC"
                         ? rates[to][from].toFixed(8)
@@ -141,7 +142,7 @@ export default function ConverterPage() {
 
             {/* Popular pairs */}
             <div>
-              <p className="text-[13px] font-medium uppercase tracking-[0.06em] mb-3" style={{ color: "rgba(255,255,255,0.4)" }}>
+              <p className="text-[13px] font-medium uppercase tracking-[0.06em] mb-3" style={{ color: "#667085" }}>
                 Popular pairs
               </p>
               <div className="grid grid-cols-2 gap-2">
@@ -157,12 +158,13 @@ export default function ConverterPage() {
                       onClick={() => { setFrom(f); setTo(t) }}
                       className="rounded-xl p-3 text-left transition-all active:scale-[0.98]"
                       style={{
-                        background: from === f && to === t ? "rgba(59,158,255,0.08)" : "rgba(255,255,255,0.02)",
-                        border: from === f && to === t ? "1px solid rgba(59,158,255,0.2)" : "1px solid rgba(255,255,255,0.04)",
+                        background: from === f && to === t ? "#EEF0FE" : "#FFFFFF",
+                        border: from === f && to === t ? "1px solid #1A2CCE" : "1px solid #EAECF0",
+                        borderRadius: 12,
                       }}
                     >
-                      <p className="text-[13px] font-medium text-white">{f}/{t}</p>
-                      <p className="text-[12px] tabular-nums mt-0.5" style={{ color: "rgba(255,255,255,0.5)" }}>
+                      <p className="text-[13px] font-medium" style={{ color: "#101828" }}>{f}/{t}</p>
+                      <p className="text-[12px] tabular-nums mt-0.5" style={{ color: "#667085" }}>
                         {r ? (t === "BTC" ? r.toFixed(8) : r.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 4 })) : "—"}
                       </p>
                     </button>

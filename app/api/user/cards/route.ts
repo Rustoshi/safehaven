@@ -141,7 +141,7 @@ export async function POST(req: Request) {
     // Enforce max cards (active + pending)
     const activeCount = await CardApplication.countDocuments({
       userId: session.user.id,
-      status: { $in: ["pending", "active", "frozen"] },
+      status: { $in: ["pending", "active", "frozen", "blocked"] },
     })
     if (activeCount >= maxCards)
       return NextResponse.json({ error: `You can have a maximum of ${maxCards} cards. Cancel an existing card to apply for a new one.` }, { status: 400 })

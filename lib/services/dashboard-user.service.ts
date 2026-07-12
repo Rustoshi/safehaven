@@ -292,7 +292,7 @@ export async function getUserDashboardData(userId: string): Promise<UserDashboar
     LoanApplication.find({ userId: uid, status: { $in: ["active", "approved", "pending"] } }),
 
     // Cards
-    CardApplication.find({ userId: uid, status: { $in: ["active", "pending", "approved", "frozen"] } }),
+    CardApplication.find({ userId: uid, status: { $in: ["active", "pending", "approved", "frozen", "blocked"] } }),
 
     // Beneficiaries (for Quick Transfer)
     Beneficiary.find({ userId: uid, isActive: true })

@@ -19,13 +19,13 @@ interface TypeConfig {
 }
 
 const TYPE_CONFIG: Record<PaymentMethodType, TypeConfig> = {
-  bank_transfer: { bg: "bg-blue-600",    text: "text-white",  label: null, icon: "building" },
-  paypal:        { bg: "bg-blue-500",    text: "text-white",  label: "PP"  },
+  bank_transfer: { bg: "bg-indigo-600",    text: "text-white",  label: null, icon: "building" },
+  paypal:        { bg: "bg-indigo-500",    text: "text-white",  label: "PP"  },
   bitcoin:       { bg: "bg-amber-500",   text: "text-white",  label: "BTC" },
   venmo:         { bg: "bg-teal-500",    text: "text-white",  label: "V"   },
   cash_app:      { bg: "bg-emerald-600", text: "text-white",  label: "$"   },
   zelle:         { bg: "bg-purple-600",  text: "text-white",  label: "Z"   },
-  wire:          { bg: "bg-[#0F4C81]",   text: "text-white",  label: "W"   },
+  wire:          { bg: "bg-[#1A2CCE]",   text: "text-white",  label: "W"   },
   crypto_other:  { bg: "bg-orange-500",  text: "text-white",  label: null, icon: "coin" },
   giftcard:      { bg: "bg-pink-500",    text: "text-white",  label: null, icon: "gift" },
 }

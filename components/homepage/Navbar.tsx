@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
-import { Menu, X, ChevronDown, Search, Plus, Minus } from "lucide-react"
+import { Menu, X, ChevronDown, Plus, Minus } from "lucide-react"
 import { BANK_NAME } from "@/lib/brand"
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -15,11 +15,10 @@ import { BANK_NAME } from "@/lib/brand"
    bronze accent, sharp 2px controls, hairline dividers, no shadows/gradients.
    ══════════════════════════════════════════════════════════════════════════ */
 
-// Top utility row (right-aligned) — the "About Us · Contact Us · Help" tier
+// Top utility row (right-aligned)
 const UTILITY_LINKS = [
   { label: "About",   href: "/about" },
   { label: "Contact", href: "/contact" },
-  { label: "Help",    href: "/help" },
 ] as const
 
 // Primary category row — the product tier with dropdowns
@@ -50,7 +49,6 @@ const PRIMARY_LINKS = [
       { label: "Fraud Prevention",   href: "/security/fraud",      desc: "Continuous monitoring" },
     ],
   },
-  { label: "Support", href: "/support", submenu: null },
 ] as const
 
 // ── Shared token shorthands (design.md) ──────────────────────────────────────
@@ -121,17 +119,6 @@ export function Navbar() {
                     {l.label}
                   </Link>
                 ))}
-                <Link
-                  href="/help"
-                  aria-label="Search"
-                  className="flex items-center gap-1.5 text-[13px] transition-colors duration-200"
-                  style={{ color: "var(--sh-linen-70)" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = LINEN }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = "var(--sh-linen-70)" }}
-                >
-                  <Search className="h-3.5 w-3.5" strokeWidth={1.5} />
-                  Search
-                </Link>
               </nav>
 
               {/* one bronze accent per screen: the Log In control */}

@@ -35,25 +35,25 @@ function ChartContent({ data, height = 120 }: { data: ChartPoint[]; height?: num
       <AreaChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
         <defs>
           <linearGradient id="txGreen" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%"  stopColor="#10B981" stopOpacity={0.3} />
-            <stop offset="95%" stopColor="#10B981" stopOpacity={0}   />
+            <stop offset="5%"  stopColor="#12B76A" stopOpacity={0.3} />
+            <stop offset="95%" stopColor="#12B76A" stopOpacity={0}   />
           </linearGradient>
           <linearGradient id="txRed" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%"  stopColor="#EF4444" stopOpacity={0.25} />
-            <stop offset="95%" stopColor="#EF4444" stopOpacity={0}    />
+            <stop offset="5%"  stopColor="#F04438" stopOpacity={0.25} />
+            <stop offset="95%" stopColor="#F04438" stopOpacity={0}    />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="#f9fafb" vertical={false} />
         <XAxis
           dataKey="period"
-          tick={{ fontSize: 10, fill: "#94a3b8" }}
+          tick={{ fontSize: 10, fill: "#98A2B3" }}
           tickLine={false}
           axisLine={false}
           interval="preserveStartEnd"
         />
         <YAxis
           tickFormatter={fmtVolume}
-          tick={{ fontSize: 10, fill: "#94a3b8" }}
+          tick={{ fontSize: 10, fill: "#98A2B3" }}
           tickLine={false}
           axisLine={false}
           width={44}
@@ -64,12 +64,12 @@ function ChartContent({ data, height = 120 }: { data: ChartPoint[]; height?: num
             return [value, name === "failedCount" ? "Failed" : "Pending"]
           }}
           labelStyle={{ fontWeight: 600, fontSize: 12 }}
-          contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12 }}
+          contentStyle={{ borderRadius: 8, border: "1px solid #EAECF0", fontSize: 12 }}
         />
         <Area
           type="monotone"
           dataKey="completedVolume"
-          stroke="#10B981"
+          stroke="#12B76A"
           strokeWidth={2}
           fill="url(#txGreen)"
           name="completedVolume"
@@ -77,7 +77,7 @@ function ChartContent({ data, height = 120 }: { data: ChartPoint[]; height?: num
         <Area
           type="monotone"
           dataKey="failedCount"
-          stroke="#EF4444"
+          stroke="#F04438"
           strokeWidth={1.5}
           fill="url(#txRed)"
           name="failedCount"
@@ -114,16 +114,16 @@ function ExpandedChart({ data, days, setDays, groupBy, setGroupBy, loading }: {
       </div>
       <ResponsiveContainer width="100%" height={320}>
         <BarChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#f9fafb" vertical={false} />
           <XAxis dataKey="period" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
           <YAxis tickFormatter={fmtVolume} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={48} />
           <Tooltip formatter={(v: number, n: string) => [
             n === "completedVolume" ? fmtVolume(v) : v,
             n === "completedVolume" ? "Volume" : n === "failedCount" ? "Failed" : "Pending"
-          ]} contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12 }} />
+          ]} contentStyle={{ borderRadius: 8, border: "1px solid #EAECF0", fontSize: 12 }} />
           <Legend wrapperStyle={{ fontSize: 12 }} />
-          <Bar dataKey="completedVolume" fill="#10B981" name="Completed Volume" radius={[2, 2, 0, 0]} />
-          <Bar dataKey="failedCount"     fill="#EF4444" name="Failed" radius={[2, 2, 0, 0]} />
+          <Bar dataKey="completedVolume" fill="#12B76A" name="Completed Volume" radius={[2, 2, 0, 0]} />
+          <Bar dataKey="failedCount"     fill="#F04438" name="Failed" radius={[2, 2, 0, 0]} />
           <Bar dataKey="pendingCount"    fill="#F59E0B" name="Pending" radius={[2, 2, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>

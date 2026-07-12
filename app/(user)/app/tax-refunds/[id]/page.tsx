@@ -61,11 +61,11 @@ interface TimelineStep {
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const STATUS_CFG: Record<string, { color: string; bg: string; label: string; icon: React.ElementType }> = {
-  pending:      { color: "#F59E0B", bg: "rgba(245,158,11,0.12)", label: "Filed",        icon: Clock },
-  under_review: { color: "#3B9EFF", bg: "rgba(59,158,255,0.12)", label: "Under Review", icon: Search },
-  approved:     { color: "#00C896", bg: "rgba(0,200,150,0.12)",  label: "Approved",     icon: CheckCircle2 },
-  deposited:    { color: "#00C896", bg: "rgba(0,200,150,0.12)",  label: "Deposited",    icon: Banknote },
-  rejected:     { color: "#EF4444", bg: "rgba(239,68,68,0.12)",  label: "Rejected",     icon: XCircle },
+  pending:      { color: "#F79009", bg: "#FFFAEB", label: "Filed",        icon: Clock },
+  under_review: { color: "#1A2CCE", bg: "#EEF0FE", label: "Under Review", icon: Search },
+  approved:     { color: "#12B76A", bg: "#ECFDF3", label: "Approved",     icon: CheckCircle2 },
+  deposited:    { color: "#12B76A", bg: "#ECFDF3", label: "Deposited",    icon: Banknote },
+  rejected:     { color: "#F04438", bg: "#FEF3F2", label: "Rejected",     icon: XCircle },
 }
 
 const FILING_LABELS: Record<string, string> = {
@@ -119,7 +119,7 @@ export default function TaxRefundDetailPage() {
   const cfg = STATUS_CFG[refund?.status || "pending"] || STATUS_CFG.pending
 
   return (
-    <div style={{ background: "#0A1628", minHeight: "100vh" }}>
+    <div style={{ background: "#F5F6F8", minHeight: "100vh" }}>
       <UserHeader title="Refund Details" showBack onBack={() => router.push("/app/tax-refunds")} />
 
       <div className="px-4 py-5 lg:px-6 max-w-[800px] mx-auto space-y-5">
@@ -130,12 +130,12 @@ export default function TaxRefundDetailPage() {
           </div>
         ) : error && !refund ? (
           <div className="py-20 text-center">
-            <AlertCircle className="h-10 w-10 mx-auto mb-3" style={{ color: "#EF4444" }} />
-            <p className="text-[15px] text-white font-semibold">{error}</p>
+            <AlertCircle className="h-10 w-10 mx-auto mb-3" style={{ color: "#F04438" }} />
+            <p className="text-[15px] font-semibold" style={{ color: "#101828" }}>{error}</p>
             <button
               onClick={() => router.push("/app/tax-refunds")}
-              className="mt-4 h-10 rounded-xl px-6 text-[14px] font-medium text-white"
-              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}
+              className="mt-4 h-10 rounded-xl px-6 text-[14px] font-medium"
+              style={{ background: "#FFFFFF", border: "1px solid #EAECF0", color: "#101828" }}
             >
               Back to Tax Refunds
             </button>
@@ -143,16 +143,16 @@ export default function TaxRefundDetailPage() {
         ) : refund ? (
           <>
             {/* ── Header Card ──────────────────────────────────────── */}
-            <div className="rounded-2xl overflow-hidden" style={{ background: "#0D1F3C", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <div className="rounded-2xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #EAECF0" }}>
               <div className="p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: "rgba(59,158,255,0.12)" }}>
-                      <Receipt className="h-5 w-5" style={{ color: "#3B9EFF" }} />
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: "#EEF0FE" }}>
+                      <Receipt className="h-5 w-5" style={{ color: "#1A2CCE" }} />
                     </div>
                     <div>
-                      <p className="text-[16px] font-semibold text-white">Tax Year {refund.taxYear}</p>
-                      <p className="text-[12px]" style={{ color: "rgba(255,255,255,0.4)" }}>
+                      <p className="text-[16px] font-semibold" style={{ color: "#101828" }}>Tax Year {refund.taxYear}</p>
+                      <p className="text-[12px]" style={{ color: "#667085" }}>
                         {FILING_LABELS[refund.filingType] || refund.filingType}
                       </p>
                     </div>
@@ -163,15 +163,15 @@ export default function TaxRefundDetailPage() {
                 </div>
 
                 <div className="text-center py-4">
-                  <p className="text-[11px] uppercase tracking-wide" style={{ color: "rgba(255,255,255,0.35)" }}>
+                  <p className="text-[11px] uppercase tracking-wide" style={{ color: "#98A2B3" }}>
                     {refund.status === "deposited" ? "Refund Deposited" : "Expected Refund"}
                   </p>
-                  <p className="text-[32px] font-bold text-white tabular-nums mt-1">{fmt(refund.refundAmount)}</p>
+                  <p className="text-[32px] font-bold tabular-nums mt-1" style={{ color: "#101828" }}>{fmt(refund.refundAmount)}</p>
                 </div>
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-3 divide-x" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.06)" }}>
+              <div className="grid grid-cols-3 divide-x" style={{ borderTop: "1px solid #EAECF0", borderColor: "#EAECF0" }}>
                 <StatCell label="Filed" value={new Date(refund.filingDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })} />
                 <StatCell
                   label="Est. Deposit"
@@ -185,9 +185,9 @@ export default function TaxRefundDetailPage() {
             </div>
 
             {/* ── Status Timeline ──────────────────────────────────── */}
-            <div className="rounded-2xl overflow-hidden" style={{ background: "#0D1F3C", border: "1px solid rgba(255,255,255,0.06)" }}>
-              <div className="px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                <p className="text-[12px] font-semibold uppercase tracking-wide" style={{ color: "rgba(255,255,255,0.4)" }}>
+            <div className="rounded-2xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #EAECF0" }}>
+              <div className="px-4 py-3" style={{ borderBottom: "1px solid #EAECF0" }}>
+                <p className="text-[12px] font-semibold uppercase tracking-wide" style={{ color: "#667085" }}>
                   Refund Status
                 </p>
               </div>
@@ -197,11 +197,11 @@ export default function TaxRefundDetailPage() {
                   const isLast = i === timeline.length - 1
                   const isRejected = t.step === "rejected"
 
-                  let dotColor = "rgba(255,255,255,0.1)"
-                  let lineColor = "rgba(255,255,255,0.06)"
-                  if (t.completed) { dotColor = "#00C896"; lineColor = "#00C896" }
-                  else if (t.active && !isRejected) dotColor = "#3B9EFF"
-                  else if (t.active && isRejected) dotColor = "#EF4444"
+                  let dotColor = "#D0D5DD"
+                  let lineColor = "#EAECF0"
+                  if (t.completed) { dotColor = "#12B76A"; lineColor = "#12B76A" }
+                  else if (t.active && !isRejected) dotColor = "#1A2CCE"
+                  else if (t.active && isRejected) dotColor = "#F04438"
 
                   return (
                     <div key={t.step} className="flex gap-3">
@@ -219,14 +219,14 @@ export default function TaxRefundDetailPage() {
                       </div>
                       {/* Content */}
                       <div className={`pb-${isLast ? "0" : "4"} pt-1`}>
-                        <p className="text-[14px] font-medium text-white">{t.label}</p>
+                        <p className="text-[14px] font-medium" style={{ color: "#101828" }}>{t.label}</p>
                         {t.date && (
-                          <p className="text-[11px] mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>
+                          <p className="text-[11px] mt-0.5" style={{ color: "#98A2B3" }}>
                             {new Date(t.date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
                           </p>
                         )}
                         {t.active && !t.completed && !isRejected && (
-                          <p className="text-[11px] mt-0.5" style={{ color: "#3B9EFF" }}>In progress</p>
+                          <p className="text-[11px] mt-0.5" style={{ color: "#1A2CCE" }}>In progress</p>
                         )}
                       </div>
                     </div>
@@ -237,39 +237,39 @@ export default function TaxRefundDetailPage() {
 
             {/* ── Rejection Reason ─────────────────────────────────── */}
             {refund.status === "rejected" && refund.rejectedReason && (
-              <div className="rounded-2xl p-4" style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.1)" }}>
-                <p className="text-[11px] font-medium uppercase tracking-wide mb-1" style={{ color: "#EF4444" }}>Reason for Rejection</p>
-                <p className="text-[13px]" style={{ color: "rgba(255,255,255,0.7)" }}>{refund.rejectedReason}</p>
+              <div className="rounded-2xl p-4" style={{ background: "#FEF3F2", border: "1px solid #EAECF0" }}>
+                <p className="text-[11px] font-medium uppercase tracking-wide mb-1" style={{ color: "#F04438" }}>Reason for Rejection</p>
+                <p className="text-[13px]" style={{ color: "#667085" }}>{refund.rejectedReason}</p>
               </div>
             )}
 
             {/* ── Admin Note ───────────────────────────────────────── */}
             {refund.adminNote && refund.status !== "rejected" && (
-              <div className="rounded-2xl p-4" style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.1)" }}>
-                <p className="text-[11px] font-medium uppercase tracking-wide mb-1" style={{ color: "#F59E0B" }}>Note from Admin</p>
-                <p className="text-[13px]" style={{ color: "rgba(255,255,255,0.7)" }}>{refund.adminNote}</p>
+              <div className="rounded-2xl p-4" style={{ background: "#FFFAEB", border: "1px solid #EAECF0" }}>
+                <p className="text-[11px] font-medium uppercase tracking-wide mb-1" style={{ color: "#F79009" }}>Note from Admin</p>
+                <p className="text-[13px]" style={{ color: "#667085" }}>{refund.adminNote}</p>
               </div>
             )}
 
             {/* ── Tax Summary ──────────────────────────────────────── */}
-            <div className="rounded-2xl overflow-hidden" style={{ background: "#0D1F3C", border: "1px solid rgba(255,255,255,0.06)" }}>
-              <div className="px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                <p className="text-[12px] font-semibold uppercase tracking-wide" style={{ color: "rgba(255,255,255,0.4)" }}>Tax Summary</p>
+            <div className="rounded-2xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #EAECF0" }}>
+              <div className="px-4 py-3" style={{ borderBottom: "1px solid #EAECF0" }}>
+                <p className="text-[12px] font-semibold uppercase tracking-wide" style={{ color: "#667085" }}>Tax Summary</p>
               </div>
-              <div className="divide-y" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+              <div className="divide-y" style={{ borderColor: "#EAECF0" }}>
                 <DetailRow label="Total reported income" value={fmt(refund.totalReportedIncome)} />
                 <DetailRow label="Total tax withheld" value={fmt(refund.totalTaxWithheld)} />
                 <DetailRow label="Eligible refund" value={fmt(refund.refundAmount)} highlight />
-                <DetailRow label="Filed date" value={new Date(refund.filingDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })} valueColor="#3B9EFF" />
+                <DetailRow label="Filed date" value={new Date(refund.filingDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })} valueColor="#1A2CCE" />
               </div>
             </div>
 
             {/* ── Filing Details ────────────────────────────────────── */}
-            <div className="rounded-2xl overflow-hidden" style={{ background: "#0D1F3C", border: "1px solid rgba(255,255,255,0.06)" }}>
-              <div className="px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                <p className="text-[12px] font-semibold uppercase tracking-wide" style={{ color: "rgba(255,255,255,0.4)" }}>Filing Details</p>
+            <div className="rounded-2xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #EAECF0" }}>
+              <div className="px-4 py-3" style={{ borderBottom: "1px solid #EAECF0" }}>
+                <p className="text-[12px] font-semibold uppercase tracking-wide" style={{ color: "#667085" }}>Filing Details</p>
               </div>
-              <div className="divide-y" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+              <div className="divide-y" style={{ borderColor: "#EAECF0" }}>
                 <DetailRow label="Tax Year" value={String(refund.taxYear)} />
                 <DetailRow label="Filing Type" value={FILING_LABELS[refund.filingType] || refund.filingType} />
                 {refund.employer && <DetailRow label="Employer" value={refund.employer} />}
@@ -286,22 +286,22 @@ export default function TaxRefundDetailPage() {
 
             {/* ── Tax Documents ──────────────────────────────────────── */}
             {refund.documents && refund.documents.length > 0 && (
-              <div className="rounded-2xl overflow-hidden" style={{ background: "#0D1F3C", border: "1px solid rgba(255,255,255,0.06)" }}>
-                <div className="px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                  <p className="text-[12px] font-semibold uppercase tracking-wide" style={{ color: "rgba(255,255,255,0.4)" }}>Tax Documents</p>
+              <div className="rounded-2xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #EAECF0" }}>
+                <div className="px-4 py-3" style={{ borderBottom: "1px solid #EAECF0" }}>
+                  <p className="text-[12px] font-semibold uppercase tracking-wide" style={{ color: "#667085" }}>Tax Documents</p>
                 </div>
-                <div className="divide-y" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+                <div className="divide-y" style={{ borderColor: "#EAECF0" }}>
                   {refund.documents.map((doc: TaxDocument, i: number) => (
                     <div key={i} className="flex items-center gap-3 px-4 py-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: "rgba(59,158,255,0.08)" }}>
-                        <FileText className="h-4 w-4" style={{ color: "#3B9EFF" }} />
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: "#EEF0FE" }}>
+                        <FileText className="h-4 w-4" style={{ color: "#1A2CCE" }} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-medium text-white">{doc.name}</p>
-                        <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>{doc.docType}</p>
+                        <p className="text-[13px] font-medium" style={{ color: "#101828" }}>{doc.name}</p>
+                        <p className="text-[11px]" style={{ color: "#98A2B3" }}>{doc.docType}</p>
                       </div>
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: "rgba(255,255,255,0.04)" }}>
-                        <Download className="h-3.5 w-3.5" style={{ color: "rgba(255,255,255,0.3)" }} />
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: "#F9FAFB" }}>
+                        <Download className="h-3.5 w-3.5" style={{ color: "#98A2B3" }} />
                       </div>
                     </div>
                   ))}
@@ -311,37 +311,37 @@ export default function TaxRefundDetailPage() {
 
             {/* ── Deposit Account ───────────────────────────────────── */}
             {account && (
-              <div className="rounded-2xl p-4 flex items-center gap-3" style={{ background: "#0D1F3C", border: "1px solid rgba(255,255,255,0.06)" }}>
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: "rgba(59,158,255,0.12)" }}>
-                  <Building className="h-4 w-4" style={{ color: "#3B9EFF" }} />
+              <div className="rounded-2xl p-4 flex items-center gap-3" style={{ background: "#FFFFFF", border: "1px solid #EAECF0" }}>
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: "#EEF0FE" }}>
+                  <Building className="h-4 w-4" style={{ color: "#1A2CCE" }} />
                 </div>
                 <div>
-                  <p className="text-[13px] font-medium text-white capitalize">{account.accountType} Account</p>
-                  <p className="text-[12px]" style={{ color: "rgba(255,255,255,0.4)" }}>
+                  <p className="text-[13px] font-medium capitalize" style={{ color: "#101828" }}>{account.accountType} Account</p>
+                  <p className="text-[12px]" style={{ color: "#667085" }}>
                     ····{account.accountNumber.slice(-4)} · {account.currency}
                   </p>
                 </div>
-                <p className="ml-auto text-[11px]" style={{ color: "rgba(255,255,255,0.3)" }}>Deposit account</p>
+                <p className="ml-auto text-[11px]" style={{ color: "#98A2B3" }}>Deposit account</p>
               </div>
             )}
 
             {/* ── Deposit Transaction ──────────────────────────────── */}
             {depositTx && (
-              <div className="rounded-2xl overflow-hidden" style={{ background: "#0D1F3C", border: "1px solid rgba(255,255,255,0.06)" }}>
-                <div className="px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                  <p className="text-[12px] font-semibold uppercase tracking-wide" style={{ color: "rgba(255,255,255,0.4)" }}>Deposit Transaction</p>
+              <div className="rounded-2xl overflow-hidden" style={{ background: "#FFFFFF", border: "1px solid #EAECF0" }}>
+                <div className="px-4 py-3" style={{ borderBottom: "1px solid #EAECF0" }}>
+                  <p className="text-[12px] font-semibold uppercase tracking-wide" style={{ color: "#667085" }}>Deposit Transaction</p>
                 </div>
                 <div className="px-4 py-3 flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: "rgba(0,200,150,0.12)" }}>
-                    <ArrowDownLeft className="h-3.5 w-3.5" style={{ color: "#00C896" }} />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: "#ECFDF3" }}>
+                    <ArrowDownLeft className="h-3.5 w-3.5" style={{ color: "#12B76A" }} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-medium text-white">Tax Refund Deposit</p>
-                    <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>
+                    <p className="text-[13px] font-medium" style={{ color: "#101828" }}>Tax Refund Deposit</p>
+                    <p className="text-[11px]" style={{ color: "#98A2B3" }}>
                       {new Date(depositTx.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · {depositTx.reference}
                     </p>
                   </div>
-                  <p className="text-[14px] font-semibold" style={{ color: "#00C896" }}>+{fmt(depositTx.amount)}</p>
+                  <p className="text-[14px] font-semibold" style={{ color: "#12B76A" }}>+{fmt(depositTx.amount)}</p>
                 </div>
               </div>
             )}
@@ -357,8 +357,8 @@ export default function TaxRefundDetailPage() {
 function StatCell({ label, value }: { label: string; value: string }) {
   return (
     <div className="py-3 text-center">
-      <p className="text-[10px] uppercase" style={{ color: "rgba(255,255,255,0.35)" }}>{label}</p>
-      <p className="text-[13px] font-semibold text-white mt-0.5 tabular-nums">{value}</p>
+      <p className="text-[10px] uppercase" style={{ color: "#98A2B3" }}>{label}</p>
+      <p className="text-[13px] font-semibold mt-0.5 tabular-nums" style={{ color: "#101828" }}>{value}</p>
     </div>
   )
 }
@@ -366,8 +366,8 @@ function StatCell({ label, value }: { label: string; value: string }) {
 function DetailRow({ label, value, highlight, valueColor }: { label: string; value: string; highlight?: boolean; valueColor?: string }) {
   return (
     <div className="flex items-center justify-between px-4 py-3">
-      <span className="text-[13px]" style={{ color: "rgba(255,255,255,0.4)" }}>{label}</span>
-      <span className="text-[14px] font-semibold tabular-nums" style={{ color: highlight ? "#00C896" : valueColor || "white" }}>{value}</span>
+      <span className="text-[13px]" style={{ color: "#667085" }}>{label}</span>
+      <span className="text-[14px] font-semibold tabular-nums" style={{ color: highlight ? "#12B76A" : valueColor || "#101828" }}>{value}</span>
     </div>
   )
 }

@@ -72,7 +72,7 @@ export function ProofModal({ proofUrl, onClose }: Props) {
                 href={proofUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-lg bg-[#0F4C81] px-4 py-2 text-sm font-medium text-white hover:bg-[#0F4C81]/90"
+                className="rounded-lg bg-[#1A2CCE] px-4 py-2 text-sm font-medium text-white hover:bg-[#1A2CCE]/90"
               >
                 Open PDF
               </a>

@@ -81,7 +81,7 @@ export function ChangePasswordClient() {
   }
 
   const inputClass =
-    "w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-all"
+    "w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-all"
   const labelClass = "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
 
   return (
@@ -98,8 +98,8 @@ export function ChangePasswordClient() {
       <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
         {/* Header */}
         <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-            <Shield className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+            <Shield className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
           </div>
           <div>
             <h2 className="font-semibold text-gray-900 dark:text-white">Security Settings</h2>
@@ -200,7 +200,7 @@ export function ChangePasswordClient() {
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

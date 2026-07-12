@@ -791,12 +791,13 @@ export async function createAdminTransaction(
     req
   )
 
-  // Send notification email if requested
-  if (sendEmail) {
+  // Notify the user. The in-app notification is ALWAYS created (matching every
+  // other transaction flow); the email is only sent when the admin opts in.
+  {
     const { notifyUser } = await import("@/lib/services/deposit.service")
     const account = await Account.findById(accountId).populate("userId", "firstName lastName email")
     const user = account?.userId as unknown as { _id: unknown; firstName: string; lastName: string; email: string } | null
-    
+
     if (user) {
       const isBitcoin = account?.walletType === "bitcoin"
       const isCredit = amount >= 0
@@ -805,13 +806,41 @@ export async function createAdminTransaction(
         ? `${(absAmount / 1e8).toFixed(8)} BTC`
         : new Intl.NumberFormat("en-US", { style: "currency", currency: account?.currency ?? "USD" }).format(absAmount / 100)
 
+      const subject = isCredit ? "Account Credited" : "Account Debited"
+      const message = `Your account has been ${isCredit ? "credited" : "debited"} with ${formattedAmount}.${description ? ` ${description}` : ""}`
+
+      // In-app notification (bell) — always
       await notifyUser(
         String(user._id),
         "transaction",
-        isCredit ? "Account Credited" : "Account Debited",
-        `Your account has been ${isCredit ? "credited" : "debited"} with ${formattedAmount}. ${description}`,
-        { sendEmail: true }
+        subject,
+        message,
+        { reference: createdTx!.reference, transferScope, emailSent: sendEmail }
       )
+
+      // Email notification — only when requested
+      if (sendEmail) {
+        try {
+          const { sendCustomEmail } = await import("@/lib/email")
+          const bankName = process.env.NEXT_PUBLIC_BANK_NAME || "NovaPay"
+          const accent = isCredit ? "#12B76A" : "#F04438"
+          const html = `
+            <div style="font-family:Inter,Arial,sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;color:#101828">
+              <h2 style="font-size:20px;font-weight:600;margin:0 0 8px">${subject}</h2>
+              <p style="font-size:14px;color:#667085;margin:0 0 24px">Hello ${user.firstName},</p>
+              <div style="border:1px solid #EAECF0;border-radius:12px;padding:20px;background:#F9FAFB">
+                <p style="font-size:13px;color:#667085;margin:0 0 4px">Amount ${isCredit ? "credited" : "debited"}</p>
+                <p style="font-size:26px;font-weight:700;margin:0;color:${accent}">${isCredit ? "+" : "−"}${formattedAmount}</p>
+                ${description ? `<p style="font-size:13px;color:#667085;margin:16px 0 0">${description}</p>` : ""}
+                <p style="font-size:12px;color:#98A2B3;margin:16px 0 0">Reference: ${createdTx!.reference}</p>
+              </div>
+              <p style="font-size:12px;color:#98A2B3;margin:24px 0 0">If you did not expect this, please contact ${bankName} support immediately.</p>
+            </div>`
+          await sendCustomEmail(user.email, `${subject} — ${bankName}`, html)
+        } catch (err) {
+          console.error("[createAdminTransaction] email send failed", err)
+        }
+      }
     }
   }
 

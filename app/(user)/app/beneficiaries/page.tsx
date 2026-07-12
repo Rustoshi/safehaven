@@ -99,10 +99,10 @@ export default function BeneficiariesPage() {
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
             <div style={{
               width: 48, height: 48, borderRadius: 14,
-              background: "linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(147,51,234,0.15) 100%)",
+              background: "#EEF0FE",
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>
-              <Users style={{ width: 24, height: 24, color: "#3B82F6" }} />
+              <Users style={{ width: 24, height: 24, color: "#1A2CCE" }} />
             </div>
             <div>
               <h1 style={{ fontSize: 22, fontWeight: 700, color: colors.textPrimary, margin: 0 }}>
@@ -210,15 +210,15 @@ export default function BeneficiariesPage() {
                   <div style={{
                     width: 44, height: 44, borderRadius: 12,
                     background: b.type === "local"
-                      ? "rgba(16,185,129,0.1)"
-                      : "rgba(59,130,246,0.1)",
+                      ? "#ECFDF3"
+                      : "#EEF0FE",
                     display: "flex", alignItems: "center", justifyContent: "center",
                     flexShrink: 0,
                   }}>
                     {b.type === "local" ? (
-                      <Building style={{ width: 20, height: 20, color: "#10B981" }} />
+                      <Building style={{ width: 20, height: 20, color: "#12B76A" }} />
                     ) : (
-                      <Globe style={{ width: 20, height: 20, color: "#3B82F6" }} />
+                      <Globe style={{ width: 20, height: 20, color: "#1A2CCE" }} />
                     )}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -235,8 +235,8 @@ export default function BeneficiariesPage() {
                   <span style={{
                     fontSize: 10, fontWeight: 600, textTransform: "uppercase",
                     padding: "4px 8px", borderRadius: 6,
-                    background: b.type === "local" ? "rgba(16,185,129,0.1)" : "rgba(59,130,246,0.1)",
-                    color: b.type === "local" ? "#10B981" : "#3B82F6",
+                    background: b.type === "local" ? "#ECFDF3" : "#EEF0FE",
+                    color: b.type === "local" ? "#12B76A" : "#1A2CCE",
                   }}>
                     {b.type}
                   </span>
@@ -326,7 +326,7 @@ export default function BeneficiariesPage() {
                     onClick={() => handleTransfer(b)}
                     style={{
                       flex: 1, padding: "10px 0", borderRadius: 10,
-                      background: "linear-gradient(135deg, #10B981 0%, #059669 100%)",
+                      background: "#12B76A",
                       border: "none", color: "#fff",
                       fontSize: 13, fontWeight: 600, cursor: "pointer",
                       display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
@@ -339,9 +339,9 @@ export default function BeneficiariesPage() {
                     disabled={deleting === b.id}
                     style={{
                       padding: "10px 14px", borderRadius: 10,
-                      background: "rgba(239,68,68,0.1)",
-                      border: "1px solid rgba(239,68,68,0.2)",
-                      color: "#EF4444",
+                      background: "#FEF3F2",
+                      border: "1px solid #FEE4E2",
+                      color: "#F04438",
                       fontSize: 13, fontWeight: 600, cursor: "pointer",
                       display: "flex", alignItems: "center", justifyContent: "center",
                     }}

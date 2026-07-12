@@ -3,14 +3,16 @@
 import { useState, useRef, useCallback, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import type { Session } from "next-auth"
-import { cn } from "@/lib/utils"
 import { BANK_NAME } from "@/lib/brand"
 import {
   Wallet, ArrowLeftRight, CreditCard, Shield, TrendingUp,
-  Sparkles, ChevronRight, Globe, Zap, Lock,
+  ChevronRight, Globe, Zap, Lock,
 } from "lucide-react"
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+/* Onboarding — per dashboard-design.md (Grey style). White modal card on a
+   dimmed canvas, Inter, indigo primary, soft shadows, premium card mockups. */
+
+const FONT = "var(--dash-font)"
 
 interface OnboardingFlowProps {
   session:       Session
@@ -18,338 +20,244 @@ interface OnboardingFlowProps {
   btcAccount?:   { btcAddress: string }
 }
 
-// ── Feature item component ────────────────────────────────────────────────────
-
-function FeatureItem({ icon: Icon, title, description, color }: {
-  icon: React.ElementType
-  title: string
-  description: string
-  color: string
+// ── Feature row ─────────────────────────────────────────────────────────────
+function FeatureItem({ icon: Icon, title, description, color, bg }: {
+  icon: React.ElementType; title: string; description: string; color: string; bg: string
 }) {
   return (
-    <div className="flex items-start gap-4 text-left">
-      <div
-        className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl"
-        style={{ background: `${color}15` }}
-      >
-        <Icon className="h-5 w-5" style={{ color }} />
-      </div>
+    <div className="flex items-start gap-3.5 text-left">
+      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center" style={{ backgroundColor: bg, borderRadius: 10 }}>
+        <Icon className="h-5 w-5" strokeWidth={2} style={{ color }} />
+      </span>
       <div className="flex-1 min-w-0">
-        <p className="text-[14px] font-semibold text-slate-900">{title}</p>
-        <p className="text-[12px] text-slate-500 mt-0.5 leading-relaxed">{description}</p>
+        <p className="text-[14px]" style={{ fontWeight: 600, color: "var(--dash-text)" }}>{title}</p>
+        <p className="text-[12.5px] mt-0.5 leading-relaxed" style={{ color: "var(--dash-text-2)" }}>{description}</p>
       </div>
     </div>
   )
 }
 
-// ── Animated background shapes ────────────────────────────────────────────────
-
-function BackgroundShapes() {
+// ── Card mockup pieces ──────────────────────────────────────────────────────
+function Chip() {
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-gradient-to-br from-emerald-400/20 to-teal-500/10 blur-3xl" />
-      <div className="absolute -bottom-32 -left-32 h-80 w-80 rounded-full bg-gradient-to-tr from-blue-400/15 to-indigo-500/10 blur-3xl" />
-      <div className="absolute top-1/3 right-10 h-32 w-32 rounded-full bg-gradient-to-br from-amber-400/10 to-orange-500/5 blur-2xl" />
-    </div>
+    <svg width="38" height="28" viewBox="0 0 38 28" fill="none" aria-hidden>
+      <rect x="0.5" y="0.5" width="37" height="27" rx="5" fill="url(#chipG)" stroke="rgba(255,255,255,0.35)" />
+      <path d="M13 0.5V27.5M25 0.5V27.5M0.5 10H13M25 10H37.5M0.5 18H13M25 18H37.5" stroke="rgba(120,90,20,0.45)" strokeWidth="0.9" />
+      <rect x="13" y="8" width="12" height="12" rx="2" fill="rgba(255,255,255,0.15)" stroke="rgba(120,90,20,0.4)" strokeWidth="0.9" />
+      <defs>
+        <linearGradient id="chipG" x1="0" y1="0" x2="38" y2="28">
+          <stop stopColor="#F6E27A" /><stop offset="0.5" stopColor="#E4C24D" /><stop offset="1" stopColor="#C99B2E" />
+        </linearGradient>
+      </defs>
+    </svg>
   )
 }
 
-// ── Wallet card preview ───────────────────────────────────────────────────────
+function Contactless() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden style={{ opacity: 0.85 }}>
+      <path d="M8.5 8.5a5 5 0 0 1 0 7M11.5 6a8.5 8.5 0 0 1 0 12M14.5 3.5a12 12 0 0 1 0 17" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  )
+}
 
-function WalletCardPreview({ fiatAccount, btcAccount }: {
+function WalletCardPreview({ session, fiatAccount, btcAccount }: {
+  session: Session
   fiatAccount?: { accountNumber: string }
   btcAccount?:  { btcAddress: string }
 }) {
-  const fiatLast4 = fiatAccount?.accountNumber?.slice(-4) || "••••"
+  const fiatLast4 = fiatAccount?.accountNumber?.slice(-4) || "0000"
   const btcAddr = btcAccount?.btcAddress || ""
-  const btcShort = btcAddr ? `${btcAddr.slice(0, 4)}...${btcAddr.slice(-4)}` : "••••...••••"
+  const btcShort = btcAddr ? `${btcAddr.slice(0, 5)}…${btcAddr.slice(-4)}` : "•••••…••••"
+  const holder = `${session.user.firstName} ${session.user.lastName}`.toUpperCase().slice(0, 22)
 
   return (
-    <div className="relative mx-auto w-full max-w-[280px]">
-      {/* Bitcoin card (back) */}
+    <div className="relative mx-auto w-full max-w-[300px]" style={{ height: 210 }}>
+      {/* Bitcoin card (behind) */}
       <div
-        className="absolute top-4 left-4 right-4 h-[140px] rounded-2xl p-5 text-white shadow-xl"
+        className="absolute overflow-hidden"
         style={{
+          top: 0, left: 22, right: 22, height: 168, borderRadius: 16, padding: "16px 18px", color: "#fff",
           background: "linear-gradient(135deg, #F7931A 0%, #E2761B 100%)",
-          transform: "rotate(-4deg)",
+          transform: "rotate(-7deg)",
+          boxShadow: "0 12px 28px rgba(226,118,27,0.30)",
         }}
       >
         <div className="flex items-center gap-2">
-          <div className="h-6 w-6 rounded-full bg-white/20 flex items-center justify-center">
-            <span className="text-[10px] font-bold">₿</span>
-          </div>
-          <span className="text-[10px] font-semibold uppercase tracking-wider opacity-80">Bitcoin</span>
+          <span className="flex h-6 w-6 items-center justify-center" style={{ borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.22)", fontSize: 11, fontWeight: 700 }}>₿</span>
+          <span className="text-[10px] uppercase" style={{ letterSpacing: "0.12em", opacity: 0.9, fontWeight: 600 }}>Bitcoin Wallet</span>
         </div>
-        <p className="mt-8 font-mono text-[11px] tracking-wide opacity-90">{btcShort}</p>
+        <p className="mt-9 text-[12px]" style={{ fontFamily: "ui-monospace, monospace", letterSpacing: "0.05em", opacity: 0.92 }}>{btcShort}</p>
       </div>
 
       {/* Fiat card (front) */}
       <div
-        className="relative h-[160px] rounded-2xl p-5 text-white shadow-2xl"
+        className="absolute overflow-hidden"
         style={{
-          background: "linear-gradient(135deg, #0F4C81 0%, #1E3A5F 50%, #0D3F6B 100%)",
+          top: 26, left: 6, right: 6, height: 184, borderRadius: 16, padding: 20, color: "#fff",
+          background: "linear-gradient(135deg, #2A3BD4 0%, #1A2CCE 45%, #101828 100%)",
           transform: "rotate(2deg)",
+          boxShadow: "0 20px 44px rgba(16,24,40,0.30)",
         }}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-white/15 flex items-center justify-center backdrop-blur-sm">
-              <Wallet className="h-4 w-4" />
-            </div>
-            <span className="text-[11px] font-semibold uppercase tracking-wider opacity-80">{BANK_NAME}</span>
-          </div>
-          <div className="flex gap-1">
-            <div className="h-5 w-5 rounded-full bg-red-500/80" />
-            <div className="h-5 w-5 rounded-full bg-amber-400/80 -ml-2" />
-          </div>
+        {/* sheen */}
+        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 70% 55% at 82% 8%, rgba(255,255,255,0.18) 0%, transparent 60%)", pointerEvents: "none" }} />
+        <div className="relative flex items-center justify-between">
+          <span className="text-[12px] uppercase" style={{ letterSpacing: "0.14em", fontWeight: 600 }}>{BANK_NAME}</span>
+          <Contactless />
         </div>
-        <p className="mt-8 font-mono text-lg tracking-[0.2em]">•••• •••• •••• {fiatLast4}</p>
-        <div className="mt-3 flex items-center justify-between">
-          <span className="text-[10px] opacity-60">USD Account</span>
-          <span className="text-[10px] font-medium opacity-80">VISA</span>
+        <div className="relative mt-3.5"><Chip /></div>
+        <p className="relative mt-3.5 text-[17px]" style={{ fontFamily: "ui-monospace, monospace", letterSpacing: "0.14em", fontVariantNumeric: "tabular-nums" }}>
+          ••••&nbsp;&nbsp;••••&nbsp;&nbsp;••••&nbsp;&nbsp;{fiatLast4}
+        </p>
+        <div className="relative mt-3 flex items-end justify-between">
+          <div>
+            <p className="text-[8px] uppercase" style={{ letterSpacing: "0.1em", opacity: 0.55 }}>Card Holder</p>
+            <p className="text-[12px] mt-0.5" style={{ fontWeight: 600, letterSpacing: "0.02em" }}>{holder}</p>
+          </div>
+          <span className="text-[16px]" style={{ fontStyle: "italic", fontWeight: 700, letterSpacing: "-0.02em" }}>VISA</span>
         </div>
       </div>
     </div>
   )
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
-
+// ── Main ────────────────────────────────────────────────────────────────────
 export function OnboardingFlow({ session, fiatAccount, btcAccount }: OnboardingFlowProps) {
   const router = useRouter()
   const [slide, setSlide] = useState(0)
   const touchStartX = useRef(0)
   const totalSlides = 3
 
-  const dismiss = useCallback(() => {
-    localStorage.setItem("onboardingShown", "true")
-  }, [])
-
-  const goToSlide = (index: number) => {
-    if (index >= 0 && index < totalSlides) {
-      setSlide(index)
-    }
-  }
-
+  const dismiss = useCallback(() => { localStorage.setItem("onboardingShown", "true") }, [])
+  const goToSlide = (index: number) => { if (index >= 0 && index < totalSlides) setSlide(index) }
   const next = () => goToSlide(slide + 1)
   const prev = () => goToSlide(slide - 1)
 
-  // Swipe support
-  const onTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX
-  }
-
+  const onTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX }
   const onTouchEnd = (e: React.TouchEvent) => {
     const diff = touchStartX.current - e.changedTouches[0].clientX
-    if (Math.abs(diff) > 50) {
-      if (diff > 0) next()
-      else prev()
-    }
+    if (Math.abs(diff) > 50) { if (diff > 0) next(); else prev() }
   }
 
-  // Check if already seen
   const [visible, setVisible] = useState(false)
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const shown = localStorage.getItem("onboardingShown")
-      if (!shown) {
-        setVisible(true)
-      }
-    }
+    if (typeof window !== "undefined" && !localStorage.getItem("onboardingShown")) setVisible(true)
   }, [])
 
-  const finishOnboarding = useCallback(() => {
-    dismiss()
-    setVisible(false)
-  }, [dismiss])
-
-  const goToDashboard = useCallback(() => {
-    dismiss()
-    setVisible(false)
-    router.push("/app/dashboard")
-  }, [dismiss, router])
+  const finishOnboarding = useCallback(() => { dismiss(); setVisible(false) }, [dismiss])
+  const goToDashboard = useCallback(() => { dismiss(); setVisible(false); router.push("/app/dashboard") }, [dismiss, router])
 
   if (!visible) return null
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gradient-to-b from-slate-50 to-white">
-      <BackgroundShapes />
+  const primaryBtn = "group h-[50px] w-full text-[15px] flex items-center justify-center gap-2 transition-colors active:scale-[0.99]"
+  const primaryStyle: React.CSSProperties = { backgroundColor: "var(--dash-primary)", color: "#fff", borderRadius: 10, fontWeight: 600 }
+  const onHover = (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.backgroundColor = "var(--dash-primary-2)" }
+  const offHover = (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.backgroundColor = "var(--dash-primary)" }
 
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ backgroundColor: "rgba(16,24,40,0.5)", fontFamily: FONT }}>
       <div
-        className="relative flex w-full max-w-md flex-col items-center px-6 py-8"
+        className="relative w-full max-w-md flex flex-col items-center px-6 py-8 sm:px-8"
+        style={{ backgroundColor: "var(--dash-surface)", borderRadius: 20, boxShadow: "0 24px 60px rgba(16,24,40,0.25)", maxHeight: "calc(100dvh - 32px)", overflowY: "auto" }}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
-        {/* Skip button */}
-        <button
-          onClick={finishOnboarding}
-          className="absolute -top-2 right-0 px-4 py-2 text-[13px] font-semibold text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-all"
-        >
-          Skip →
+        {/* Skip */}
+        <button onClick={finishOnboarding} className="absolute top-4 right-4 px-3 py-1.5 text-[13px] transition-colors" style={{ color: "var(--dash-text-2)", borderRadius: 8, fontWeight: 500 }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "var(--dash-surface-2)" }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent" }}>
+          Skip
         </button>
 
-        {/* ── Slide 1: Welcome ── */}
+        {/* ── Slide 1: Welcome (no icon) ── */}
         {slide === 0 && (
-          <div className="w-full text-center animate-[fadeIn_0.4s_ease-out]">
-            {/* Logo/Brand mark */}
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/25">
-              <Sparkles className="h-10 w-10 text-white" />
-            </div>
-
-            <h1 className="mb-2 text-[26px] font-bold text-slate-900 tracking-tight">
-              Welcome, {session.user.firstName}!
+          <div className="w-full text-center animate-[obFade_0.4s_ease-out] pt-4">
+            <h1 className="mb-2 text-[26px] tracking-tight" style={{ fontWeight: 700, color: "var(--dash-text)" }}>
+              Welcome, {session.user.firstName} <span aria-hidden>👋</span>
             </h1>
-            <p className="mb-8 text-[15px] text-slate-500 leading-relaxed">
-              Your {BANK_NAME} account is ready.<br />
-              Let&apos;s get you started.
+            <p className="mb-8 text-[15px] leading-relaxed" style={{ color: "var(--dash-text-2)" }}>
+              Your {BANK_NAME} account is ready. Let&apos;s get you started.
             </p>
 
-            {/* Quick stats */}
-            <div className="mb-8 flex justify-center gap-6">
-              <div className="text-center">
-                <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-blue-50">
-                  <Wallet className="h-5 w-5 text-blue-600" />
-                </div>
-                <p className="mt-2 text-[11px] font-medium text-slate-600">2 Wallets</p>
-              </div>
-              <div className="text-center">
-                <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-emerald-50">
-                  <Globe className="h-5 w-5 text-emerald-600" />
-                </div>
-                <p className="mt-2 text-[11px] font-medium text-slate-600">Global Access</p>
-              </div>
-              <div className="text-center">
-                <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-amber-50">
-                  <Lock className="h-5 w-5 text-amber-600" />
-                </div>
-                <p className="mt-2 text-[11px] font-medium text-slate-600">Secure</p>
-              </div>
+            <div className="mb-8 grid grid-cols-3 gap-3">
+              {[
+                { icon: Wallet, label: "2 Wallets",     color: "#2775CA", bg: "#EFF8FF" },
+                { icon: Globe,  label: "Global Access",  color: "#12B76A", bg: "#ECFDF3" },
+                { icon: Lock,   label: "Secure",         color: "#1A2CCE", bg: "#EEF0FE" },
+              ].map((s) => {
+                const Icon = s.icon
+                return (
+                  <div key={s.label} className="flex flex-col items-center gap-2 py-4" style={{ backgroundColor: "var(--dash-surface-2)", borderRadius: 12 }}>
+                    <span className="flex h-11 w-11 items-center justify-center" style={{ backgroundColor: s.bg, borderRadius: 12 }}>
+                      <Icon className="h-5 w-5" strokeWidth={2} style={{ color: s.color }} />
+                    </span>
+                    <p className="text-[11px]" style={{ color: "var(--dash-text-2)", fontWeight: 500 }}>{s.label}</p>
+                  </div>
+                )
+              })}
             </div>
 
-            <button
-              onClick={next}
-              className="group h-[52px] w-full rounded-2xl bg-gradient-to-r from-slate-900 to-slate-800 text-[15px] font-semibold text-white shadow-lg shadow-slate-900/20 transition-all hover:shadow-xl hover:shadow-slate-900/25 active:scale-[0.98] flex items-center justify-center gap-2"
-            >
-              Get Started
-              <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            <button onClick={next} className={primaryBtn} style={primaryStyle} onMouseEnter={onHover} onMouseLeave={offHover}>
+              Get started <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </button>
           </div>
         )}
 
-        {/* ── Slide 2: Your Wallets ── */}
+        {/* ── Slide 2: Wallets ── */}
         {slide === 1 && (
-          <div className="w-full text-center animate-[fadeIn_0.4s_ease-out]">
-            <WalletCardPreview fiatAccount={fiatAccount} btcAccount={btcAccount} />
+          <div className="w-full text-center animate-[obFade_0.4s_ease-out] pt-6">
+            <WalletCardPreview session={session} fiatAccount={fiatAccount} btcAccount={btcAccount} />
 
-            <h2 className="mt-8 mb-2 text-[22px] font-bold text-slate-900 tracking-tight">
-              Your Wallets Are Ready
-            </h2>
-            <p className="mb-8 text-[14px] text-slate-500 leading-relaxed">
-              Manage USD and Bitcoin in one place.<br />
-              Swap between currencies instantly.
+            <h2 className="mt-7 mb-2 text-[22px] tracking-tight" style={{ fontWeight: 700, color: "var(--dash-text)" }}>Your wallets are ready</h2>
+            <p className="mb-7 text-[14px] leading-relaxed" style={{ color: "var(--dash-text-2)" }}>
+              Manage cash and Bitcoin in one place, and swap between them instantly.
             </p>
 
             <div className="mb-8 space-y-4">
-              <FeatureItem
-                icon={ArrowLeftRight}
-                title="Instant Swaps"
-                description="Convert between USD and BTC with competitive rates"
-                color="#3B82F6"
-              />
-              <FeatureItem
-                icon={TrendingUp}
-                title="Real-Time Tracking"
-                description="Monitor your portfolio value 24/7"
-                color="#10B981"
-              />
+              <FeatureItem icon={ArrowLeftRight} title="Instant swaps" description="Convert between cash and BTC at competitive rates" color="#1A2CCE" bg="#EEF0FE" />
+              <FeatureItem icon={TrendingUp}     title="Real-time tracking" description="Monitor your portfolio value around the clock" color="#12B76A" bg="#ECFDF3" />
             </div>
 
-            <button
-              onClick={next}
-              className="group h-[52px] w-full rounded-2xl bg-gradient-to-r from-slate-900 to-slate-800 text-[15px] font-semibold text-white shadow-lg shadow-slate-900/20 transition-all hover:shadow-xl hover:shadow-slate-900/25 active:scale-[0.98] flex items-center justify-center gap-2"
-            >
-              Continue
-              <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            <button onClick={next} className={primaryBtn} style={primaryStyle} onMouseEnter={onHover} onMouseLeave={offHover}>
+              Continue <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </button>
           </div>
         )}
 
-        {/* ── Slide 3: Features & Get Started ── */}
+        {/* ── Slide 3: Features ── */}
         {slide === 2 && (
-          <div className="w-full text-center animate-[fadeIn_0.4s_ease-out]">
-            {/* Feature grid icon */}
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/25">
-              <Zap className="h-10 w-10 text-white" />
+          <div className="w-full text-center animate-[obFade_0.4s_ease-out] pt-4">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center" style={{ backgroundColor: "var(--dash-primary-bg)", borderRadius: 18 }}>
+              <Zap className="h-8 w-8" strokeWidth={2} style={{ color: "var(--dash-primary)" }} />
             </div>
 
-            <h2 className="mb-2 text-[22px] font-bold text-slate-900 tracking-tight">
-              Everything You Need
-            </h2>
-            <p className="mb-8 text-[14px] text-slate-500 leading-relaxed">
-              Powerful features to manage your finances
-            </p>
+            <h2 className="mb-2 text-[22px] tracking-tight" style={{ fontWeight: 700, color: "var(--dash-text)" }}>Everything you need</h2>
+            <p className="mb-8 text-[14px] leading-relaxed" style={{ color: "var(--dash-text-2)" }}>Powerful tools to manage your finances</p>
 
             <div className="mb-8 space-y-4">
-              <FeatureItem
-                icon={CreditCard}
-                title="Virtual & Physical Cards"
-                description="Spend anywhere with your debit card"
-                color="#8B5CF6"
-              />
-              <FeatureItem
-                icon={Shield}
-                title="Bank-Grade Security"
-                description="Your funds are protected with enterprise security"
-                color="#10B981"
-              />
-              <FeatureItem
-                icon={Globe}
-                title="Global Transfers"
-                description="Send money worldwide with low fees"
-                color="#F59E0B"
-              />
+              <FeatureItem icon={CreditCard} title="Virtual & physical cards" description="Spend anywhere with your Safe Haven card" color="#475467" bg="#F2F4F7" />
+              <FeatureItem icon={Shield}     title="Bank-grade security" description="Your funds are protected with enterprise security" color="#12B76A" bg="#ECFDF3" />
+              <FeatureItem icon={Globe}      title="Global transfers" description="Send money worldwide with low fees" color="#2775CA" bg="#EFF8FF" />
             </div>
 
-            <div className="space-y-3">
-              <button
-                onClick={goToDashboard}
-                className="group h-[52px] w-full rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-[15px] font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-xl hover:shadow-emerald-500/30 active:scale-[0.98] flex items-center justify-center gap-2"
-              >
-                Go to Dashboard
-                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </button>
-            </div>
+            <button onClick={goToDashboard} className={primaryBtn} style={primaryStyle} onMouseEnter={onHover} onMouseLeave={offHover}>
+              Go to dashboard <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </button>
           </div>
         )}
 
-        {/* ── Dot navigation ── */}
-        <div className="mt-10 flex gap-2.5">
+        {/* Dots */}
+        <div className="mt-8 flex items-center gap-2">
           {Array.from({ length: totalSlides }).map((_, i) => (
-            <button
-              key={i}
-              onClick={() => goToSlide(i)}
-              className={cn(
-                "h-2 rounded-full transition-all duration-300",
-                i === slide
-                  ? "w-6 bg-slate-900"
-                  : "w-2 bg-slate-300 hover:bg-slate-400"
-              )}
-            />
+            <button key={i} onClick={() => goToSlide(i)} aria-label={`Slide ${i + 1}`}
+              style={{ height: 8, width: i === slide ? 24 : 8, borderRadius: 4, backgroundColor: i === slide ? "var(--dash-primary)" : "var(--dash-border-2)", transition: "all 300ms" }} />
           ))}
         </div>
-
-        {/* Progress indicator */}
-        <p className="mt-4 text-[11px] text-slate-400">
-          {slide + 1} of {totalSlides}
-        </p>
+        <p className="mt-3 text-[11px]" style={{ color: "var(--dash-text-3)" }}>{slide + 1} of {totalSlides}</p>
       </div>
 
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(12px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
+      <style>{`@keyframes obFade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }`}</style>
     </div>
   )
 }

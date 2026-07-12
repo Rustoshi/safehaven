@@ -37,7 +37,7 @@ export function GenerationResultChart({ result }: Props) {
           { label: "Transactions created", value: result.transactionsCreated.toLocaleString(), color: "text-gray-900" },
           { label: "Total income",          value: fmt(result.incomeTotal),                    color: "text-emerald-600" },
           { label: "Total expenses",         value: fmt(result.expensesTotal),                  color: "text-red-500" },
-          { label: "Final balance",          value: fmt(result.finalBalance),                   color: "text-blue-600" },
+          { label: "Final balance",          value: fmt(result.finalBalance),                   color: "text-indigo-600" },
         ].map((card) => (
           <div key={card.label} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
             <p className="text-xs text-gray-500 mb-1">{card.label}</p>

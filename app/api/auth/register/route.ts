@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import { registerUser } from "@/lib/services/user-auth.service"
-import { sendWelcomeEmail } from "@/lib/email"
+import { startEmailVerification } from "@/lib/services/user-auth.service"
+import { sendOtpEmail } from "@/lib/email"
 import { getAppSettings } from "@/lib/services/settings.service"
 
 // ── In-memory rate limiter (IP-based, 5 registrations per hour) ───────────────
@@ -79,7 +79,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Validation failed", errors }, { status: 400 })
     }
 
-    const { user } = await registerUser({
+    // Do NOT create the account yet — stash it and email a one-time code first.
+    const { otp, firstName, email } = await startEmailVerification({
       firstName: parsed.data.firstName,
       lastName:  parsed.data.lastName,
       email:     parsed.data.email,
@@ -89,12 +90,17 @@ export async function POST(req: NextRequest) {
       currency:  parsed.data.currency,
     })
 
-    // Send welcome email (non-blocking — failures are swallowed)
-    await sendWelcomeEmail(user.email, user.firstName)
+    const sent = await sendOtpEmail(email, firstName, otp)
+    if (!sent) {
+      return NextResponse.json(
+        { error: "We couldn't send your verification code. Please try again shortly." },
+        { status: 502 }
+      )
+    }
 
     return NextResponse.json(
-      { success: true, message: "Account created successfully." },
-      { status: 201 }
+      { success: true, requiresOtp: true, email },
+      { status: 200 }
     )
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Registration failed"

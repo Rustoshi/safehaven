@@ -45,6 +45,7 @@ export interface CardStats {
   rejectedCount:   number
   activeCount:     number
   frozenCount:     number
+  blockedCount:    number
   cancelledCount:  number
   totalCreditIssued: number
 }
@@ -188,6 +189,7 @@ export async function getCardApplications(
         rejectedCount:    { $sum: { $cond: [{ $eq: ["$status", "rejected"]  }, 1, 0] } },
         activeCount:      { $sum: { $cond: [{ $eq: ["$status", "active"]    }, 1, 0] } },
         frozenCount:      { $sum: { $cond: [{ $eq: ["$status", "frozen"]    }, 1, 0] } },
+        blockedCount:     { $sum: { $cond: [{ $eq: ["$status", "blocked"]   }, 1, 0] } },
         cancelledCount:   { $sum: { $cond: [{ $eq: ["$status", "cancelled"] }, 1, 0] } },
         totalCreditIssued:{ $sum: { $ifNull: ["$creditLimit", 0] } },
       }},
@@ -201,6 +203,7 @@ export async function getCardApplications(
     rejectedCount:    s.rejectedCount   ?? 0,
     activeCount:      s.activeCount     ?? 0,
     frozenCount:      s.frozenCount     ?? 0,
+    blockedCount:     s.blockedCount    ?? 0,
     cancelledCount:   s.cancelledCount  ?? 0,
     totalCreditIssued:s.totalCreditIssued ?? 0,
   }
@@ -390,6 +393,65 @@ export async function unfreezeCard(
   return (updated!.toObject()) as unknown as Record<string, unknown>
 }
 
+// ── blockCard ─────────────────────────────────────────────────────────────────
+// Admin-enforced hard block (e.g. fraud / compliance). Unlike a freeze — which
+// the user can lift themselves — a blocked card can only be restored by an admin.
+
+export async function blockCard(
+  cardId:     string,
+  reason:     string,
+  adminId:    string,
+  adminEmail: string,
+  req?:       Request
+): Promise<Record<string, unknown>> {
+  await connectDB()
+
+  const card = await CardApplication.findById(cardId)
+  if (!card)                                        throw new Error("Card not found")
+  if (!["active", "frozen"].includes(card.status))  throw new Error("Only active or frozen cards can be blocked")
+
+  const updated = await CardApplication.findByIdAndUpdate(
+    cardId, { status: "blocked", adminNote: reason }, { new: true }
+  )
+
+  const last4 = card.cardNumber?.slice(-4) ?? "****"
+  await createAuditLog(adminId, adminEmail, "card.block", "CardApplication", cardId, { reason }, req)
+  await notifyUser(
+    String(card.userId), "card", "Card blocked",
+    `Your card ending in ${last4} has been blocked. Reason: ${reason}. Please contact support.`, { cardId }
+  )
+
+  return (updated!.toObject()) as unknown as Record<string, unknown>
+}
+
+// ── unblockCard ───────────────────────────────────────────────────────────────
+
+export async function unblockCard(
+  cardId:     string,
+  adminId:    string,
+  adminEmail: string,
+  req?:       Request
+): Promise<Record<string, unknown>> {
+  await connectDB()
+
+  const card = await CardApplication.findById(cardId)
+  if (!card)                     throw new Error("Card not found")
+  if (card.status !== "blocked") throw new Error("Card is not blocked")
+
+  const updated = await CardApplication.findByIdAndUpdate(
+    cardId, { status: "active" }, { new: true }
+  )
+
+  const last4 = card.cardNumber?.slice(-4) ?? "****"
+  await createAuditLog(adminId, adminEmail, "card.unblock", "CardApplication", cardId, {}, req)
+  await notifyUser(
+    String(card.userId), "card", "Card unblocked",
+    `Your card ending in ${last4} has been unblocked and is now active.`, { cardId }
+  )
+
+  return (updated!.toObject()) as unknown as Record<string, unknown>
+}
+
 // ── cancelCard ────────────────────────────────────────────────────────────────
 
 export async function cancelCard(
@@ -403,7 +465,7 @@ export async function cancelCard(
 
   const card = await CardApplication.findById(cardId)
   if (!card) throw new Error("Card not found")
-  if (!["active", "frozen"].includes(card.status)) throw new Error("Card cannot be cancelled in its current state")
+  if (!["active", "frozen", "blocked"].includes(card.status)) throw new Error("Card cannot be cancelled in its current state")
 
   const updated = await CardApplication.findByIdAndUpdate(
     cardId,

@@ -86,7 +86,7 @@ export async function PATCH(
 
     const { cardId } = await params
     const body = await req.json()
-    const { action, spendingLimit, dailySpendLimit } = body
+    const { action, spendingLimit, dailySpendLimit, newPin } = body
 
     await connectDB()
 
@@ -125,11 +125,22 @@ export async function PATCH(
           card.dailySpendLimit = dailySpendLimit
         }
         await card.save()
-        return NextResponse.json({ 
-          success: true, 
+        return NextResponse.json({
+          success: true,
           spendingLimit: card.spendingLimit,
           dailySpendLimit: card.dailySpendLimit,
         })
+
+      case "change_pin":
+        if (typeof newPin !== "string" || !/^\d{4}$/.test(newPin)) {
+          return NextResponse.json({ error: "PIN must be exactly 4 digits" }, { status: 400 })
+        }
+        if (!["active", "frozen"].includes(card.status)) {
+          return NextResponse.json({ error: "PIN can only be changed on an active card" }, { status: 400 })
+        }
+        card.cardPin = newPin
+        await card.save()
+        return NextResponse.json({ success: true, cardPin: newPin })
 
       default:
         return NextResponse.json({ error: "Invalid action" }, { status: 400 })
@@ -163,6 +174,13 @@ export async function DELETE(
 
     if (!card) {
       return NextResponse.json({ error: "Card not found" }, { status: 404 })
+    }
+
+    // A blocked card is under an admin hold — the user cannot cancel it themselves
+    if (card.status === "blocked") {
+      return NextResponse.json({
+        error: "This card has been blocked by an administrator. Please contact support.",
+      }, { status: 403 })
     }
 
     // Check if card has outstanding balance (for credit cards)

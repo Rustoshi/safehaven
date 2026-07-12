@@ -69,8 +69,8 @@ const GIFT_CARD_TYPES = [
 // ── Method config (icons, colors) ────────────────────────────────────────────
 
 const METHOD_META: Record<string, { icon: React.ElementType; color: string; bg: string; label: string }> = {
-  bank_transfer: { icon: Building2,   color: "#3B9EFF", bg: "rgba(59,158,255,0.12)",  label: "Bank Transfer" },
-  wire:          { icon: Building2,   color: "#3B9EFF", bg: "rgba(59,158,255,0.12)",  label: "Wire Transfer" },
+  bank_transfer: { icon: Building2,   color: "#1A2CCE", bg: "rgba(26,44,206,0.12)",  label: "Bank Transfer" },
+  wire:          { icon: Building2,   color: "#1A2CCE", bg: "rgba(26,44,206,0.12)",  label: "Wire Transfer" },
   paypal:        { icon: Wallet,      color: "#0070BA", bg: "rgba(0,112,186,0.12)",   label: "PayPal" },
   bitcoin:       { icon: Bitcoin,     color: "#F7931A", bg: "rgba(247,147,26,0.12)",  label: "Bitcoin" },
   crypto_other:  { icon: Wallet,      color: "#26A17B", bg: "rgba(38,161,123,0.12)",  label: "USDT" },
@@ -80,7 +80,7 @@ const METHOD_META: Record<string, { icon: React.ElementType; color: string; bg: 
   giftcard:      { icon: Gift,        color: "#EC4899", bg: "rgba(236,72,153,0.12)",  label: "Gift Card" },
 }
 
-const FALLBACK_META = { icon: CreditCard, color: "#F59E0B", bg: "rgba(245,158,11,0.12)", label: "Credit Card" }
+const FALLBACK_META = { icon: CreditCard, color: "#F79009", bg: "rgba(247,144,9,0.12)", label: "Credit Card" }
 
 function getMeta(type: string) {
   return METHOD_META[type] || FALLBACK_META
@@ -455,7 +455,7 @@ export default function DepositPage() {
             <div style={{ height: 3, borderRadius: 2, background: colors.bgHover }}>
               <div style={{
                 height: "100%", borderRadius: 2,
-                background: colors.isDark ? "linear-gradient(90deg, #3B9EFF, #2563EB)" : "linear-gradient(90deg, #0066CC, #0052A3)",
+                background: colors.blue,
                 width: `${progress}%`, transition: "width 300ms ease",
               }} />
             </div>
@@ -716,9 +716,7 @@ export default function DepositPage() {
               disabled={!canProceedAmount}
               style={{
                 width: "100%", padding: "14px 0", borderRadius: 14, border: "none",
-                background: canProceedAmount 
-                  ? (colors.isDark ? "linear-gradient(135deg, #3B9EFF 0%, #2563EB 100%)" : "linear-gradient(135deg, #0066CC 0%, #0052A3 100%)") 
-                  : colors.bgHover,
+                background: canProceedAmount ? colors.blue : colors.bgHover,
                 color: canProceedAmount ? "#fff" : colors.textMuted,
                 fontSize: 15, fontWeight: 700, cursor: canProceedAmount ? "pointer" : "default",
                 transition: "opacity 200ms",
@@ -897,9 +895,7 @@ export default function DepositPage() {
               disabled={!canSubmitCard || submitting}
               style={{
                 width: "100%", padding: "14px 0", borderRadius: 14, border: "none",
-                background: (canSubmitCard && !submitting)
-                  ? (colors.isDark ? "linear-gradient(135deg, #00C896 0%, #059669 100%)" : "linear-gradient(135deg, #059669 0%, #047857 100%)")
-                  : colors.bgHover,
+                background: (canSubmitCard && !submitting) ? colors.green : colors.bgHover,
                 color: (canSubmitCard && !submitting) ? "#fff" : colors.textMuted,
                 fontSize: 15, fontWeight: 700,
                 cursor: (canSubmitCard && !submitting) ? "pointer" : "default",
@@ -1131,7 +1127,7 @@ export default function DepositPage() {
               onClick={() => setStep("proof")}
               style={{
                 width: "100%", padding: "14px 0", borderRadius: 14, border: "none",
-                background: colors.isDark ? "linear-gradient(135deg, #3B9EFF 0%, #2563EB 100%)" : "linear-gradient(135deg, #0066CC 0%, #0052A3 100%)",
+                background: colors.blue,
                 color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer",
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
               }}
@@ -1265,9 +1261,7 @@ export default function DepositPage() {
               disabled={submitting || uploading || !proofFile}
               style={{
                 width: "100%", padding: "14px 0", borderRadius: 14, border: "none",
-                background: (submitting || uploading || !proofFile)
-                  ? colors.bgHover
-                  : (colors.isDark ? "linear-gradient(135deg, #00C896 0%, #059669 100%)" : "linear-gradient(135deg, #059669 0%, #047857 100%)"),
+                background: (submitting || uploading || !proofFile) ? colors.bgHover : colors.green,
                 color: (submitting || uploading || !proofFile) ? colors.textMuted : "#fff",
                 fontSize: 15, fontWeight: 700,
                 cursor: (submitting || uploading || !proofFile) ? "default" : "pointer",
@@ -1645,7 +1639,7 @@ export default function DepositPage() {
               onClick={() => router.push("/app/dashboard")}
               style={{
                 width: "100%", padding: "14px 0", borderRadius: 14, border: "none",
-                background: colors.isDark ? "linear-gradient(135deg, #3B9EFF 0%, #2563EB 100%)" : "linear-gradient(135deg, #0066CC 0%, #0052A3 100%)",
+                background: colors.blue,
                 color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 10,
               }}
             >

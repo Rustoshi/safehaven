@@ -83,13 +83,13 @@ export function TransactionTypeFilter({ selected, onChange }: Props) {
         className={cn(
           "flex h-9 items-center gap-2 rounded-lg border px-3 text-sm transition-colors",
           selected.length > 0
-            ? "border-[#0F4C81] bg-[#0F4C81]/5 text-[#0F4C81]"
+            ? "border-[#1A2CCE] bg-[#1A2CCE]/5 text-[#1A2CCE]"
             : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
         )}
       >
         Type
         {selected.length > 0 && (
-          <span className="rounded-full bg-[#0F4C81] px-1.5 py-0.5 text-[10px] font-semibold text-white leading-none">
+          <span className="rounded-full bg-[#1A2CCE] px-1.5 py-0.5 text-[10px] font-semibold text-white leading-none">
             {selected.length}
           </span>
         )}

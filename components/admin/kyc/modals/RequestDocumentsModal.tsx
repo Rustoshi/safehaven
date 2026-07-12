@@ -88,10 +88,10 @@ export function RequestDocumentsModal({ userId, userName, open, onOpenChange, on
                     type="checkbox"
                     checked={docTypes.includes(opt.value)}
                     onChange={() => toggleDocType(opt.value)}
-                    className="mt-0.5 accent-[#0F4C81]"
+                    className="mt-0.5 accent-[#1A2CCE]"
                   />
                   <div>
-                    <p className="text-sm font-medium group-hover:text-[#0F4C81] transition-colors">{opt.label}</p>
+                    <p className="text-sm font-medium group-hover:text-[#1A2CCE] transition-colors">{opt.label}</p>
                     <p className="text-xs text-gray-500">{opt.hint}</p>
                   </div>
                 </label>
@@ -121,7 +121,7 @@ export function RequestDocumentsModal({ userId, userName, open, onOpenChange, on
               onChange={(e) => setMessage(e.target.value)}
               rows={4}
               placeholder="Please resubmit your identity documents. The following were not accepted: ..."
-              className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-[#0F4C81] focus:border-[#0F4C81]"
+              className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-[#1A2CCE] focus:border-[#1A2CCE]"
             />
             <p className="text-xs text-gray-400 mt-1">{message.length} chars</p>
           </div>
@@ -146,7 +146,7 @@ export function RequestDocumentsModal({ userId, userName, open, onOpenChange, on
           <Button
             onClick={submit}
             disabled={!message.trim() || docTypes.length === 0 || submitting}
-            className="bg-[#0F4C81] hover:bg-[#0F4C81]/90"
+            className="bg-[#1A2CCE] hover:bg-[#1A2CCE]/90"
           >
             {submitting ? "Sending…" : "Send request"}
           </Button>

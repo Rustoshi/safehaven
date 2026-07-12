@@ -105,7 +105,7 @@ export function UpdateLimitsModal({ card, open, onOpenChange, onSuccess }: Props
 
           <div className="flex justify-end gap-2 pt-1">
             <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button onClick={submit} disabled={submitting} className="bg-[#0F4C81] hover:bg-[#0F4C81]/90">
+            <Button onClick={submit} disabled={submitting} className="bg-[#1A2CCE] hover:bg-[#1A2CCE]/90">
               {submitting ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Updating…</> : "Update limits"}
             </Button>
           </div>

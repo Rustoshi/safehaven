@@ -31,15 +31,15 @@ interface Props {
 // ── Type icon mapping ─────────────────────────────────────────────────────────
 
 const TYPE_CONFIG: Record<string, { icon: React.ElementType; bg: string; color: string }> = {
-  transaction:      { icon: ArrowLeftRight, bg: "rgba(0,200,150,0.12)",   color: "#00C896" },
-  security:         { icon: ShieldAlert,    bg: "rgba(239,68,68,0.12)",   color: "#EF4444" },
-  kyc:              { icon: ShieldCheck,    bg: "rgba(59,158,255,0.12)",  color: "#3B9EFF" },
-  loan:             { icon: Landmark,       bg: "rgba(129,140,248,0.12)", color: "#818CF8" },
-  card:             { icon: CreditCard,     bg: "rgba(167,139,250,0.12)", color: "#A78BFA" },
-  system:           { icon: Bell,           bg: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" },
-  marketing:        { icon: Megaphone,      bg: "rgba(0,200,150,0.12)",   color: "#00C896" },
-  deposit_request:  { icon: ArrowLeftRight, bg: "rgba(0,200,150,0.12)",   color: "#00C896" },
-  transfer:         { icon: ArrowLeftRight, bg: "rgba(59,158,255,0.12)",  color: "#3B9EFF" },
+  transaction:      { icon: ArrowLeftRight, bg: "#ECFDF3", color: "#12B76A" },
+  security:         { icon: ShieldAlert,    bg: "#FEF3F2", color: "#F04438" },
+  kyc:              { icon: ShieldCheck,    bg: "#EEF0FE", color: "#1A2CCE" },
+  loan:             { icon: Landmark,       bg: "#EEF0FE", color: "#1A2CCE" },
+  card:             { icon: CreditCard,     bg: "#EEF0FE", color: "#1A2CCE" },
+  system:           { icon: Bell,           bg: "#F9FAFB", color: "#98A2B3" },
+  marketing:        { icon: Megaphone,      bg: "#ECFDF3", color: "#12B76A" },
+  deposit_request:  { icon: ArrowLeftRight, bg: "#ECFDF3", color: "#12B76A" },
+  transfer:         { icon: ArrowLeftRight, bg: "#EEF0FE", color: "#1A2CCE" },
 }
 
 const FILTER_TABS = [

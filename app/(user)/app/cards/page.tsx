@@ -55,11 +55,12 @@ interface Eligibility {
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<string, { icon: React.ElementType; color: string; bg: string; label: string }> = {
-  pending:   { icon: Clock,         color: "#F59E0B", bg: "rgba(245,158,11,0.12)", label: "Pending Review" },
-  active:    { icon: CheckCircle2,  color: "#00C896", bg: "rgba(0,200,150,0.12)",  label: "Active" },
-  frozen:    { icon: Snowflake,     color: "#3B9EFF", bg: "rgba(59,158,255,0.12)", label: "Frozen" },
-  rejected:  { icon: XCircle,       color: "#EF4444", bg: "rgba(239,68,68,0.12)",  label: "Rejected" },
-  cancelled: { icon: XCircle,       color: "rgba(255,255,255,0.4)", bg: "rgba(255,255,255,0.06)", label: "Cancelled" },
+  pending:   { icon: Clock,         color: "#F79009", bg: "#FFFAEB", label: "Pending Review" },
+  active:    { icon: CheckCircle2,  color: "#12B76A", bg: "#ECFDF3",  label: "Active" },
+  frozen:    { icon: Snowflake,     color: "#1A2CCE", bg: "#EEF0FE", label: "Frozen" },
+  blocked:   { icon: Lock,          color: "#B42318", bg: "#FEF3F2", label: "Blocked" },
+  rejected:  { icon: XCircle,       color: "#F04438", bg: "#FEF3F2",  label: "Rejected" },
+  cancelled: { icon: XCircle,       color: "#667085", bg: "#F9FAFB", label: "Cancelled" },
 }
 
 function formatCardLabel(network: string, type: string): string {
@@ -163,7 +164,7 @@ export default function CardsPage() {
 
   useEffect(() => { fetchCards() }, [fetchCards])
 
-  const activeOrPending = cards?.filter((c) => ["pending", "active", "frozen"].includes(c.status)) || []
+  const activeOrPending = cards?.filter((c) => ["pending", "active", "frozen", "blocked"].includes(c.status)) || []
   const canApply = activeOrPending.length < cardSettings.maxPerUser
 
   const openApply = () => {
@@ -431,7 +432,7 @@ export default function CardsPage() {
                       {cardSettings.applicationFee > 0 && (
                         <div className="flex items-center justify-between">
                           <span className="text-[13px]" style={{ color: colors.textSecondary }}>Application Fee</span>
-                          <span className="text-[13px] font-semibold" style={{ color: colors.yellow || "#F59E0B" }}>{formatAmount(cardSettings.applicationFee)}</span>
+                          <span className="text-[13px] font-semibold" style={{ color: colors.yellow || "#F79009" }}>{formatAmount(cardSettings.applicationFee)}</span>
                         </div>
                       )}
                     </div>
@@ -473,7 +474,7 @@ export default function CardsPage() {
                   <div className="grid grid-cols-3 gap-3">
                     {(["visa", "mastercard", "amex"] as const).map((net) => {
                       const sel = selectedNetwork === net
-                      const color = net === "visa" ? colors.blue : net === "mastercard" ? (colors.yellow || "#F59E0B") : "#2E77BC"
+                      const color = net === "visa" ? colors.blue : net === "mastercard" ? (colors.yellow || "#F79009") : "#2E77BC"
                       return (
                         <button
                           key={net}
@@ -848,8 +849,8 @@ export default function CardsPage() {
                       )}
                       {cardSettings.applicationFee > 0 && (
                         <div className="flex justify-between pt-2 border-t" style={{ borderColor: colors.border }}>
-                          <span className="text-[13px] font-medium" style={{ color: colors.yellow || "#F59E0B" }}>Application Fee</span>
-                          <span className="text-[13px] font-bold" style={{ color: colors.yellow || "#F59E0B" }}>{formatAmount(cardSettings.applicationFee)}</span>
+                          <span className="text-[13px] font-medium" style={{ color: colors.yellow || "#F79009" }}>Application Fee</span>
+                          <span className="text-[13px] font-bold" style={{ color: colors.yellow || "#F79009" }}>{formatAmount(cardSettings.applicationFee)}</span>
                         </div>
                       )}
                     </div>
@@ -1263,9 +1264,9 @@ function CardVisual({ card, colors, accountBalance, onPayment }: CardVisualProps
                 </div>
 
                 {payError && (
-                  <div className="mb-4 p-3 rounded-xl flex items-start gap-2" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)" }}>
-                    <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" style={{ color: "#EF4444" }} />
-                    <p className="text-[13px]" style={{ color: "#EF4444" }}>{payError}</p>
+                  <div className="mb-4 p-3 rounded-xl flex items-start gap-2" style={{ background: colors.redBg, border: `1px solid ${colors.red}33` }}>
+                    <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" style={{ color: colors.red }} />
+                    <p className="text-[13px]" style={{ color: colors.red }}>{payError}</p>
                   </div>
                 )}
 

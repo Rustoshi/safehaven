@@ -120,7 +120,7 @@ export function RecordPaymentModal({ loan, open, onOpenChange, onSuccess }: Prop
           {loan.primaryAccount && isValid && (
             <div className={[
               "rounded-lg p-3 text-xs",
-              overBalance ? "bg-red-50 border border-red-200" : "bg-blue-50 border border-blue-100",
+              overBalance ? "bg-red-50 border border-red-200" : "bg-indigo-50 border border-indigo-100",
             ].join(" ")}>
               <p className="font-medium mb-1 text-gray-700">Balance impact</p>
               <p>
@@ -145,7 +145,7 @@ export function RecordPaymentModal({ loan, open, onOpenChange, onSuccess }: Prop
             <Button
               onClick={submit}
               disabled={!isValid || overBalance || submitting}
-              className="bg-[#0F4C81] hover:bg-[#0F4C81]/90"
+              className="bg-[#1A2CCE] hover:bg-[#1A2CCE]/90"
             >
               {submitting ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Recording…</> : "Record payment"}
             </Button>

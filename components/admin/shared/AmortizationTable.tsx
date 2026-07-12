@@ -166,7 +166,7 @@ export function AmortizationTable({ principal, annualRate, termMonths, startDate
       {maxVisible && rows.length > (maxVisible ?? COLLAPSED) && !useVirtual && (
         <button
           onClick={() => setExpanded((v) => !v)}
-          className="text-xs text-blue-600 hover:underline"
+          className="text-xs text-indigo-600 hover:underline"
         >
           {expanded ? "Show less" : `Show all ${rows.length} payments`}
         </button>

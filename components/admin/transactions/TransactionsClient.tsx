@@ -37,7 +37,7 @@ const CREDIT_TYPES = new Set([
 const NON_REVERSIBLE = new Set(["fee", "loan_repayment"])
 
 const TYPE_COLORS: Record<string, string> = {
-  admin_deposit:    "bg-blue-100 text-blue-700",
+  admin_deposit:    "bg-indigo-100 text-indigo-700",
   deposit:          "bg-emerald-100 text-emerald-700",
   withdrawal:       "bg-amber-100 text-amber-700",
   transfer_out:     "bg-orange-100 text-orange-700",
@@ -302,7 +302,7 @@ export function TransactionsClient({ initialData }: Props) {
           actions={
             <Button
               onClick={() => setCreateOpen(true)}
-              className="bg-[#0F4C81] hover:bg-[#0F4C81]/90 text-white gap-1.5"
+              className="bg-[#1A2CCE] hover:bg-[#1A2CCE]/90 text-white gap-1.5"
             >
               <Plus className="h-4 w-4" />
               Create transaction
@@ -347,14 +347,14 @@ export function TransactionsClient({ initialData }: Props) {
               type="date"
               value={dateFrom}
               onChange={(e) => { setDateFrom(e.target.value); applyFilter({ dateFrom: e.target.value }) }}
-              className="h-9 rounded-lg border border-slate-200 px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/20 shrink-0"
+              className="h-9 rounded-lg border border-slate-200 px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#1A2CCE]/20 shrink-0"
               title="From date"
             />
             <input
               type="date"
               value={dateTo}
               onChange={(e) => { setDateTo(e.target.value); applyFilter({ dateTo: e.target.value }) }}
-              className="h-9 rounded-lg border border-slate-200 px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0F4C81]/20 shrink-0"
+              className="h-9 rounded-lg border border-slate-200 px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#1A2CCE]/20 shrink-0"
               title="To date"
             />
 
@@ -362,7 +362,7 @@ export function TransactionsClient({ initialData }: Props) {
               variant="outline"
               size="sm"
               onClick={() => setAdvOpen((o) => !o)}
-              className={`shrink-0 ${advOpen ? "border-[#0F4C81] text-[#0F4C81]" : ""}`}
+              className={`shrink-0 ${advOpen ? "border-[#1A2CCE] text-[#1A2CCE]" : ""}`}
             >
               <SlidersHorizontal className="h-4 w-4 sm:mr-1.5" />
               <span className="hidden sm:inline">Filters</span>
@@ -503,7 +503,7 @@ export function TransactionsClient({ initialData }: Props) {
                 onClick={() => { setLimit(l); applyFilter({ limit: l, page: 1 }) }}
                 className={`rounded-md px-2.5 py-1 text-sm border transition-colors ${
                   limit === l
-                    ? "bg-[#0F4C81] text-white border-[#0F4C81]"
+                    ? "bg-[#1A2CCE] text-white border-[#1A2CCE]"
                     : "border-slate-200 text-slate-600 hover:bg-slate-50"
                 }`}
               >
@@ -528,7 +528,7 @@ export function TransactionsClient({ initialData }: Props) {
               <Inbox className="h-8 w-8" />
               <p className="text-sm">No transactions found</p>
               {activeFilters.length > 0 && (
-                <button onClick={clearAll} className="text-xs text-[#0F4C81] underline">Clear filters</button>
+                <button onClick={clearAll} className="text-xs text-[#1A2CCE] underline">Clear filters</button>
               )}
             </div>
           ) : (
@@ -810,7 +810,7 @@ export function TransactionsClient({ initialData }: Props) {
                       variant={page === p ? "default" : "outline"}
                       size="sm"
                       onClick={() => { setPage(p); fetchData({ page: p }) }}
-                      className={page === p ? "bg-[#0F4C81] text-white border-[#0F4C81]" : ""}
+                      className={page === p ? "bg-[#1A2CCE] text-white border-[#1A2CCE]" : ""}
                     >
                       {p}
                     </Button>
@@ -901,11 +901,11 @@ function StatusMultiSelect({
       <button
         onClick={() => setOpen((o) => !o)}
         className={`flex h-9 items-center gap-2 rounded-lg border px-3 text-sm transition-colors
-          ${selected.length > 0 ? "border-[#0F4C81] bg-[#0F4C81]/5 text-[#0F4C81]" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"}`}
+          ${selected.length > 0 ? "border-[#1A2CCE] bg-[#1A2CCE]/5 text-[#1A2CCE]" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"}`}
       >
         Status
         {selected.length > 0 && (
-          <span className="rounded-full bg-[#0F4C81] px-1.5 py-0.5 text-[10px] font-semibold text-white leading-none">
+          <span className="rounded-full bg-[#1A2CCE] px-1.5 py-0.5 text-[10px] font-semibold text-white leading-none">
             {selected.length}
           </span>
         )}

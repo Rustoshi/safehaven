@@ -94,7 +94,7 @@ export function CurrencyTagInput({ value, onChange, defaultCurrency, disabled }:
           className={[
             "min-h-[42px] flex flex-wrap gap-1.5 items-center border rounded-lg px-2 py-1.5 cursor-text transition-colors",
             disabled ? "bg-gray-50 opacity-60" : "bg-white",
-            focused ? "border-[#0F4C81] ring-1 ring-[#0F4C81]" : "border-gray-300",
+            focused ? "border-[#1A2CCE] ring-1 ring-[#1A2CCE]" : "border-gray-300",
           ].join(" ")}
           onClick={() => { if (!disabled) { inputRef.current?.focus(); setOpen(true) } }}
         >
@@ -106,7 +106,7 @@ export function CurrencyTagInput({ value, onChange, defaultCurrency, disabled }:
                 className={[
                   "inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium select-none",
                   isDefault
-                    ? "bg-[#0F4C81] text-white"
+                    ? "bg-[#1A2CCE] text-white"
                     : "bg-gray-100 text-gray-700",
                 ].join(" ")}
                 title={getCurrencyName(code)}

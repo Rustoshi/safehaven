@@ -6,22 +6,29 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { Eye, EyeOff, Loader2, AlertCircle, ShieldCheck } from "lucide-react"
-import { cn } from "@/lib/utils"
+import Link from "next/link"
+import Image from "next/image"
+import { Eye, EyeOff, Loader2, AlertCircle, Lock, ShieldCheck } from "lucide-react"
 import { BANK_NAME } from "@/lib/brand"
-import { Button }                          from "@/components/ui/button"
-import { Input }                           from "@/components/ui/input"
-import { Label }                           from "@/components/ui/label"
-import { Alert, AlertDescription }         from "@/components/ui/alert"
 
-// ── Validation ──────────────────────────────────────────────────────────────
+/* ══════════════════════════════════════════════════════════════════════════
+   Admin sign-in — Safe Haven Private system (design.md): ink brand panel over
+   a Pexels image, linen text, Newsreader display, General Sans UI, sharp 2px
+   bronze-outline controls. Fully responsive.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+const INK = "#17140F"
+const BRONZE = "#A67C3D"
+const DISPLAY = "var(--sh-font-display)"
+const UI = "var(--sh-font-ui)"
+const LABEL = "text-[11px] uppercase tracking-[0.09em] font-medium"
+
 const loginSchema = z.object({
   email:    z.string().min(1, "Email is required").email("Enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
 })
 type LoginFormValues = z.infer<typeof loginSchema>
 
-// ── Error code → human message map ──────────────────────────────────────────
 const AUTH_ERRORS: Record<string, string> = {
   invalid_credentials: "Invalid email or password. Please check your credentials and try again.",
   account_suspended:   "This account has been suspended. Contact your system administrator.",
@@ -31,139 +38,35 @@ const AUTH_ERRORS: Record<string, string> = {
 }
 const FALLBACK_ERROR = "Something went wrong. Please try again later."
 
-// ── Brand panel — CSS-only geometric decoration ──────────────────────────────
-function BrandPanel() {
-  return (
-    <div
-      className="relative hidden lg:flex lg:w-1/2 flex-col justify-between overflow-hidden p-12"
-      style={{ backgroundColor: "#0F4C81" }}
-    >
-      {/* Dot-grid texture */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle at 1.5px 1.5px, rgba(255,255,255,0.13) 1.5px, transparent 0)",
-          backgroundSize: "32px 32px",
-        }}
-      />
+const FEATURES = [
+  "Real-time transaction monitoring",
+  "KYC review & compliance tools",
+  "User management & access control",
+]
 
-      {/* Decorative rings */}
-      <div
-        className="pointer-events-none absolute -top-28 -right-28 h-80 w-80 rounded-full"
-        style={{
-          background: "rgba(255,255,255,0.03)",
-          border:     "1px solid rgba(255,255,255,0.07)",
-        }}
-      />
-      <div
-        className="pointer-events-none absolute top-1/3 -right-20 h-56 w-56 rounded-full"
-        style={{
-          background: "transparent",
-          border:     "1px solid rgba(0,200,150,0.18)",
-        }}
-      />
-      <div
-        className="pointer-events-none absolute -bottom-36 -left-20 h-[26rem] w-[26rem] rounded-full"
-        style={{
-          background: "rgba(0,200,150,0.06)",
-          border:     "1px solid rgba(0,200,150,0.1)",
-        }}
-      />
-
-      {/* ── Top: wordmark ── */}
-      <div className="relative z-10 flex items-center gap-2.5">
-        <div
-          className="flex h-9 w-9 items-center justify-center rounded-lg"
-          style={{ backgroundColor: "#00C896" }}
-        >
-          <ShieldCheck className="h-5 w-5 text-white" strokeWidth={2.5} />
-        </div>
-        <span className="text-xl font-bold tracking-tight text-white">{BANK_NAME}</span>
-      </div>
-
-      {/* ── Middle: headline ── */}
-      <div className="relative z-10">
-        <span
-          className="mb-4 inline-block rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-widest"
-          style={{
-            backgroundColor: "rgba(0,200,150,0.18)",
-            color:           "#00C896",
-          }}
-        >
-          Admin Portal
-        </span>
-
-        <h2 className="text-[2.6rem] font-bold leading-[1.15] text-white">
-          Welcome back,<br />Administrator
-        </h2>
-
-        <p className="mt-4 text-base leading-relaxed" style={{ color: "rgba(255,255,255,0.6)" }}>
-          Manage accounts, review transactions, approve deposits, and maintain full control of the {BANK_NAME} platform.
-        </p>
-
-        {/* Feature bullets */}
-        <ul className="mt-8 space-y-3">
-          {[
-            "Real-time transaction monitoring",
-            "KYC review & compliance tools",
-            "User management & access control",
-          ].map((item) => (
-            <li key={item} className="flex items-center gap-2.5" style={{ color: "rgba(255,255,255,0.75)" }}>
-              <span
-                className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
-                style={{ backgroundColor: "#00C896" }}
-              />
-              <span className="text-sm">{item}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* ── Bottom: security badge ── */}
-      <div
-        className="relative z-10 flex items-center gap-2"
-        style={{ color: "rgba(255,255,255,0.4)" }}
-      >
-        <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round"
-            d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"
-          />
-        </svg>
-        <span className="text-xs">Secured with 256-bit TLS encryption</span>
-      </div>
-    </div>
-  )
+function fieldBorder(focused: boolean, error: boolean) {
+  return `0.5px solid ${error ? "var(--sh-error)" : focused ? BRONZE : "var(--sh-ink-10)"}`
 }
 
-// ── Main export ───────────────────────────────────────────────────────────────
 export function AdminLoginForm() {
   const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
-  const [authError,    setAuthError]    = useState<string | null>(null)
+  const [authError, setAuthError]       = useState<string | null>(null)
+  const [focused, setFocused]           = useState<string | null>(null)
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-  })
+  } = useForm<LoginFormValues>({ resolver: zodResolver(loginSchema) })
 
   const onSubmit = async (data: LoginFormValues) => {
     setAuthError(null)
-
-    const result = await signIn("credentials", {
-      redirect:  false,
-      email:     data.email,
-      password:  data.password,
-    })
-
+    const result = await signIn("credentials", { redirect: false, email: data.email, password: data.password })
     if (result?.error) {
       setAuthError(AUTH_ERRORS[result.error] ?? FALLBACK_ERROR)
       return
     }
-
     if (result?.ok) {
       router.push("/admin/dashboard")
       router.refresh()
@@ -171,136 +74,165 @@ export function AdminLoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen">
-      <BrandPanel />
+    <>
+      {/* Safe Haven Private type system */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link rel="preconnect" href="https://api.fontshare.com" />
+      <link href="https://api.fontshare.com/v2/css?f[]=general-sans@300,400,500&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
-      {/* ── Form panel ── */}
-      <div className="flex flex-1 items-center justify-center bg-surface-50 px-6 py-12">
-        <div className="w-full max-w-md">
+      <div className="flex min-h-screen" style={{ backgroundColor: "var(--sh-linen)", fontFamily: UI, color: INK }}>
 
-          {/* Mobile-only logo (brand panel hidden on small screens) */}
-          <div className="mb-8 flex flex-col items-center lg:hidden">
-            <div className="flex items-center gap-2.5">
-              <div
-                className="flex h-9 w-9 items-center justify-center rounded-lg"
-                style={{ backgroundColor: "#0F4C81" }}
-              >
-                <ShieldCheck className="h-5 w-5 text-white" strokeWidth={2.5} />
+        {/* ── Brand panel ── */}
+        <div className="relative hidden lg:flex lg:w-[48%] flex-col overflow-hidden">
+          <Image src="/images/stock/admin-brand.jpg" alt="" aria-hidden fill priority sizes="48vw" className="object-cover" />
+          <div className="absolute inset-0" style={{ backgroundColor: "rgba(23,20,15,0.66)" }} />
+
+          <div className="relative z-10 flex flex-col h-full p-12 xl:p-16">
+            {/* Logo */}
+            <Link href="/" aria-label={BANK_NAME} className="inline-flex w-fit">
+              <Image src="/images/logo.png" alt={BANK_NAME} width={256} height={128} className="h-7 w-auto" priority />
+            </Link>
+
+            {/* Headline */}
+            <div className="flex-1 flex flex-col justify-center max-w-md">
+              <div className="flex items-center gap-3">
+                <span aria-hidden style={{ width: 28, height: "1.5px", backgroundColor: BRONZE }} />
+                <span className={LABEL} style={{ color: "var(--sh-linen-70)" }}>Admin Portal</span>
               </div>
-              <span className="text-xl font-bold tracking-tight text-surface-900">{BANK_NAME}</span>
-            </div>
-            <span className="mt-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.15em] text-surface-400">
-              Admin Portal
-            </span>
-          </div>
-
-          {/* Card */}
-          <div className="rounded-xl border border-surface-200 bg-white p-8 shadow-sm">
-            <div className="mb-7">
-              <h1 className="text-2xl font-bold text-surface-900">Sign in to {BANK_NAME}</h1>
-              <p className="mt-1.5 text-sm text-surface-500">
-                Enter your administrator credentials to continue
+              <h1 className="mt-5 text-[2.5rem] xl:text-[3rem] leading-[1.1]" style={{ fontFamily: DISPLAY, fontWeight: 300, color: "var(--sh-linen)" }}>
+                Welcome back,
+                <br />
+                Administrator
+              </h1>
+              <p className="mt-6 text-[16px] leading-relaxed" style={{ color: "var(--sh-linen-70)" }}>
+                Manage accounts, review transactions, approve deposits, and maintain full control of the {BANK_NAME} platform.
               </p>
+
+              <ul className="mt-8 space-y-3">
+                {FEATURES.map((f) => (
+                  <li key={f} className="flex items-center gap-3 text-[14px]" style={{ color: "var(--sh-linen-70)" }}>
+                    <span aria-hidden style={{ width: 5, height: 5, borderRadius: "50%", backgroundColor: BRONZE }} />
+                    {f}
+                  </li>
+                ))}
+              </ul>
             </div>
 
-            {/* Auth error banner */}
-            {authError && (
-              <Alert variant="destructive" className="mb-6">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{authError}</AlertDescription>
-              </Alert>
-            )}
+            {/* Security note */}
+            <div className="flex items-center gap-2 text-[12px]" style={{ color: "var(--sh-linen-50)" }}>
+              <Lock className="w-3.5 h-3.5" strokeWidth={1.5} />
+              Secured with 256-bit TLS encryption
+            </div>
+          </div>
+        </div>
 
-            <form onSubmit={handleSubmit(onSubmit)} noValidate>
-              <div className="space-y-5">
-
-                {/* Email */}
-                <div className="space-y-1.5">
-                  <Label htmlFor="email">Email address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    autoComplete="email"
-                    autoFocus
-                    placeholder="admin@novapay.io"
-                    aria-invalid={!!errors.email}
-                    aria-describedby={errors.email ? "email-error" : undefined}
-                    {...register("email")}
-                    className={cn(
-                      errors.email &&
-                        "border-red-400 focus-visible:ring-red-400"
-                    )}
-                  />
-                  {errors.email && (
-                    <p id="email-error" role="alert" className="text-xs text-red-600">
-                      {errors.email.message}
-                    </p>
-                  )}
-                </div>
-
-                {/* Password */}
-                <div className="space-y-1.5">
-                  <Label htmlFor="password">Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      autoComplete="current-password"
-                      placeholder="••••••••"
-                      aria-invalid={!!errors.password}
-                      aria-describedby={errors.password ? "password-error" : undefined}
-                      {...register("password")}
-                      className={cn(
-                        "pr-10",
-                        errors.password &&
-                          "border-red-400 focus-visible:ring-red-400"
-                      )}
-                    />
-                    <button
-                      type="button"
-                      tabIndex={-1}
-                      onClick={() => setShowPassword((v) => !v)}
-                      aria-label={showPassword ? "Hide password" : "Show password"}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-400 transition-colors hover:text-surface-600"
-                    >
-                      {showPassword
-                        ? <EyeOff className="h-4 w-4" />
-                        : <Eye    className="h-4 w-4" />
-                      }
-                    </button>
-                  </div>
-                  {errors.password && (
-                    <p id="password-error" role="alert" className="text-xs text-red-600">
-                      {errors.password.message}
-                    </p>
-                  )}
-                </div>
-
-                {/* Submit */}
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="h-11 w-full text-sm font-semibold"
-                  style={{ backgroundColor: "#0F4C81" }}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="animate-spin" />
-                      Signing in…
-                    </>
-                  ) : (
-                    "Sign in"
-                  )}
-                </Button>
-              </div>
-            </form>
+        {/* ── Form panel ── */}
+        <div className="flex flex-1 flex-col min-h-screen">
+          {/* Mobile header */}
+          <div className="lg:hidden flex items-center justify-between px-6 h-16" style={{ borderBottom: "0.5px solid var(--sh-ink-10)" }}>
+            <Link href="/" aria-label={BANK_NAME} className="inline-flex">
+              <Image src="/images/logo.png" alt={BANK_NAME} width={256} height={128} className="h-6 w-auto" />
+            </Link>
+            <span className={LABEL} style={{ color: "var(--sh-ink-50)" }}>Admin Portal</span>
           </div>
 
-          <p className="mt-6 text-center text-xs text-surface-400">
-            Protected area — unauthorised access is strictly prohibited
-          </p>
+          <div className="flex-1 flex items-center justify-center px-6 py-12 lg:py-16">
+            <div className="w-full max-w-[420px]">
+              <div className="space-y-8">
+                {/* Header */}
+                <div>
+                  <div className="flex items-center gap-3">
+                    <span aria-hidden style={{ width: 28, height: "1.5px", backgroundColor: BRONZE }} />
+                    <span className={LABEL} style={{ color: "var(--sh-ink-50)" }}>Administrators</span>
+                  </div>
+                  <h2 className="mt-4 text-[2rem] leading-[1.1]" style={{ fontFamily: DISPLAY, fontWeight: 300, color: INK }}>
+                    Sign in
+                  </h2>
+                  <p className="mt-2 text-[15px]" style={{ color: "var(--sh-ink-50)" }}>
+                    Enter your administrator credentials to continue
+                  </p>
+                </div>
+
+                {authError && (
+                  <div className="flex items-center gap-3 px-4 py-3.5" style={{ backgroundColor: "var(--sh-error-bg)", borderRadius: "2px" }}>
+                    <AlertCircle className="w-5 h-5 flex-shrink-0" strokeWidth={1.5} style={{ color: "var(--sh-error)" }} />
+                    <p className="text-[14px]" style={{ color: "var(--sh-error)" }}>{authError}</p>
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
+                  {/* Email */}
+                  <div className="space-y-2">
+                    <label htmlFor="email" className={LABEL} style={{ color: focused === "email" ? "var(--sh-bronze-dark)" : "var(--sh-ink-50)" }}>
+                      Email address
+                    </label>
+                    <input
+                      id="email" type="email" autoComplete="email" autoFocus placeholder="admin@safehaven.io"
+                      aria-invalid={!!errors.email}
+                      {...register("email")}
+                      onFocus={() => setFocused("email")}
+                      onBlur={() => setFocused(null)}
+                      className="w-full h-12 px-4 text-[15px] focus:outline-none transition-colors placeholder:text-[#17140F80]"
+                      style={{ backgroundColor: "var(--sh-surface)", border: fieldBorder(focused === "email", !!errors.email), borderRadius: "2px", color: INK }}
+                    />
+                    {errors.email && (
+                      <p role="alert" className="text-[12px] flex items-center gap-1" style={{ color: "var(--sh-error)" }}>
+                        <AlertCircle className="w-3 h-3" strokeWidth={1.5} />{errors.email.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Password */}
+                  <div className="space-y-2">
+                    <label htmlFor="password" className={LABEL} style={{ color: focused === "password" ? "var(--sh-bronze-dark)" : "var(--sh-ink-50)" }}>
+                      Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="password" type={showPassword ? "text" : "password"} autoComplete="current-password" placeholder="Enter your password"
+                        aria-invalid={!!errors.password}
+                        {...register("password")}
+                        onFocus={() => setFocused("password")}
+                        onBlur={() => setFocused(null)}
+                        className="w-full h-12 px-4 pr-11 text-[15px] focus:outline-none transition-colors placeholder:text-[#17140F80]"
+                        style={{ backgroundColor: "var(--sh-surface)", border: fieldBorder(focused === "password", !!errors.password), borderRadius: "2px", color: INK }}
+                      />
+                      <button type="button" tabIndex={-1} onClick={() => setShowPassword((v) => !v)}
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2" style={{ color: "var(--sh-ink-50)" }}>
+                        {showPassword ? <EyeOff className="w-4 h-4" strokeWidth={1.5} /> : <Eye className="w-4 h-4" strokeWidth={1.5} />}
+                      </button>
+                    </div>
+                    {errors.password && (
+                      <p role="alert" className="text-[12px] flex items-center gap-1" style={{ color: "var(--sh-error)" }}>
+                        <AlertCircle className="w-3 h-3" strokeWidth={1.5} />{errors.password.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Submit */}
+                  <button
+                    type="submit" disabled={isSubmitting}
+                    className={`${LABEL} w-full h-12 inline-flex items-center justify-center gap-2 transition-colors`}
+                    style={{ color: "var(--sh-bronze-dark)", border: `0.5px solid ${BRONZE}`, borderRadius: "2px", opacity: isSubmitting ? 0.6 : 1 }}
+                    onMouseEnter={(e) => { if (!isSubmitting) e.currentTarget.style.backgroundColor = "var(--sh-bronze-10)" }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent" }}
+                  >
+                    {isSubmitting ? (<><Loader2 className="w-4 h-4 animate-spin" /> Signing in…</>) : "Sign in"}
+                  </button>
+                </form>
+
+                <p className="flex items-center justify-center gap-2 text-center text-[12px]" style={{ color: "var(--sh-ink-50)" }}>
+                  <ShieldCheck className="w-3.5 h-3.5" strokeWidth={1.5} />
+                  Protected area — unauthorised access is strictly prohibited
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }

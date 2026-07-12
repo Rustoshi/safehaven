@@ -37,6 +37,37 @@
   --sh-font-mono:    'Spline Sans Mono', ui-monospace, monospace;
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   SAFE HAVEN — DASHBOARD design system (per dashboard-design.md)
+   Grey-style app: blue/white/grey, Inter, soft shadows, bold numbers.
+   Prefixed --dash-* — used by /app/* (and admin) only; never on public pages.
+   ══════════════════════════════════════════════════════════════════════════ */
+:root {
+  --dash-bg:         #F5F6F8;
+  --dash-surface:    #FFFFFF;
+  --dash-surface-2:  #F9FAFB;
+  --dash-text:       #101828;
+  --dash-text-2:     #667085;
+  --dash-text-3:     #98A2B3;
+  --dash-primary:    #1A2CCE;
+  --dash-primary-2:  #3D50E0;
+  --dash-primary-bg: #EEF0FE;
+  --dash-border:     #EAECF0;
+  --dash-border-2:   #D0D5DD;
+  --dash-success:    #12B76A;
+  --dash-success-bg: #ECFDF3;
+  --dash-danger:     #F04438;
+  --dash-danger-bg:  #FEF3F2;
+  --dash-warning:    #F79009;
+  --dash-warning-bg: #FFFAEB;
+  --dash-radius-card:  16px;
+  --dash-radius-inner: 12px;
+  --dash-radius-ctrl:  10px;
+  --dash-shadow:    0 1px 2px rgba(16,24,40,0.04), 0 1px 3px rgba(16,24,40,0.08);
+  --dash-shadow-sm: 0 1px 2px rgba(16,24,40,0.05);
+  --dash-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
 /* Footer hover states (inline styles can't express :hover) — bronze on hover, per design.md §5 */
 .sh-foot-link   { transition: color 200ms; }
 .sh-foot-link:hover   { color: var(--sh-bronze) !important; }

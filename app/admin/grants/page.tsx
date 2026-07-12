@@ -196,13 +196,13 @@ export default function AdminGrantsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name, email, reference..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }}
-          className="px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
           {STATUS_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -214,7 +214,7 @@ export default function AdminGrantsPage() {
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+            <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
           </div>
         ) : filteredGrants.length === 0 ? (
           <div className="text-center py-20 text-gray-500">
@@ -264,7 +264,7 @@ export default function AdminGrantsPage() {
                       <td className="px-4 py-3 text-right">
                         <button
                           onClick={() => setSelectedGrant(g)}
-                          className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                          className="px-3 py-1.5 text-xs font-medium rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
                         >
                           View
                         </button>
@@ -364,12 +364,12 @@ export default function AdminGrantsPage() {
                     <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${
                       selectedGrant.depositAccount.walletType === "bitcoin" 
                         ? "bg-orange-100 dark:bg-orange-900/30" 
-                        : "bg-blue-100 dark:bg-blue-900/30"
+                        : "bg-indigo-100 dark:bg-indigo-900/30"
                     }`}>
                       {selectedGrant.depositAccount.walletType === "bitcoin" ? (
                         <Bitcoin className="h-5 w-5 text-orange-500" />
                       ) : (
-                        <DollarSign className="h-5 w-5 text-blue-500" />
+                        <DollarSign className="h-5 w-5 text-indigo-500" />
                       )}
                     </div>
                     <div>
@@ -408,8 +408,8 @@ export default function AdminGrantsPage() {
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50 hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
                       >
-                        <FileText className="h-4 w-4 text-blue-500" />
-                        <span className="text-sm font-medium text-blue-600">{doc.name}</span>
+                        <FileText className="h-4 w-4 text-indigo-500" />
+                        <span className="text-sm font-medium text-indigo-600">{doc.name}</span>
                       </a>
                     ))}
                   </div>
@@ -424,9 +424,9 @@ export default function AdminGrantsPage() {
               )}
 
               {selectedGrant.adminNote && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
-                  <p className="text-xs font-medium text-blue-600 uppercase mb-1">Admin Note</p>
-                  <p className="text-blue-700 dark:text-blue-400">{selectedGrant.adminNote}</p>
+                <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-4">
+                  <p className="text-xs font-medium text-indigo-600 uppercase mb-1">Admin Note</p>
+                  <p className="text-indigo-700 dark:text-indigo-400">{selectedGrant.adminNote}</p>
                 </div>
               )}
 
@@ -496,7 +496,7 @@ export default function AdminGrantsPage() {
                   <button
                     onClick={() => handleAction("review")}
                     disabled={actionLoading}
-                    className="w-full sm:flex-1 py-3 sm:py-2.5 rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="w-full sm:flex-1 py-3 sm:py-2.5 rounded-lg bg-indigo-500 text-white font-medium hover:bg-indigo-600 disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
                     Start Review

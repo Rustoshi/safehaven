@@ -4,13 +4,12 @@ import { useEffect }      from "react"
 import { useForm }        from "react-hook-form"
 import { zodResolver }    from "@hookform/resolvers/zod"
 import { z }              from "zod"
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
-} from "@/components/ui/dialog"
-import { Textarea }       from "@/components/ui/textarea"
-import { Label }          from "@/components/ui/label"
-import { Button }         from "@/components/ui/button"
+import { Ban, ShieldCheck, AlertTriangle } from "lucide-react"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { toast }          from "@/components/ui/use-toast"
+import {
+  DASH, ModalHeader, Field, TextArea, InfoBox, PrimaryButton, GhostButton, ModalFooter,
+} from "./_ui"
 
 const SuspendSchema   = z.object({ reason: z.string().min(1, "Reason is required") })
 const UnsuspendSchema = z.object({})
@@ -74,67 +73,70 @@ export function SuspendModal({ open, onClose, onSuccess, userId, isSuspended, su
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{isSuspended ? "Unsuspend User" : "Suspend User"}</DialogTitle>
-          <DialogDescription>
-            {isSuspended
-              ? `Remove the suspension on ${userName}'s account.`
-              : `Suspend ${userName}'s account. They will not be able to log in.`}
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-md p-6" style={{ fontFamily: DASH.font }}>
+        <DialogTitle className="sr-only">{isSuspended ? "Unsuspend User" : "Suspend User"}</DialogTitle>
 
-        <div className="px-6 py-4">
+        <ModalHeader
+          icon={isSuspended ? ShieldCheck : Ban}
+          tone={isSuspended ? "success" : "danger"}
+          title={isSuspended ? "Unsuspend user" : "Suspend user"}
+          description={isSuspended
+            ? `Restore access to ${userName}'s account.`
+            : `${userName} will no longer be able to log in.`}
+        />
+
+        <div style={{ marginTop: 22 }}>
           {isSuspended ? (
-            <div className="space-y-4">
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               {suspendReason && (
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Current suspension reason</p>
-                  <p className="text-sm text-slate-700">{suspendReason}</p>
-                </div>
+                <InfoBox tone="neutral" title="Current suspension reason">
+                  {suspendReason}
+                </InfoBox>
               )}
-              <p className="text-sm text-slate-600">
+              <p style={{ fontSize: 13.5, color: DASH.textMuted, margin: 0, lineHeight: 1.5 }}>
                 Confirming will restore {userName}&apos;s access immediately.
               </p>
-              <DialogFooter>
-                <Button variant="outline" onClick={onClose}>Cancel</Button>
-                <Button
+              <ModalFooter>
+                <GhostButton type="button" onClick={onClose}>Cancel</GhostButton>
+                <PrimaryButton
+                  tone="success"
                   onClick={handleUnsuspend}
                   disabled={unsuspendForm.formState.isSubmitting}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
                 >
                   {unsuspendForm.formState.isSubmitting ? "Processing…" : "Unsuspend account"}
-                </Button>
-              </DialogFooter>
+                </PrimaryButton>
+              </ModalFooter>
             </div>
           ) : (
-            <form onSubmit={suspendForm.handleSubmit(handleSuspend)} className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="suspend-reason">Reason for suspension</Label>
-                <Textarea
+            <form onSubmit={suspendForm.handleSubmit(handleSuspend)} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <Field
+                label="Reason for suspension"
+                htmlFor="suspend-reason"
+                error={suspendForm.formState.errors.reason?.message}
+                required
+              >
+                <TextArea
                   id="suspend-reason"
+                  rows={3}
                   placeholder="Describe why this account is being suspended…"
                   {...suspendForm.register("reason")}
                 />
-                {suspendForm.formState.errors.reason && (
-                  <p className="text-xs text-red-500">{suspendForm.formState.errors.reason.message}</p>
-                )}
-              </div>
+              </Field>
 
-              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+              <InfoBox tone="danger" icon={AlertTriangle}>
                 The user will be immediately blocked from logging in. This action is reversible.
-              </div>
+              </InfoBox>
 
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-                <Button
+              <ModalFooter>
+                <GhostButton type="button" onClick={onClose}>Cancel</GhostButton>
+                <PrimaryButton
+                  tone="danger"
                   type="submit"
                   disabled={suspendForm.formState.isSubmitting}
-                  className="bg-red-600 hover:bg-red-700 text-white"
                 >
                   {suspendForm.formState.isSubmitting ? "Suspending…" : "Suspend account"}
-                </Button>
-              </DialogFooter>
+                </PrimaryButton>
+              </ModalFooter>
             </form>
           )}
         </div>

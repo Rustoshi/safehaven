@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import {
@@ -30,6 +30,20 @@ export default function ProfilePage() {
   const [showCurrent, setShowCurrent] = useState(false)
   const [showNew, setShowNew] = useState(false)
 
+  // The session JWT captures kycStatus at login time and can go stale (e.g.
+  // after submitting documents or an admin review). Fetch the authoritative
+  // value from the server so the profile always shows the real status.
+  const [liveKycStatus, setLiveKycStatus] = useState<string | null>(null)
+
+  useEffect(() => {
+    let active = true
+    fetch("/api/user/profile")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (active && d?.kycStatus) setLiveKycStatus(d.kycStatus) })
+      .catch(() => { /* fall back to session value */ })
+    return () => { active = false }
+  }, [])
+
   const user = session?.user
 
   const handleChangePassword = async () => {
@@ -56,7 +70,8 @@ export default function ProfilePage() {
     setPwLoading(false)
   }
 
-  const kycStatus = user?.kycStatus ? (KYC_STATUS[user.kycStatus] || KYC_STATUS.unverified) : KYC_STATUS.unverified
+  const effectiveKyc = liveKycStatus ?? user?.kycStatus
+  const kycStatus = effectiveKyc ? (KYC_STATUS[effectiveKyc] || KYC_STATUS.unverified) : KYC_STATUS.unverified
   const KycIcon = kycStatus.icon
 
   return (

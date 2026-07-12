@@ -250,7 +250,7 @@ export function DepositDetailDrawer({ requestId, onClose, onAction }: Props) {
                   </div>
                   <button
                     onClick={() => setProofOpen(true)}
-                    className="mt-1.5 text-xs text-[#0F4C81] hover:underline"
+                    className="mt-1.5 text-xs text-[#1A2CCE] hover:underline"
                   >
                     View full size
                   </button>

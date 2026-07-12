@@ -81,64 +81,57 @@ export function useTheme() {
   return context
 }
 
-// Shared theme-aware colors hook for consistent theming across all pages
+// Shared colours hook for the dashboard/app pages.
+// Fixed to the Grey light system (dashboard-design.md → --dash-* tokens),
+// regardless of OS/theme setting, so every app page is dark-on-light with
+// consistent colours (no white-on-white). Values are literals (not var())
+// so they resolve identically on server and client.
 export function useThemeColors() {
-  const { resolvedTheme } = useTheme()
-  const isDark = resolvedTheme === "dark"
-
   return {
     // Backgrounds
-    bgBase: isDark ? "#0A1628" : "#F8FAFC",
-    bgElevated: isDark ? "#0D1F3C" : "#FFFFFF",
-    bgSurface: isDark ? "#112244" : "#F1F5F9",
-    bgHover: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)",
-    bgActive: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)",
-    bgCard: isDark ? "#131B2E" : "#FFFFFF",
-    bgInput: isDark ? "rgba(255,255,255,0.06)" : "#FFFFFF",
-    bgOverlay: isDark ? "rgba(0,0,0,0.6)" : "rgba(0,0,0,0.4)",
-    
-    // Hero/gradient backgrounds
-    heroGradient: isDark
-      ? "linear-gradient(180deg, #0D1F3C 0%, #0A1628 100%)"
-      : "linear-gradient(180deg, #FFFFFF 0%, #F1F5F9 100%)",
-    bgHero: isDark 
-      ? "linear-gradient(180deg, #060e1a 0%, #081422 60%, #0a1628 100%)"
-      : "linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)",
-    
+    bgBase:     "#F5F6F8",  // --dash-bg
+    bgElevated: "#FFFFFF",  // --dash-surface
+    bgSurface:  "#F9FAFB",  // --dash-surface-2
+    bgHover:    "rgba(16,24,40,0.03)",
+    bgActive:   "rgba(16,24,40,0.05)",
+    bgCard:     "#FFFFFF",
+    bgInput:    "#FFFFFF",
+    bgOverlay:  "rgba(16,24,40,0.5)",
+
+    // Hero/section backgrounds — flat grey canvas (no dark gradients)
+    heroGradient: "#F5F6F8",
+    bgHero:       "#F5F6F8",
+
     // Borders
-    border: isDark ? "rgba(255,255,255,0.08)" : "#E2E8F0",
-    borderSubtle: isDark ? "rgba(255,255,255,0.05)" : "#F1F5F9",
-    borderStrong: isDark ? "rgba(255,255,255,0.15)" : "#CBD5E1",
-    borderBlue: isDark ? "rgba(59,158,255,0.18)" : "rgba(0,102,204,0.15)",
-    
-    // Text colors
-    textPrimary: isDark ? "#FFFFFF" : "#0F172A",
-    textSecondary: isDark ? "rgba(255,255,255,0.7)" : "#334155",
-    textTertiary: isDark ? "rgba(255,255,255,0.45)" : "#64748B",
-    textMuted: isDark ? "rgba(255,255,255,0.35)" : "#94A3B8",
-    textInverse: isDark ? "#0A1628" : "#FFFFFF",
-    
-    // Accent colors
-    blue: isDark ? "#3B9EFF" : "#0066CC",
-    blueBg: isDark ? "rgba(59,158,255,0.12)" : "rgba(0,102,204,0.08)",
-    green: isDark ? "#00C896" : "#059669",
-    greenBg: isDark ? "rgba(0,200,150,0.12)" : "rgba(5,150,105,0.08)",
-    red: isDark ? "#EF4444" : "#DC2626",
-    redBg: isDark ? "rgba(239,68,68,0.12)" : "rgba(220,38,38,0.08)",
-    yellow: isDark ? "#F59E0B" : "#D97706",
-    yellowBg: isDark ? "rgba(245,158,11,0.12)" : "rgba(217,119,6,0.08)",
-    amber: isDark ? "#F59E0B" : "#B45309",
-    amberBg: isDark ? "rgba(245,158,11,0.12)" : "rgba(180,83,9,0.08)",
-    
-    // Shadows
-    shadow: isDark 
-      ? "0 12px 40px rgba(0,0,0,0.5), 0 4px 16px rgba(59,158,255,0.12)"
-      : "0 4px 20px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04)",
-    shadowCard: isDark
-      ? "0 12px 40px rgba(0,0,0,0.5), 0 4px 16px rgba(59,158,255,0.12), inset 0 1px 0 rgba(255,255,255,0.06)"
-      : "0 4px 20px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)",
-    
+    border:       "#EAECF0",  // --dash-border
+    borderSubtle: "#F2F4F7",
+    borderStrong: "#D0D5DD",  // --dash-border-2
+    borderBlue:   "rgba(26,44,206,0.20)",
+
+    // Text — dark on light (guarantees contrast)
+    textPrimary:   "#101828",  // --dash-text
+    textSecondary: "#475467",
+    textTertiary:  "#667085",  // --dash-text-2
+    textMuted:     "#98A2B3",  // --dash-text-3
+    textInverse:   "#FFFFFF",
+
+    // Accents — Grey indigo + money semantics
+    blue:    "#1A2CCE",  // --dash-primary
+    blueBg:  "#EEF0FE",  // --dash-primary-bg
+    green:   "#12B76A",  // --dash-success
+    greenBg: "#ECFDF3",
+    red:     "#F04438",  // --dash-danger
+    redBg:   "#FEF3F2",
+    yellow:  "#F79009",  // --dash-warning
+    yellowBg:"#FFFAEB",
+    amber:   "#F79009",
+    amberBg: "#FFFAEB",
+
+    // Soft shadows
+    shadow:     "0 1px 3px rgba(16,24,40,0.08), 0 1px 2px rgba(16,24,40,0.04)",
+    shadowCard: "0 1px 3px rgba(16,24,40,0.08), 0 1px 2px rgba(16,24,40,0.04)",
+
     // Utility
-    isDark,
+    isDark: false,
   }
 }

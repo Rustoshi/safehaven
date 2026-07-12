@@ -4,15 +4,12 @@ import { useState }       from "react"
 import { useForm }        from "react-hook-form"
 import { zodResolver }    from "@hookform/resolvers/zod"
 import { z }              from "zod"
-import { Eye, EyeOff }   from "lucide-react"
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
-} from "@/components/ui/dialog"
-import { Input }          from "@/components/ui/input"
-import { Label }          from "@/components/ui/label"
-import { Button }         from "@/components/ui/button"
+import { Eye, EyeOff, KeyRound } from "lucide-react"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { toast }          from "@/components/ui/use-toast"
-import { cn }             from "@/lib/utils"
+import {
+  DASH, ModalHeader, Field, TextInput, PrimaryButton, GhostButton, ModalFooter,
+} from "./_ui"
 
 const Schema = z
   .object({
@@ -40,9 +37,26 @@ function getStrength(pw: string): { score: number; label: string; color: string 
   if (/[A-Z]/.test(pw)) score++
   if (/[0-9]/.test(pw)) score++
   if (/[^A-Za-z0-9]/.test(pw)) score++
-  if (score <= 1) return { score, label: "Weak",   color: "bg-red-400" }
-  if (score <= 3) return { score, label: "Fair",   color: "bg-amber-400" }
-  return               { score, label: "Strong", color: "bg-emerald-500" }
+  if (score <= 1) return { score, label: "Weak",   color: DASH.danger }
+  if (score <= 3) return { score, label: "Fair",   color: DASH.warning }
+  return               { score, label: "Strong", color: DASH.success }
+}
+
+function RevealButton({ shown, onClick }: { shown: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      tabIndex={-1}
+      style={{
+        position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
+        display: "flex", background: "none", border: "none", cursor: "pointer",
+        color: DASH.textMuted, padding: 0,
+      }}
+    >
+      {shown ? <EyeOff size={16} /> : <Eye size={16} />}
+    </button>
+  )
 }
 
 export function ResetPasswordModal({ open, onClose, userId, userName }: Props) {
@@ -75,79 +89,67 @@ export function ResetPasswordModal({ open, onClose, userId, userName }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) { reset(); onClose() } }}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Reset Password</DialogTitle>
-          <DialogDescription>Set a new password for {userName}. They will need to use it on next login.</DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-md p-6" style={{ fontFamily: DASH.font }}>
+        <DialogTitle className="sr-only">Reset Password</DialogTitle>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 px-6 py-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="rp-new">New password</Label>
-            <div className="relative">
-              <Input
+        <ModalHeader
+          icon={KeyRound}
+          tone="primary"
+          title="Reset password"
+          description={`Set a new password for ${userName}. They will use it on next login.`}
+        />
+
+        <form onSubmit={handleSubmit(onSubmit)} style={{ display: "flex", flexDirection: "column", gap: 18, marginTop: 22 }}>
+          <Field label="New password" htmlFor="rp-new" error={errors.newPassword?.message}>
+            <div style={{ position: "relative" }}>
+              <TextInput
                 id="rp-new"
                 type={showNew ? "text" : "password"}
-                className="pr-10"
+                style={{ paddingRight: 40 }}
                 {...register("newPassword")}
               />
-              <button
-                type="button"
-                onClick={() => setShowNew((s) => !s)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-              >
-                {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
+              <RevealButton shown={showNew} onClick={() => setShowNew((s) => !s)} />
             </div>
-            {errors.newPassword && <p className="text-xs text-red-500">{errors.newPassword.message}</p>}
 
-            {/* Strength indicator */}
             {pw.length > 0 && (
-              <div className="space-y-1">
-                <div className="flex h-1.5 gap-1">
+              <div style={{ display: "flex", flexDirection: "column", gap: 5, marginTop: 8 }}>
+                <div style={{ display: "flex", gap: 4, height: 6 }}>
                   {Array.from({ length: 5 }).map((_, i) => (
                     <div
                       key={i}
-                      className={cn(
-                        "flex-1 rounded-full transition-colors",
-                        i < strength.score ? strength.color : "bg-slate-200"
-                      )}
+                      style={{
+                        flex: 1, borderRadius: 999,
+                        backgroundColor: i < strength.score ? strength.color : DASH.border,
+                        transition: "background-color .2s",
+                      }}
                     />
                   ))}
                 </div>
-                <p className="text-xs text-slate-500">{strength.label}</p>
+                <p style={{ fontSize: 12, color: strength.color, fontWeight: 500, margin: 0 }}>{strength.label}</p>
               </div>
             )}
-          </div>
+          </Field>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="rp-confirm">Confirm password</Label>
-            <div className="relative">
-              <Input
+          <Field label="Confirm password" htmlFor="rp-confirm" error={errors.confirmPassword?.message}>
+            <div style={{ position: "relative" }}>
+              <TextInput
                 id="rp-confirm"
                 type={showConfirm ? "text" : "password"}
-                className="pr-10"
+                style={{ paddingRight: 40 }}
                 {...register("confirmPassword")}
               />
-              <button
-                type="button"
-                onClick={() => setShowConfirm((s) => !s)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-              >
-                {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
+              <RevealButton shown={showConfirm} onClick={() => setShowConfirm((s) => !s)} />
             </div>
-            {errors.confirmPassword && <p className="text-xs text-red-500">{errors.confirmPassword.message}</p>}
-          </div>
+          </Field>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => { reset(); onClose() }} disabled={isSubmitting}>
+          <ModalFooter>
+            <GhostButton type="button" onClick={() => { reset(); onClose() }} disabled={isSubmitting}>
               Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            </GhostButton>
+            <PrimaryButton type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Resetting…" : "Reset password"}
-            </Button>
-          </DialogFooter>
+            </PrimaryButton>
+          </ModalFooter>
         </form>
       </DialogContent>
     </Dialog>

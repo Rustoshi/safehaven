@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { Lock, Eye, EyeOff } from "lucide-react"
 import { useCurrency } from "@/components/shared/PlatformSettingsProvider"
+import { BANK_NAME } from "@/lib/brand"
 
 interface AccountData {
   _id:           string
@@ -71,11 +72,11 @@ export function WalletCard({ account, btcUsdRate, onTap, userName }: WalletCardP
     : null
 
   const gradient = isBtc
-    ? "linear-gradient(135deg, #5c2800 0%, #3d1a00 40%, #2a1000 100%)"
-    : "linear-gradient(135deg, #1a4a8a 0%, #0f3060 40%, #0a2040 100%)"
+    ? "linear-gradient(135deg, #F7931A 0%, #B5670F 50%, #3d1a00 100%)"
+    : "linear-gradient(135deg, #2A3BD4 0%, #1A2CCE 45%, #101828 100%)"
 
-  const glow1 = isBtc ? "rgba(245,158,11,0.25)" : "rgba(59,158,255,0.2)"
-  const glow2 = isBtc ? "rgba(251,191,36,0.12)" : "rgba(0,200,150,0.15)"
+  const glow1 = isBtc ? "rgba(247,144,9,0.25)" : "rgba(26,44,206,0.2)"
+  const glow2 = isBtc ? "rgba(251,191,36,0.12)" : "rgba(18,183,106,0.15)"
 
   return (
     <button
@@ -113,7 +114,7 @@ export function WalletCard({ account, btcUsdRate, onTap, userName }: WalletCardP
       <div className="relative flex items-start justify-between">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em]" style={{ color: "rgba(255,255,255,0.8)" }}>
-            {isBtc ? "BITCOIN WALLET" : "NOVAPAY"}
+            {isBtc ? "BITCOIN WALLET" : BANK_NAME.toUpperCase()}
           </p>
           {userName && (
             <p className="text-[13px] mt-0.5" style={{ color: "rgba(255,255,255,0.6)" }}>
@@ -164,7 +165,7 @@ export function WalletCard({ account, btcUsdRate, onTap, userName }: WalletCardP
       {/* Bottom row */}
       <div className="relative mt-4 flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <div className="h-[6px] w-[6px] rounded-full" style={{ background: account.isFrozen ? "#EF4444" : "#00C896" }} />
+          <div className="h-[6px] w-[6px] rounded-full" style={{ background: account.isFrozen ? "#F04438" : "#12B76A" }} />
           <span className="text-[12px]" style={{ color: "rgba(255,255,255,0.8)" }}>
             {account.isFrozen ? "Frozen" : "Active"}
           </span>

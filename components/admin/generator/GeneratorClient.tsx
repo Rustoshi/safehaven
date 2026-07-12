@@ -45,7 +45,7 @@ function StepDot({ n, active, done }: { n: number; active: boolean; done: boolea
       <div className={[
         "w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold transition-all",
         done   ? "bg-emerald-500 text-white"  :
-        active ? "bg-blue-600   text-white ring-2 ring-blue-300" :
+        active ? "bg-indigo-600   text-white ring-2 ring-indigo-300" :
                  "bg-gray-100   text-gray-400",
       ].join(" ")}>
         {done ? <Check className="w-3.5 h-3.5" /> : n}
@@ -362,7 +362,7 @@ export function GeneratorClient() {
                       className={[
                         "w-full flex items-center justify-between rounded-lg border px-3 py-2.5 text-left transition-all",
                         selectedAcct?.id === acc.id
-                          ? "border-blue-500 bg-blue-50 ring-1 ring-blue-400"
+                          ? "border-indigo-500 bg-indigo-50 ring-1 ring-indigo-400"
                           : "border-gray-200 bg-white hover:border-gray-300",
                       ].join(" ")}
                     >
@@ -524,7 +524,7 @@ export function GeneratorClient() {
                     className="rounded"
                   />
                   <div className="flex items-center gap-2">
-                    <Repeat className="w-4 h-4 text-blue-500" />
+                    <Repeat className="w-4 h-4 text-indigo-500" />
                     <div>
                       <span className="text-sm text-gray-700 font-medium">Include fiat ↔ BTC swaps</span>
                       <p className="text-xs text-gray-400">Generate swap transactions between fiat and bitcoin</p>
@@ -657,7 +657,7 @@ export function GeneratorClient() {
                 </div>
 
                 {/* Summary info */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-700">
+                <div className="bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-3 text-sm text-indigo-700">
                   <p>
                     <strong>~{preview.avgTransactionsPerMonth}</strong> transactions per month will be generated.
                     {includeCards && hasActiveCards && (
@@ -681,7 +681,7 @@ export function GeneratorClient() {
               <Button
                 onClick={generate}
                 disabled={generating}
-                className="gap-2 bg-blue-600 hover:bg-blue-700"
+                className="gap-2 bg-indigo-600 hover:bg-indigo-700"
               >
                 {generating ? (
                   <><Loader2 className="w-4 h-4 animate-spin" /> Generating…</>
@@ -737,9 +737,9 @@ export function GeneratorClient() {
               </div>
               {!isBtcMode && (
                 <>
-                  <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                    <p className="text-xs text-blue-600">Total Income</p>
-                    <p className="text-lg font-semibold text-blue-700">${result.incomeTotal.toLocaleString()}</p>
+                  <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-200">
+                    <p className="text-xs text-indigo-600">Total Income</p>
+                    <p className="text-lg font-semibold text-indigo-700">${result.incomeTotal.toLocaleString()}</p>
                   </div>
                   <div className="bg-red-50 rounded-lg p-3 border border-red-200">
                     <p className="text-xs text-red-600">Total Expenses</p>

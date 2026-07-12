@@ -53,10 +53,10 @@ const CREDIT_TYPES = new Set([
 ])
 
 const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
-  pending:    { bg: "rgba(245,158,11,0.12)", text: "#F59E0B" },
-  processing: { bg: "rgba(59,158,255,0.12)", text: "#3B9EFF" },
-  failed:     { bg: "rgba(239,68,68,0.12)",  text: "#EF4444" },
-  reversed:   { bg: "rgba(255,255,255,0.06)", text: "rgba(255,255,255,0.5)" },
+  pending:    { bg: "rgba(247,144,9,0.12)",  text: "#F79009" },
+  processing: { bg: "rgba(26,44,206,0.12)",  text: "#1A2CCE" },
+  failed:     { bg: "rgba(240,68,56,0.12)",  text: "#F04438" },
+  reversed:   { bg: "rgba(152,162,179,0.12)", text: "#667085" },
 }
 
 export function TransactionRow({ transaction, index }: TransactionRowProps) {

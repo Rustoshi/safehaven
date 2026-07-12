@@ -27,6 +27,31 @@ interface TransferCode {
 
 type IntlMethod = "bank" | "wire" | "crypto" | "paypal" | "wise" | "cashapp" | "zelle" | "venmo" | "revolut" | "westernunion" | "moneygram"
 
+// IBAN country codes (ISO 3166-1 alpha-2) → country name. An IBAN always begins
+// with the 2-letter country code, so the recipient country can be derived from it.
+const IBAN_COUNTRY: Record<string, string> = {
+  AD: "Andorra", AE: "United Arab Emirates", AL: "Albania", AT: "Austria", AZ: "Azerbaijan",
+  BA: "Bosnia and Herzegovina", BE: "Belgium", BG: "Bulgaria", BH: "Bahrain", BR: "Brazil",
+  BY: "Belarus", CH: "Switzerland", CR: "Costa Rica", CY: "Cyprus", CZ: "Czech Republic",
+  DE: "Germany", DK: "Denmark", DO: "Dominican Republic", EE: "Estonia", EG: "Egypt",
+  ES: "Spain", FI: "Finland", FO: "Faroe Islands", FR: "France", GB: "United Kingdom",
+  GE: "Georgia", GI: "Gibraltar", GL: "Greenland", GR: "Greece", GT: "Guatemala",
+  HR: "Croatia", HU: "Hungary", IE: "Ireland", IL: "Israel", IQ: "Iraq", IS: "Iceland",
+  IT: "Italy", JO: "Jordan", KW: "Kuwait", KZ: "Kazakhstan", LB: "Lebanon", LC: "Saint Lucia",
+  LI: "Liechtenstein", LT: "Lithuania", LU: "Luxembourg", LV: "Latvia", LY: "Libya",
+  MC: "Monaco", MD: "Moldova", ME: "Montenegro", MK: "North Macedonia", MR: "Mauritania",
+  MT: "Malta", MU: "Mauritius", NL: "Netherlands", NO: "Norway", PK: "Pakistan", PL: "Poland",
+  PS: "Palestine", PT: "Portugal", QA: "Qatar", RO: "Romania", RS: "Serbia", SA: "Saudi Arabia",
+  SC: "Seychelles", SE: "Sweden", SI: "Slovenia", SK: "Slovakia", SM: "San Marino",
+  ST: "Sao Tome and Principe", SV: "El Salvador", TL: "Timor-Leste", TN: "Tunisia", TR: "Turkey",
+  UA: "Ukraine", VA: "Vatican City", VG: "British Virgin Islands", XK: "Kosovo",
+}
+
+function deriveCountryFromIban(iban: string): string {
+  const code = (iban || "").replace(/\s+/g, "").slice(0, 2).toUpperCase()
+  return /^[A-Z]{2}$/.test(code) ? (IBAN_COUNTRY[code] || "") : ""
+}
+
 interface AccountInfo {
   _id: string
   walletType: "fiat" | "bitcoin"
@@ -94,7 +119,14 @@ function TransferPageContent() {
 
   // International method-specific fields
   const [intlFields, setIntlFields] = useState<Record<string, string>>({})
-  const updateIntlField = (key: string, value: string) => setIntlFields((prev) => ({ ...prev, [key]: value }))
+  const updateIntlField = (key: string, value: string) => setIntlFields((prev) => {
+    const next = { ...prev, [key]: value }
+    // For bank transfers, the recipient country is derived from the IBAN.
+    if (intlMethod === "bank" && key === "accountNumber") {
+      next.recipientCountry = deriveCountryFromIban(value)
+    }
+    return next
+  })
   const [accounts, setAccounts]             = useState<AccountInfo[]>([])
   const [loading, setLoading]               = useState(true)
   const [recipientId, setRecipientId]       = useState("") // account number
@@ -318,7 +350,6 @@ function TransferPageContent() {
         || intlFields.mtcn
         || intlFields.referenceNumber
         || intlFields.recipientName
-        || intlFields.bankSelect
         || intlFields.bankName
         || `INTL-${Date.now()}`
     } else {
@@ -384,9 +415,10 @@ function TransferPageContent() {
               beneficiaryData.recipientName = recipient?.recipientName || ""
             } else if (intlMethod === "bank") {
               beneficiaryData.recipientName = intlFields.recipientName || ""
-              beneficiaryData.bankName = intlFields.bankSelect === "Others" ? intlFields.bankName : intlFields.bankSelect
+              beneficiaryData.bankName = intlFields.bankName || ""
               beneficiaryData.accountNumber = intlFields.accountNumber || ""
-              beneficiaryData.routingNumber = intlFields.routingNumber || ""
+              beneficiaryData.iban = intlFields.accountNumber || ""
+              beneficiaryData.country = intlFields.recipientCountry || ""
             } else if (intlMethod === "wire") {
               beneficiaryData.recipientName = intlFields.recipientName || ""
               beneficiaryData.bankName = intlFields.bankName || ""
@@ -647,12 +679,12 @@ function TransferPageContent() {
                         width: isCurrent ? 32 : 24, height: isCurrent ? 32 : 24,
                         borderRadius: "50%",
                         background: active
-                          ? isCurrent ? (colors.isDark ? "linear-gradient(135deg, #3B9EFF, #2563EB)" : "linear-gradient(135deg, #0066CC, #0052A3)") : colors.blueBg
+                          ? isCurrent ? (colors.isDark ? "linear-gradient(135deg, #1A2CCE, #1A2CCE)" : "linear-gradient(135deg, #1A2CCE, #1A2CCE)") : colors.blueBg
                           : colors.bgHover,
                         border: isCurrent ? "none" : `2px solid ${active ? colors.blueBg : colors.border}`,
                         display: "flex", alignItems: "center", justifyContent: "center",
                         transition: "all 300ms cubic-bezier(.4,0,.2,1)",
-                        boxShadow: isCurrent ? (colors.isDark ? "0 0 16px rgba(59,158,255,0.4)" : "0 0 16px rgba(0,102,204,0.25)") : "none",
+                        boxShadow: isCurrent ? (colors.isDark ? "0 0 16px rgba(26,44,206,0.4)" : "0 0 16px rgba(26,44,206,0.25)") : "none",
                       }}>
                         {i < stepIdx ? (
                           <Check style={{ width: 12, height: 12, color: colors.blue }} />
@@ -687,13 +719,13 @@ function TransferPageContent() {
         {/* ── Error banner ──────────────────────────────────────── */}
         {error && step !== "pin" && (
           <div style={{
-            background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)",
+            background: "rgba(240,68,56,0.08)", border: "1px solid rgba(240,68,56,0.15)",
             borderRadius: 14, padding: "12px 16px", marginTop: 8, marginBottom: 4,
             display: "flex", alignItems: "center", gap: 10,
           }}>
-            <AlertTriangle style={{ width: 16, height: 16, color: "#EF4444", flexShrink: 0 }} />
-            <span style={{ fontSize: 13, color: "#EF4444", flex: 1 }}>{error}</span>
-            <X onClick={() => setError("")} style={{ width: 14, height: 14, color: "rgba(239,68,68,0.5)", cursor: "pointer", flexShrink: 0 }} />
+            <AlertTriangle style={{ width: 16, height: 16, color: "#F04438", flexShrink: 0 }} />
+            <span style={{ fontSize: 13, color: "#F04438", flex: 1 }}>{error}</span>
+            <X onClick={() => setError("")} style={{ width: 14, height: 14, color: "rgba(240,68,56,0.5)", cursor: "pointer", flexShrink: 0 }} />
           </div>
         )}
 
@@ -706,7 +738,7 @@ function TransferPageContent() {
                 width: 64, height: 64, borderRadius: 20, margin: "0 auto 14px",
                 background: colors.blueBg,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: colors.isDark ? "0 0 24px rgba(59,158,255,0.15)" : "0 0 24px rgba(0,102,204,0.1)",
+                boxShadow: colors.isDark ? "0 0 24px rgba(26,44,206,0.15)" : "0 0 24px rgba(26,44,206,0.1)",
               }}>
                 <Send style={{ width: 26, height: 26, color: colors.blue, transform: "rotate(-45deg)" }} />
               </div>
@@ -739,11 +771,11 @@ function TransferPageContent() {
                 <p style={{ fontSize: 15, fontWeight: 700, color: colors.textPrimary, margin: 0 }}>Local Transfer</p>
                 <p style={{ fontSize: 12, color: colors.textTertiary, margin: "3px 0 0" }}>Send to local accounts instantly</p>
                 <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "#F59E0B", background: "rgba(245,158,11,0.1)", padding: "2px 8px", borderRadius: 6, display: "flex", alignItems: "center", gap: 3 }}>{"\u26A1"} Instant</span>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "#00C896", background: "rgba(0,200,150,0.1)", padding: "2px 8px", borderRadius: 6 }}>0% Fee</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "#F79009", background: "rgba(247,144,9,0.1)", padding: "2px 8px", borderRadius: 6, display: "flex", alignItems: "center", gap: 3 }}>{"\u26A1"} Instant</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "#12B76A", background: "rgba(18,183,106,0.1)", padding: "2px 8px", borderRadius: 6 }}>0% Fee</span>
                 </div>
               </div>
-              <ArrowRight style={{ width: 18, height: 18, color: "rgba(59,158,255,0.5)", flexShrink: 0 }} />
+              <ArrowRight style={{ width: 18, height: 18, color: "rgba(26,44,206,0.5)", flexShrink: 0 }} />
             </div>
 
             {/* International */}
@@ -771,7 +803,7 @@ function TransferPageContent() {
                 <p style={{ fontSize: 15, fontWeight: 700, color: colors.textPrimary, margin: 0 }}>International Transfer</p>
                 <p style={{ fontSize: 12, color: colors.textTertiary, margin: "3px 0 0" }}>Global transfers within 72 hours</p>
                 <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "#00C896", background: "rgba(0,200,150,0.1)", padding: "2px 8px", borderRadius: 6, display: "flex", alignItems: "center", gap: 3 }}>{"\u{1F6E1}\uFE0F"} Secure</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "#12B76A", background: "rgba(18,183,106,0.1)", padding: "2px 8px", borderRadius: 6, display: "flex", alignItems: "center", gap: 3 }}>{"\u{1F6E1}\uFE0F"} Secure</span>
                   <span style={{ fontSize: 10, fontWeight: 700, color: "#A78BFA", background: "rgba(167,139,250,0.1)", padding: "2px 8px", borderRadius: 6 }}>SWIFT</span>
                 </div>
               </div>
@@ -1049,7 +1081,7 @@ function TransferPageContent() {
                 </div>
 
                 {recipientId.trim().length > 0 && recipientId.trim().length < 3 && (
-                  <p style={{ fontSize: 11, color: "#EF4444", margin: "-8px 0 12px", display: "flex", alignItems: "center", gap: 4 }}>
+                  <p style={{ fontSize: 11, color: "#F04438", margin: "-8px 0 12px", display: "flex", alignItems: "center", gap: 4 }}>
                     <AlertTriangle style={{ width: 10, height: 10 }} /> Account number must be at least 3 characters
                   </p>
                 )}
@@ -1061,13 +1093,13 @@ function TransferPageContent() {
                   style={{
                     width: "100%", padding: "14px 0", borderRadius: 14, border: "none",
                     background: (!lookingUp && recipientId.trim().length >= 3) 
-                      ? (colors.isDark ? "linear-gradient(135deg, #3B9EFF 0%, #2563EB 100%)" : "linear-gradient(135deg, #0066CC 0%, #0052A3 100%)") 
+                      ? (colors.isDark ? "linear-gradient(135deg, #1A2CCE 0%, #1A2CCE 100%)" : "linear-gradient(135deg, #1A2CCE 0%, #1A2CCE 100%)") 
                       : colors.bgHover,
                     color: (!lookingUp && recipientId.trim().length >= 3) ? "#fff" : colors.textMuted,
                     fontSize: 15, fontWeight: 700, cursor: (!lookingUp && recipientId.trim().length >= 3) ? "pointer" : "default",
                     display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                     marginBottom: 16,
-                    boxShadow: (!lookingUp && recipientId.trim().length >= 3) ? (colors.isDark ? "0 4px 16px rgba(59,158,255,0.3)" : "0 4px 16px rgba(0,102,204,0.2)") : "none",
+                    boxShadow: (!lookingUp && recipientId.trim().length >= 3) ? (colors.isDark ? "0 4px 16px rgba(26,44,206,0.3)" : "0 4px 16px rgba(26,44,206,0.2)") : "none",
                   }}
                 >
                   {lookingUp ? <><Loader2 style={{ width: 18, height: 18, animation: "spin 1s linear infinite" }} /> Looking up...</> : "Find Account"}
@@ -1077,7 +1109,7 @@ function TransferPageContent() {
                   <div style={{
                     background: colors.bgElevated, border: `1px solid ${colors.green}33`,
                     borderRadius: 16, padding: "16px", marginBottom: 16,
-                    boxShadow: colors.isDark ? "0 0 20px rgba(0,200,150,0.05)" : "none",
+                    boxShadow: colors.isDark ? "0 0 20px rgba(18,183,106,0.05)" : "none",
                   }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                       <div style={{
@@ -1094,10 +1126,10 @@ function TransferPageContent() {
                       </div>
                       <div style={{
                         width: 28, height: 28, borderRadius: "50%",
-                        background: "rgba(0,200,150,0.15)",
+                        background: "rgba(18,183,106,0.15)",
                         display: "flex", alignItems: "center", justifyContent: "center",
                       }}>
-                        <CheckCircle2 style={{ width: 16, height: 16, color: "#00C896" }} />
+                        <CheckCircle2 style={{ width: 16, height: 16, color: "#12B76A" }} />
                       </div>
                     </div>
                   </div>
@@ -1109,10 +1141,10 @@ function TransferPageContent() {
                     className="pressable"
                     style={{
                       width: "100%", padding: "14px 0", borderRadius: 14, border: "none",
-                      background: colors.isDark ? "linear-gradient(135deg, #3B9EFF 0%, #2563EB 100%)" : "linear-gradient(135deg, #0066CC 0%, #0052A3 100%)",
+                      background: colors.isDark ? "linear-gradient(135deg, #1A2CCE 0%, #1A2CCE 100%)" : "linear-gradient(135deg, #1A2CCE 0%, #1A2CCE 100%)",
                       color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer",
                       display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                      boxShadow: colors.isDark ? "0 4px 16px rgba(59,158,255,0.3)" : "0 4px 16px rgba(0,102,204,0.2)",
+                      boxShadow: colors.isDark ? "0 4px 16px rgba(26,44,206,0.3)" : "0 4px 16px rgba(26,44,206,0.2)",
                     }}
                   >
                     Continue <ArrowRight style={{ width: 16, height: 16 }} />
@@ -1132,10 +1164,9 @@ function TransferPageContent() {
               const fieldConfigs: Record<IntlMethod, { key: string; label: string; placeholder: string; type?: string; options?: string[] }[]> = {
                 bank: [
                   { key: "recipientName", label: "Recipient Full Name", placeholder: "John Doe" },
-                  { key: "bankSelect", label: "Select Bank", placeholder: "Choose a bank", options: ["DSB bank", "Vcb bank", "Hakrinbank", "Republic bank", "Godo bank", "USD bank", "Euro bank", "MCB bank", "SBM bank", "Asba bank", "MVR account", "Others"] },
-                  { key: "bankName", label: "Bank Name (if Other)", placeholder: "Enter bank name" },
-                  { key: "accountNumber", label: "Account Number", placeholder: "e.g. 123456789" },
-                  { key: "routingNumber", label: "Routing Number", placeholder: "e.g. 026009593" },
+                  { key: "accountNumber", label: "Account Number (IBAN)", placeholder: "e.g. GB29NWBK60161331926819" },
+                  { key: "bankName", label: "Bank Name", placeholder: "e.g. HSBC, Barclays" },
+                  { key: "recipientCountry", label: "Recipient Country", placeholder: "Auto-detected from IBAN" },
                 ],
                 wire: [
                   { key: "recipientName", label: "Recipient Full Name", placeholder: "John Doe" },
@@ -1196,10 +1227,10 @@ function TransferPageContent() {
               }
 
               const fields = fieldConfigs[intlMethod] || []
-              const requiredFields = fields.filter(f => !f.placeholder.startsWith("Optional") && !f.label.includes("optional") && !(f.key === "bankName" && intlFields.bankSelect !== "Others"))
+              const requiredFields = fields.filter(f => !f.placeholder.startsWith("Optional") && !f.label.includes("optional"))
               const allFilled = requiredFields.every(f => (intlFields[f.key] || "").trim().length > 0)
               const isFieldRequired = (f: { key: string; label: string; placeholder: string }) =>
-                !f.placeholder.startsWith("Optional") && !f.label.includes("optional") && !(f.key === "bankName" && intlFields.bankSelect !== "Others")
+                !f.placeholder.startsWith("Optional") && !f.label.includes("optional")
               const isFieldEmpty = (key: string) => !(intlFields[key] || "").trim()
 
               return (
@@ -1219,24 +1250,21 @@ function TransferPageContent() {
 
                   <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
                     {fields.map((f) => {
-                      // Skip bankName field if bankSelect is not "Others"
-                      if (f.key === "bankName" && intlFields.bankSelect !== "Others") {
-                        return null
-                      }
-
                       const required = isFieldRequired(f)
                       const empty = isFieldEmpty(f.key)
                       const showWarning = required && empty && Object.keys(intlFields).length > 0
+                      // Recipient country for a bank transfer is derived from the IBAN — read-only.
+                      const isAutoCountry = intlMethod === "bank" && f.key === "recipientCountry"
                       return (
                         <div key={f.key}>
                           <label style={{
                             fontSize: 11, fontWeight: 600,
-                            color: showWarning ? "#EF4444" : colors.textTertiary,
+                            color: showWarning ? "#F04438" : colors.textTertiary,
                             marginBottom: 6, display: "flex", alignItems: "center", gap: 4,
                             textTransform: "uppercase", letterSpacing: "0.05em"
                           }}>
                             {f.label}
-                            {required && <span style={{ color: "#EF4444" }}>*</span>}
+                            {required && <span style={{ color: "#F04438" }}>*</span>}
                           </label>
                           {f.options ? (
                             <select
@@ -1245,12 +1273,12 @@ function TransferPageContent() {
                               style={{
                                 width: "100%", padding: "13px 14px", borderRadius: 14, boxSizing: "border-box",
                                 background: colors.bgElevated,
-                                border: `1px solid ${showWarning ? "#EF4444" : colors.border}`,
+                                border: `1px solid ${showWarning ? "#F04438" : colors.border}`,
                                 color: colors.textPrimary, fontSize: 14, fontWeight: 500, outline: "none",
                                 transition: "border-color 200ms", cursor: "pointer",
                               }}
                               onFocus={(e) => e.currentTarget.style.borderColor = colors.blue}
-                              onBlur={(e) => e.currentTarget.style.borderColor = showWarning ? "#EF4444" : colors.border}
+                              onBlur={(e) => e.currentTarget.style.borderColor = showWarning ? "#F04438" : colors.border}
                             >
                               <option value="">{f.placeholder}</option>
                               {f.options.map((opt) => (
@@ -1261,21 +1289,24 @@ function TransferPageContent() {
                             <input
                               type={f.type || "text"}
                               value={intlFields[f.key] || ""}
-                              onChange={(e) => updateIntlField(f.key, e.target.value)}
+                              onChange={(e) => { if (!isAutoCountry) updateIntlField(f.key, e.target.value) }}
                               placeholder={f.placeholder}
+                              readOnly={isAutoCountry}
                               style={{
                                 width: "100%", padding: "13px 14px", borderRadius: 14, boxSizing: "border-box",
-                                background: colors.bgElevated,
-                                border: `1px solid ${showWarning ? "#EF4444" : colors.border}`,
-                                color: colors.textPrimary, fontSize: 14, fontWeight: 500, outline: "none",
+                                background: isAutoCountry ? colors.bgHover : colors.bgElevated,
+                                border: `1px solid ${showWarning ? "#F04438" : colors.border}`,
+                                color: isAutoCountry ? colors.textSecondary : colors.textPrimary,
+                                fontSize: 14, fontWeight: 500, outline: "none",
                                 transition: "border-color 200ms",
+                                cursor: isAutoCountry ? "default" : "text",
                               }}
-                              onFocus={(e) => e.currentTarget.style.borderColor = colors.blue}
-                              onBlur={(e) => e.currentTarget.style.borderColor = showWarning ? "#EF4444" : colors.border}
+                              onFocus={(e) => { if (!isAutoCountry) e.currentTarget.style.borderColor = colors.blue }}
+                              onBlur={(e) => e.currentTarget.style.borderColor = showWarning ? "#F04438" : colors.border}
                             />
                           )}
                           {showWarning && (
-                            <p style={{ fontSize: 11, color: "#EF4444", margin: "4px 0 0", display: "flex", alignItems: "center", gap: 4 }}>
+                            <p style={{ fontSize: 11, color: "#F04438", margin: "4px 0 0", display: "flex", alignItems: "center", gap: 4 }}>
                               <AlertTriangle style={{ width: 10, height: 10 }} /> This field is required
                             </p>
                           )}
@@ -1286,12 +1317,12 @@ function TransferPageContent() {
 
                   {!allFilled && Object.keys(intlFields).length > 0 && (
                     <div style={{
-                      background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)",
+                      background: "rgba(240,68,56,0.08)", border: "1px solid rgba(240,68,56,0.15)",
                       borderRadius: 12, padding: "10px 14px", marginBottom: 16,
                       display: "flex", alignItems: "center", gap: 8,
                     }}>
-                      <AlertTriangle style={{ width: 14, height: 14, color: "#EF4444", flexShrink: 0 }} />
-                      <span style={{ fontSize: 12, color: "#EF4444" }}>
+                      <AlertTriangle style={{ width: 14, height: 14, color: "#F04438", flexShrink: 0 }} />
+                      <span style={{ fontSize: 12, color: "#F04438" }}>
                         Please fill in all required fields marked with *
                       </span>
                     </div>
@@ -1304,12 +1335,12 @@ function TransferPageContent() {
                     style={{
                       width: "100%", padding: "14px 0", borderRadius: 14, border: "none",
                       background: allFilled 
-                        ? (colors.isDark ? "linear-gradient(135deg, #3B9EFF 0%, #2563EB 100%)" : "linear-gradient(135deg, #0066CC 0%, #0052A3 100%)") 
+                        ? (colors.isDark ? "linear-gradient(135deg, #1A2CCE 0%, #1A2CCE 100%)" : "linear-gradient(135deg, #1A2CCE 0%, #1A2CCE 100%)") 
                         : colors.bgHover,
                       color: allFilled ? "#fff" : colors.textMuted,
                       fontSize: 15, fontWeight: 700, cursor: allFilled ? "pointer" : "default",
                       display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                      boxShadow: allFilled ? (colors.isDark ? "0 4px 16px rgba(59,158,255,0.3)" : "0 4px 16px rgba(0,102,204,0.2)") : "none",
+                      boxShadow: allFilled ? (colors.isDark ? "0 4px 16px rgba(26,44,206,0.3)" : "0 4px 16px rgba(26,44,206,0.2)") : "none",
                     }}
                   >
                     Continue <ArrowRight style={{ width: 16, height: 16 }} />
@@ -1337,9 +1368,9 @@ function TransferPageContent() {
                 width: 32, height: 32, borderRadius: "50%",
                 background: transferType === "international"
                   ? "linear-gradient(135deg, rgba(167,139,250,0.2), rgba(167,139,250,0.08))"
-                  : "linear-gradient(135deg, rgba(0,200,150,0.2), rgba(0,200,150,0.08))",
+                  : "linear-gradient(135deg, rgba(18,183,106,0.2), rgba(18,183,106,0.08))",
                 display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                fontSize: 11, fontWeight: 800, color: transferType === "international" ? "#A78BFA" : "#00C896",
+                fontSize: 11, fontWeight: 800, color: transferType === "international" ? "#A78BFA" : "#12B76A",
               }}>
                 {transferType === "international" ? <Globe style={{ width: 14, height: 14 }} /> : recipientInitials}
               </div>
@@ -1390,10 +1421,10 @@ function TransferPageContent() {
                 </span>
               </div>
               {parseFloat(amount) > availableBalance && (
-                <p style={{ fontSize: 12, color: "#EF4444", marginTop: 8, fontWeight: 600 }}>Exceeds available balance</p>
+                <p style={{ fontSize: 12, color: "#F04438", marginTop: 8, fontWeight: 600 }}>Exceeds available balance</p>
               )}
               {amount && parseFloat(amount) <= 0 && (
-                <p style={{ fontSize: 12, color: "#EF4444", marginTop: 8, fontWeight: 600 }}>Amount must be greater than 0</p>
+                <p style={{ fontSize: 12, color: "#F04438", marginTop: 8, fontWeight: 600 }}>Amount must be greater than 0</p>
               )}
               {!amount && (
                 <p style={{ fontSize: 12, color: colors.textMuted, marginTop: 8 }}>Enter an amount to continue</p>
@@ -1415,7 +1446,7 @@ function TransferPageContent() {
                       borderRadius: 24, padding: "8px 18px", cursor: "pointer",
                       fontSize: 13, fontWeight: 700,
                       color: isActive ? colors.blue : colors.textSecondary,
-                      boxShadow: isActive ? (colors.isDark ? "0 0 12px rgba(59,158,255,0.15)" : "0 0 12px rgba(0,102,204,0.1)") : "none",
+                      boxShadow: isActive ? (colors.isDark ? "0 0 12px rgba(26,44,206,0.15)" : "0 0 12px rgba(26,44,206,0.1)") : "none",
                       transition: "all 200ms ease",
                     }}
                   >
@@ -1462,11 +1493,11 @@ function TransferPageContent() {
               style={{
                 width: "100%", padding: "15px 0", borderRadius: 14, border: "none",
                 background: canProceedAmount 
-                  ? (colors.isDark ? "linear-gradient(135deg, #3B9EFF 0%, #2563EB 100%)" : "linear-gradient(135deg, #0066CC 0%, #0052A3 100%)") 
+                  ? (colors.isDark ? "linear-gradient(135deg, #1A2CCE 0%, #1A2CCE 100%)" : "linear-gradient(135deg, #1A2CCE 0%, #1A2CCE 100%)") 
                   : colors.bgHover,
                 color: canProceedAmount ? "#fff" : colors.textMuted,
                 fontSize: 15, fontWeight: 700, cursor: canProceedAmount ? "pointer" : "default",
-                boxShadow: canProceedAmount ? (colors.isDark ? "0 4px 16px rgba(59,158,255,0.3)" : "0 4px 16px rgba(0,102,204,0.2)") : "none",
+                boxShadow: canProceedAmount ? (colors.isDark ? "0 4px 16px rgba(26,44,206,0.3)" : "0 4px 16px rgba(26,44,206,0.2)") : "none",
               }}
             >
               Review Transfer
@@ -1536,9 +1567,9 @@ function TransferPageContent() {
                 ) : (
                   <div style={{
                     width: 38, height: 38, borderRadius: "50%",
-                    background: "linear-gradient(135deg, rgba(0,200,150,0.2), rgba(0,200,150,0.08))",
+                    background: "linear-gradient(135deg, rgba(18,183,106,0.2), rgba(18,183,106,0.08))",
                     display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                    fontSize: 13, fontWeight: 800, color: "#00C896",
+                    fontSize: 13, fontWeight: 800, color: "#12B76A",
                   }}>
                     {recipientInitials}
                   </div>
@@ -1571,7 +1602,8 @@ function TransferPageContent() {
                 return (
                   <>
                     <ConfirmRow label="Method" value={({ bank: "Bank Transfer", wire: "Wire Transfer", crypto: "Cryptocurrency", paypal: "PayPal", wise: "Wise Transfer", cashapp: "Cash App", zelle: "Zelle", venmo: "Venmo", revolut: "Revolut", westernunion: "Western Union", moneygram: "MoneyGram" } as Record<string, string>)[intlMethod]} />
-                    {intlMethod === "bank" && intlFields.bankSelect && <ConfirmRow label="Bank" value={intlFields.bankSelect === "Others" ? intlFields.bankName : intlFields.bankSelect} />}
+                    {intlMethod === "bank" && intlFields.bankName && <ConfirmRow label="Bank" value={intlFields.bankName} />}
+                    {intlMethod === "bank" && intlFields.recipientCountry && <ConfirmRow label="Country" value={intlFields.recipientCountry} />}
                     {intlMethod === "wire" && intlFields.swiftCode && <ConfirmRow label="SWIFT Code" value={intlFields.swiftCode} />}
                     {intlMethod === "wire" && intlFields.bankName && <ConfirmRow label="Bank" value={intlFields.bankName} />}
                     {intlMethod === "crypto" && intlFields.network && <ConfirmRow label="Network" value={intlFields.network} />}
@@ -1579,7 +1611,7 @@ function TransferPageContent() {
                     <ConfirmRow 
                       label={`Fee ${intlFee?.feeType === "percentage" ? `(${intlFee.percentFee}%)` : ""}`} 
                       value={formatAmount(calculatedFee)} 
-                      valueColor={calculatedFee > 0 ? "#F59E0B" : "#00C896"} 
+                      valueColor={calculatedFee > 0 ? "#F79009" : "#12B76A"} 
                     />
                     <ConfirmRow label="Total Debit" value={formatAmount(total)} valueColor={colors.blue} />
                     {description && <ConfirmRow label="Note" value={description} />}
@@ -1594,7 +1626,7 @@ function TransferPageContent() {
               })() : (
                 <>
                   <ConfirmRow label="Network" value="Internal" />
-                  <ConfirmRow label="Fee" value="$0.00" valueColor="#00C896" />
+                  <ConfirmRow label="Fee" value="$0.00" valueColor="#12B76A" />
                   {description && <ConfirmRow label="Note" value={description} />}
                   <ConfirmRow label="Estimated Arrival" value="Instant" noBorder />
                 </>
@@ -1637,7 +1669,7 @@ function TransferPageContent() {
                       fontSize: 11, fontWeight: 600, color: colors.textMuted, 
                       marginBottom: 6, display: "block", textTransform: "uppercase", letterSpacing: "0.05em" 
                     }}>
-                      Nickname <span style={{ color: "#EF4444" }}>*</span>
+                      Nickname <span style={{ color: "#F04438" }}>*</span>
                     </label>
                     <input
                       type="text"
@@ -1659,7 +1691,7 @@ function TransferPageContent() {
             {/* Show loaded beneficiary indicator */}
             {loadedBeneficiary && (
               <div style={{
-                background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)",
+                background: "rgba(26,44,206,0.08)", border: "1px solid rgba(26,44,206,0.2)",
                 borderRadius: 12, padding: "10px 14px", marginBottom: 16,
                 display: "flex", alignItems: "center", gap: 10,
               }}>
@@ -1678,11 +1710,11 @@ function TransferPageContent() {
                 width: "100%", padding: "15px 0", borderRadius: 14, border: "none",
                 background: (saveBeneficiary && !beneficiaryNickname.trim()) 
                   ? colors.bgHover 
-                  : (colors.isDark ? "linear-gradient(135deg, #00C896 0%, #059669 100%)" : "linear-gradient(135deg, #059669 0%, #047857 100%)"),
+                  : (colors.isDark ? "linear-gradient(135deg, #12B76A 0%, #059669 100%)" : "linear-gradient(135deg, #059669 0%, #047857 100%)"),
                 color: (saveBeneficiary && !beneficiaryNickname.trim()) ? colors.textMuted : "#fff",
                 fontSize: 15, fontWeight: 700, cursor: (saveBeneficiary && !beneficiaryNickname.trim()) ? "default" : "pointer",
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                boxShadow: (saveBeneficiary && !beneficiaryNickname.trim()) ? "none" : (colors.isDark ? "0 4px 16px rgba(0,200,150,0.3)" : "0 4px 16px rgba(5,150,105,0.2)"),
+                boxShadow: (saveBeneficiary && !beneficiaryNickname.trim()) ? "none" : (colors.isDark ? "0 4px 16px rgba(18,183,106,0.3)" : "0 4px 16px rgba(5,150,105,0.2)"),
               }}
             >
               <Lock style={{ width: 16, height: 16 }} /> Authorize Transfer
@@ -1699,7 +1731,7 @@ function TransferPageContent() {
               background: colors.blueBg,
               display: "flex", alignItems: "center", justifyContent: "center",
               margin: "0 auto 20px",
-              boxShadow: colors.isDark ? "0 0 24px rgba(59,158,255,0.12)" : "0 0 24px rgba(0,102,204,0.08)",
+              boxShadow: colors.isDark ? "0 0 24px rgba(26,44,206,0.12)" : "0 0 24px rgba(26,44,206,0.08)",
             }}>
               <Shield style={{ width: 32, height: 32, color: colors.blue }} />
             </div>
@@ -1720,7 +1752,7 @@ function TransferPageContent() {
                     border: `2.5px solid ${filled ? colors.blue : colors.border}`,
                     transition: "all 200ms cubic-bezier(.4,0,.2,1)",
                     transform: filled ? "scale(1.15)" : "scale(1)",
-                    boxShadow: filled ? (colors.isDark ? "0 0 12px rgba(59,158,255,0.4)" : "0 0 12px rgba(0,102,204,0.25)") : "none",
+                    boxShadow: filled ? (colors.isDark ? "0 0 12px rgba(26,44,206,0.4)" : "0 0 12px rgba(26,44,206,0.25)") : "none",
                   }} />
                 )
               })}
@@ -1785,22 +1817,22 @@ function TransferPageContent() {
           <div style={{ paddingTop: 20 }}>
             {/* Warning banner */}
             <div style={{
-              background: "linear-gradient(135deg, rgba(245,158,11,0.12), rgba(234,88,12,0.08))",
-              border: "1px solid rgba(245,158,11,0.3)",
+              background: "linear-gradient(135deg, rgba(247,144,9,0.12), rgba(234,88,12,0.08))",
+              border: "1px solid rgba(247,144,9,0.3)",
               borderRadius: 16, padding: "16px", marginBottom: 24,
               position: "relative", overflow: "hidden",
             }}>
-              <div className="pointer-events-none" style={{ position: "absolute", top: -20, right: -20, width: 80, height: 80, borderRadius: "50%", background: "rgba(245,158,11,0.15)", filter: "blur(20px)" }} />
+              <div className="pointer-events-none" style={{ position: "absolute", top: -20, right: -20, width: 80, height: 80, borderRadius: "50%", background: "rgba(247,144,9,0.15)", filter: "blur(20px)" }} />
               <div style={{ display: "flex", alignItems: "flex-start", gap: 12, position: "relative" }}>
                 <div style={{
                   width: 40, height: 40, borderRadius: 12,
-                  background: "rgba(245,158,11,0.15)",
+                  background: "rgba(247,144,9,0.15)",
                   display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
                 }}>
-                  <AlertTriangle style={{ width: 20, height: 20, color: "#F59E0B" }} />
+                  <AlertTriangle style={{ width: 20, height: 20, color: "#F79009" }} />
                 </div>
                 <div>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: "#F59E0B", margin: "0 0 4px" }}>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: "#F79009", margin: "0 0 4px" }}>
                     Verification Required
                   </p>
                   <p style={{ fontSize: 13, color: colors.textSecondary, margin: 0, lineHeight: 1.5 }}>
@@ -1817,14 +1849,14 @@ function TransferPageContent() {
                   <div style={{
                     width: 28, height: 28, borderRadius: "50%",
                     background: idx < currentCodeIndex ? colors.greenBg : idx === currentCodeIndex ? colors.yellowBg : colors.bgHover,
-                    border: `2px solid ${idx < currentCodeIndex ? colors.green : idx === currentCodeIndex ? "#F59E0B" : colors.border}`,
+                    border: `2px solid ${idx < currentCodeIndex ? colors.green : idx === currentCodeIndex ? "#F79009" : colors.border}`,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     transition: "all 300ms ease",
                   }}>
                     {idx < currentCodeIndex ? (
                       <Check style={{ width: 14, height: 14, color: colors.green }} />
                     ) : (
-                      <span style={{ fontSize: 11, fontWeight: 700, color: idx === currentCodeIndex ? "#F59E0B" : colors.textMuted }}>{idx + 1}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: idx === currentCodeIndex ? "#F79009" : colors.textMuted }}>{idx + 1}</span>
                     )}
                   </div>
                   {idx < requiredCodes.length - 1 && (
@@ -1838,12 +1870,12 @@ function TransferPageContent() {
             <div style={{ textAlign: "center", marginBottom: 24 }}>
               <div style={{
                 width: 64, height: 64, borderRadius: "50%",
-                background: "linear-gradient(135deg, rgba(245,158,11,0.15), rgba(234,88,12,0.1))",
+                background: "linear-gradient(135deg, rgba(247,144,9,0.15), rgba(234,88,12,0.1))",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 margin: "0 auto 16px",
-                boxShadow: "0 0 24px rgba(245,158,11,0.15)",
+                boxShadow: "0 0 24px rgba(247,144,9,0.15)",
               }}>
-                <ShieldCheck style={{ width: 28, height: 28, color: "#F59E0B" }} />
+                <ShieldCheck style={{ width: 28, height: 28, color: "#F79009" }} />
               </div>
               <p style={{ fontSize: 18, fontWeight: 700, color: colors.textPrimary, margin: "0 0 4px" }}>
                 Enter {requiredCodes[currentCodeIndex]?.label}
@@ -1855,7 +1887,7 @@ function TransferPageContent() {
 
             {/* Code input */}
             <div style={{
-              background: colors.bgElevated, border: `1px solid ${codeError ? "#EF4444" : colors.border}`,
+              background: colors.bgElevated, border: `1px solid ${codeError ? "#F04438" : colors.border}`,
               borderRadius: 14, padding: "0 16px", marginBottom: 12,
               transition: "border-color 200ms",
             }}>
@@ -1878,10 +1910,10 @@ function TransferPageContent() {
               <div style={{
                 display: "flex", alignItems: "center", gap: 8, marginBottom: 12,
                 padding: "10px 14px", borderRadius: 10,
-                background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)",
+                background: "rgba(240,68,56,0.08)", border: "1px solid rgba(240,68,56,0.2)",
               }}>
-                <AlertTriangle style={{ width: 14, height: 14, color: "#EF4444", flexShrink: 0 }} />
-                <span style={{ fontSize: 13, color: "#EF4444" }}>{codeError}</span>
+                <AlertTriangle style={{ width: 14, height: 14, color: "#F04438", flexShrink: 0 }} />
+                <span style={{ fontSize: 13, color: "#F04438" }}>{codeError}</span>
               </div>
             )}
 
@@ -1893,12 +1925,12 @@ function TransferPageContent() {
               style={{
                 width: "100%", padding: "15px 0", borderRadius: 14, border: "none",
                 background: (!verifyingCode && enteredCode.trim())
-                  ? "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)"
+                  ? "linear-gradient(135deg, #F79009 0%, #D97706 100%)"
                   : colors.bgHover,
                 color: (!verifyingCode && enteredCode.trim()) ? "#fff" : colors.textMuted,
                 fontSize: 15, fontWeight: 700, cursor: (!verifyingCode && enteredCode.trim()) ? "pointer" : "default",
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                boxShadow: (!verifyingCode && enteredCode.trim()) ? "0 4px 16px rgba(245,158,11,0.3)" : "none",
+                boxShadow: (!verifyingCode && enteredCode.trim()) ? "0 4px 16px rgba(247,144,9,0.3)" : "none",
                 marginBottom: 12,
               }}
             >
@@ -1926,7 +1958,7 @@ function TransferPageContent() {
               display: "flex", alignItems: "center", justifyContent: "center",
               margin: "0 auto 28px",
               position: "relative",
-              boxShadow: colors.isDark ? "0 0 40px rgba(59,158,255,0.2)" : "0 0 40px rgba(0,102,204,0.15)",
+              boxShadow: colors.isDark ? "0 0 40px rgba(26,44,206,0.2)" : "0 0 40px rgba(26,44,206,0.15)",
             }}>
               {/* Spinning ring */}
               <div style={{
@@ -2024,7 +2056,7 @@ function TransferPageContent() {
               background: colors.greenBg,
               display: "flex", alignItems: "center", justifyContent: "center",
               margin: "0 auto 20px",
-              boxShadow: colors.isDark ? "0 0 32px rgba(0,200,150,0.15)" : "0 0 32px rgba(5,150,105,0.1)",
+              boxShadow: colors.isDark ? "0 0 32px rgba(18,183,106,0.15)" : "0 0 32px rgba(5,150,105,0.1)",
               animation: "successPulse 2s ease-in-out infinite",
             }}>
               <CheckCircle2 style={{ width: 40, height: 40, color: colors.green }} />
@@ -2171,9 +2203,9 @@ function TransferPageContent() {
               className="pressable"
               style={{
                 width: "100%", padding: "15px 0", borderRadius: 14, border: "none",
-                background: colors.isDark ? "linear-gradient(135deg, #3B9EFF 0%, #2563EB 100%)" : "linear-gradient(135deg, #0066CC 0%, #0052A3 100%)",
+                background: colors.isDark ? "linear-gradient(135deg, #1A2CCE 0%, #1A2CCE 100%)" : "linear-gradient(135deg, #1A2CCE 0%, #1A2CCE 100%)",
                 color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", marginBottom: 10,
-                boxShadow: colors.isDark ? "0 4px 16px rgba(59,158,255,0.3)" : "0 4px 16px rgba(0,102,204,0.2)",
+                boxShadow: colors.isDark ? "0 4px 16px rgba(26,44,206,0.3)" : "0 4px 16px rgba(26,44,206,0.2)",
               }}
             >
               Back to Dashboard
@@ -2204,8 +2236,8 @@ function TransferPageContent() {
           to   { transform: rotate(360deg); }
         }
         @keyframes successPulse {
-          0%, 100% { box-shadow: 0 0 32px rgba(0,200,150,0.15); }
-          50% { box-shadow: 0 0 48px rgba(0,200,150,0.25); }
+          0%, 100% { box-shadow: 0 0 32px rgba(18,183,106,0.15); }
+          50% { box-shadow: 0 0 48px rgba(18,183,106,0.25); }
         }
         .hide-scrollbar::-webkit-scrollbar {
           display: none;

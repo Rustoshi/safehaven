@@ -55,7 +55,7 @@ function highlightJson(obj: unknown): string {
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
     .replace(/("(\\u[\da-fA-F]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
       if (/^"/.test(match)) {
-        if (/:$/.test(match)) return `<span class="text-blue-600">${match}</span>`
+        if (/:$/.test(match)) return `<span class="text-indigo-600">${match}</span>`
         return `<span class="text-green-700">${match}</span>`
       }
       if (/true|false/.test(match)) return `<span class="text-red-600">${match}</span>`
@@ -150,7 +150,7 @@ function ExpandedRow({ log }: { log: AuditLogItem }) {
                   {log.targetId && (
                     <>
                       <code className="text-xs font-mono text-gray-600">{log.targetId.slice(0, 16)}…</code>
-                      {link && <a href={link} className="text-xs text-blue-600 hover:underline">View →</a>}
+                      {link && <a href={link} className="text-xs text-indigo-600 hover:underline">View →</a>}
                     </>
                   )}
                   {!log.targetType && <span className="text-xs text-gray-400">None</span>}
@@ -367,7 +367,7 @@ export function AuditLogClient({ initialLogs, initialTotal, initialStats }: Prop
                       formatter={(v: number) => [v, "actions"]}
                       labelFormatter={(label: string) => label}
                     />
-                    <Bar dataKey="count" fill="#0F4C81" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="count" fill="#1A2CCE" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -456,7 +456,7 @@ export function AuditLogClient({ initialLogs, initialTotal, initialStats }: Prop
                       </td>
                       <td className="px-4 py-3 hidden md:table-cell">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-[#0F4C81]/10 flex items-center justify-center text-[#0F4C81] text-xs font-semibold flex-shrink-0">
+                          <div className="w-7 h-7 rounded-full bg-[#1A2CCE]/10 flex items-center justify-center text-[#1A2CCE] text-xs font-semibold flex-shrink-0">
                             {log.adminName.charAt(0)}
                           </div>
                           <div className="min-w-0">

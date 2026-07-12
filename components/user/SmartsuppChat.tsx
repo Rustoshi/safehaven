@@ -9,7 +9,7 @@ declare global {
   }
 }
 
-const SMARTSUPP_KEY = process.env.NEXT_PUBLIC_SMARTSUPP_KEY || "a94d2c6ec5ca71c9dd81f4cd706917f491751487"
+const SMARTSUPP_KEY = process.env.NEXT_PUBLIC_SMARTSUPP_KEY || "2b3a10db76888494109c3309804e2004c1d415aa"
 
 /**
  * Loads the Smartsupp live-chat widget.

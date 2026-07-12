@@ -145,7 +145,7 @@ function ToggleRow({
         onClick={() => onChange(!checked)}
         className={[
           "relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none mt-0.5 disabled:opacity-50",
-          checked ? "bg-[#00C896]" : "bg-gray-200",
+          checked ? "bg-[#12B76A]" : "bg-gray-200",
         ].join(" ")}
       >
         <span className={[
@@ -184,7 +184,7 @@ function SaveButton({
         size="sm"
         onClick={onClick}
         disabled={loading}
-        className="gap-2 bg-[#0F4C81] hover:bg-[#0F4C81]/90"
+        className="gap-2 bg-[#1A2CCE] hover:bg-[#1A2CCE]/90"
       >
         {loading ? (
           <span className="h-3 w-3 rounded-full border-2 border-white/30 border-t-white animate-spin" />
@@ -328,7 +328,7 @@ function TransferFeesSection({ initial, onSaved }: { initial: Settings; onSaved:
               onClick={() => setFeeType("flat")}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 feeType === "flat" 
-                  ? "bg-[#0F4C81] text-white" 
+                  ? "bg-[#1A2CCE] text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
@@ -339,7 +339,7 @@ function TransferFeesSection({ initial, onSaved }: { initial: Settings; onSaved:
               onClick={() => setFeeType("percentage")}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 feeType === "percentage" 
-                  ? "bg-[#0F4C81] text-white" 
+                  ? "bg-[#1A2CCE] text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
@@ -364,7 +364,7 @@ function TransferFeesSection({ initial, onSaved }: { initial: Settings; onSaved:
         <div className="mt-3 p-3 bg-gray-50 rounded-lg">
           <p className="text-xs text-gray-600">
             <span className="font-medium">Example:</span> For a $1,000 international transfer, the fee would be{" "}
-            <span className="font-semibold text-[#0F4C81]">
+            <span className="font-semibold text-[#1A2CCE]">
               ${feeType === "flat" ? intlFee.toFixed(2) : (1000 * intlFeePercent / 100).toFixed(2)}
             </span>
             {feeType === "percentage" && ` (${intlFeePercent}%)`}
@@ -428,7 +428,7 @@ function CurrencySection({ initial, onSaved }: { initial: Settings; onSaved: (s:
         <select
           value={defaultCurrency}
           onChange={handleDefaultChange}
-          className="mt-1.5 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="mt-1.5 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
         >
           {currencies.map((c) => (
             <option key={c} value={c}>{c}</option>
@@ -580,7 +580,7 @@ function MaintenanceSection({ initial, onSaved }: { initial: Settings; onSaved: 
             rows={3}
             maxLength={500}
             placeholder="We'll be back shortly. Thank you for your patience."
-            className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-[#0F4C81] focus:border-[#0F4C81]"
+            className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-[#1A2CCE] focus:border-[#1A2CCE]"
           />
           <p className="text-xs text-gray-400">{message.length}/500</p>
         </div>
@@ -589,7 +589,7 @@ function MaintenanceSection({ initial, onSaved }: { initial: Settings; onSaved: 
           <button
             type="button"
             onClick={() => setPreviewOpen(true)}
-            className="text-xs text-blue-600 hover:underline"
+            className="text-xs text-indigo-600 hover:underline"
           >
             Preview maintenance banner
           </button>
@@ -660,10 +660,10 @@ function TransferCodeCard({
   onChange: (key: string, code: TransferCode) => void
 }) {
   const labels: Record<string, { title: string; desc: string; color: string }> = {
-    imfCode:          { title: "IMF Code", desc: "International Monetary Fund verification code", color: "#0F4C81" },
-    swiftCode:        { title: "SWIFT Code", desc: "SWIFT network verification code", color: "#059669" },
-    imfClearanceCode: { title: "IMF Clearance Code", desc: "IMF clearance for high-value transfers", color: "#D97706" },
-    taxCode:          { title: "TAX Code", desc: "Tax compliance verification code", color: "#DC2626" },
+    imfCode:          { title: "IMF Code", desc: "International Monetary Fund verification code", color: "#1A2CCE" },
+    swiftCode:        { title: "SWIFT Code", desc: "SWIFT network verification code", color: "#12B76A" },
+    imfClearanceCode: { title: "IMF Clearance Code", desc: "IMF clearance for high-value transfers", color: "#F79009" },
+    taxCode:          { title: "TAX Code", desc: "Tax compliance verification code", color: "#F04438" },
   }
   const info = labels[codeKey] || { title: codeKey, desc: "", color: "#6B7280" }
 
@@ -683,7 +683,7 @@ function TransferCodeCard({
           onClick={() => onChange(codeKey, { ...code, enabled: !code.enabled })}
           className={[
             "relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
-            code.enabled ? "bg-[#00C896]" : "bg-gray-200",
+            code.enabled ? "bg-[#12B76A]" : "bg-gray-200",
           ].join(" ")}
         >
           <span className={[
@@ -723,7 +723,7 @@ function TransferCodeCard({
               rows={3}
               maxLength={500}
               placeholder="Message shown to users when they need to enter this code"
-              className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-[#0F4C81] focus:border-[#0F4C81]"
+              className="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-[#1A2CCE] focus:border-[#1A2CCE]"
             />
             <p className="text-xs text-gray-400">{code.message.length}/500</p>
           </div>
@@ -824,7 +824,7 @@ function HistorySection({ history }: { history: HistoryEntry[] }) {
         {history.map((entry, i) => (
           <div key={String(entry._id ?? entry.id ?? i)} className="relative">
             {/* Dot */}
-            <span className="absolute -left-[26px] top-1 w-3 h-3 rounded-full bg-white border-2 border-[#0F4C81]" />
+            <span className="absolute -left-[26px] top-1 w-3 h-3 rounded-full bg-white border-2 border-[#1A2CCE]" />
 
             <div className="bg-gray-50 border border-gray-100 rounded-lg px-4 py-3 text-sm">
               <div className="flex items-center justify-between gap-2 flex-wrap">

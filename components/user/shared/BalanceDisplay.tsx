@@ -108,9 +108,10 @@ export function BalanceDisplay({ amount, currency, size = "md", blur: initialBlu
     <span className="inline-flex items-center gap-2">
       <span
         className={cn(
-          "inline-flex items-baseline gap-0.5 font-bold tabular-nums tracking-tight transition-all text-white",
+          "inline-flex items-baseline gap-0.5 font-bold tabular-nums tracking-tight transition-all",
           SIZE_MAP[size]
         )}
+        style={{ color: "#101828" }}
       >
         {isHidden ? (
           <span className="select-none">
@@ -132,9 +133,9 @@ export function BalanceDisplay({ amount, currency, size = "md", blur: initialBlu
         aria-label={isHidden ? "Show balance" : "Hide balance"}
       >
         {isHidden ? (
-          <EyeOff className="h-[18px] w-[18px]" style={{ color: "rgba(255,255,255,0.4)" }} />
+          <EyeOff className="h-[18px] w-[18px]" style={{ color: "#98A2B3" }} />
         ) : (
-          <Eye className="h-[18px] w-[18px]" style={{ color: "#3B9EFF" }} />
+          <Eye className="h-[18px] w-[18px]" style={{ color: "#1A2CCE" }} />
         )}
       </button>
     </span>

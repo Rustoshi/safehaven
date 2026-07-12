@@ -38,7 +38,7 @@ interface Props {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const DOC_TYPE_STYLES: Record<string, { label: string; bg: string; text: string }> = {
-  passport:        { label: "Passport",         bg: "bg-blue-100",   text: "text-blue-800"   },
+  passport:        { label: "Passport",         bg: "bg-indigo-100",   text: "text-indigo-800"   },
   drivers_license: { label: "Driver's License", bg: "bg-teal-100",   text: "text-teal-800"   },
   national_id:     { label: "National ID",      bg: "bg-purple-100", text: "text-purple-800" },
   selfie:          { label: "Selfie",           bg: "bg-pink-100",   text: "text-pink-800"   },
@@ -166,23 +166,23 @@ export function DocumentReviewPanel({ document: doc, idDocUrl, onApprove, onReje
 
       {/* Personal Info Section - for ID documents */}
       {isIdDocument && hasPersonalInfo && (
-        <div className="px-4 py-3 bg-blue-50 border-b border-blue-100">
-          <p className="text-xs font-semibold text-blue-800 mb-2">Submitted Personal Information</p>
+        <div className="px-4 py-3 bg-indigo-50 border-b border-indigo-100">
+          <p className="text-xs font-semibold text-indigo-800 mb-2">Submitted Personal Information</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {doc.dateOfBirth && (
               <div className="flex items-start gap-2">
-                <Calendar className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                <Calendar className="w-4 h-4 text-indigo-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-xs text-blue-600 font-medium">Date of Birth</p>
+                  <p className="text-xs text-indigo-600 font-medium">Date of Birth</p>
                   <p className="text-sm text-gray-900">{new Date(doc.dateOfBirth).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</p>
                 </div>
               </div>
             )}
             {doc.address && (doc.address.street || doc.address.city || doc.address.country) && (
               <div className="flex items-start gap-2">
-                <MapPin className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                <MapPin className="w-4 h-4 text-indigo-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-xs text-blue-600 font-medium">Address</p>
+                  <p className="text-xs text-indigo-600 font-medium">Address</p>
                   <p className="text-sm text-gray-900">
                     {[
                       doc.address.street,
@@ -196,7 +196,7 @@ export function DocumentReviewPanel({ document: doc, idDocUrl, onApprove, onReje
               </div>
             )}
           </div>
-          <p className="text-xs text-blue-600 mt-2 italic">
+          <p className="text-xs text-indigo-600 mt-2 italic">
             This information will be saved to the user&apos;s profile upon approval.
           </p>
         </div>
@@ -227,7 +227,7 @@ export function DocumentReviewPanel({ document: doc, idDocUrl, onApprove, onReje
         ) : isImage ? (
           <div className="space-y-2">
             {/* Image controls */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <button onClick={() => setZoom((z) => Math.min(3, z + 0.25))}
                 className="p-1.5 rounded border border-gray-200 hover:bg-gray-50"><ZoomIn className="w-3.5 h-3.5" /></button>
               <button onClick={() => setZoom((z) => Math.max(0.5, z - 0.25))}
@@ -237,11 +237,11 @@ export function DocumentReviewPanel({ document: doc, idDocUrl, onApprove, onReje
                 className="p-1.5 rounded border border-gray-200 hover:bg-gray-50 ml-1"><RotateCw className="w-3.5 h-3.5" /></button>
               <div className="ml-auto flex gap-2">
                 <a href={docUrl} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-xs text-blue-600 hover:underline">
+                  className="flex items-center gap-1 text-xs text-indigo-600 hover:underline">
                   <ExternalLink className="w-3 h-3" /> Full size
                 </a>
                 <a href={docUrl} download
-                  className="flex items-center gap-1 text-xs text-blue-600 hover:underline">
+                  className="flex items-center gap-1 text-xs text-indigo-600 hover:underline">
                   <Download className="w-3 h-3" /> Download
                 </a>
               </div>
@@ -265,7 +265,7 @@ export function DocumentReviewPanel({ document: doc, idDocUrl, onApprove, onReje
               <p className="text-sm font-medium text-gray-900">PDF Document</p>
               <p className="text-xs text-gray-500">Cannot preview PDF inline.</p>
               <a href={docUrl} target="_blank" rel="noopener noreferrer"
-                className="text-xs text-blue-600 hover:underline mt-1 inline-flex items-center gap-1">
+                className="text-xs text-indigo-600 hover:underline mt-1 inline-flex items-center gap-1">
                 <ExternalLink className="w-3 h-3" /> View PDF
               </a>
             </div>

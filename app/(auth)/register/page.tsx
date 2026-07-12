@@ -41,6 +41,7 @@ type RegisterValues = z.infer<typeof registerSchema>
 const STEPS = [
   { label: "Personal", icon: User },
   { label: "Security", icon: Shield },
+  { label: "Verify",   icon: Mail },
 ]
 
 function getPasswordStrength(pw: string): { score: number; label: string; color: string; tips: string[] } {
@@ -105,6 +106,20 @@ export default function RegisterPage() {
   const [showCurrencyDropdown, setShowCurrencyDropdown] = useState(false)
   const [currencySearch, setCurrencySearch] = useState("")
   const currencyDropdownRef = useRef<HTMLDivElement>(null)
+
+  // ── Email OTP verification (step 2) ──
+  const [registeredEmail, setRegisteredEmail] = useState("")
+  const [otp, setOtp]           = useState("")
+  const [otpError, setOtpError] = useState<string | null>(null)
+  const [verifying, setVerifying] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
+  const [resendNote, setResendNote] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const t = setInterval(() => setResendCooldown((s) => (s <= 1 ? 0 : s - 1)), 1000)
+    return () => clearInterval(t)
+  }, [resendCooldown])
 
   useEffect(() => {
     (async () => {
@@ -171,6 +186,8 @@ export default function RegisterPage() {
     if (valid) setStep(1)
   }, [trigger])
 
+  // Step 1 submit → send an OTP to the email; the account is created only once
+  // the code is confirmed in step 2.
   const onSubmit = async (data: RegisterValues) => {
     setApiError(null)
     try {
@@ -187,11 +204,63 @@ export default function RegisterPage() {
         }
         setApiError(json.error || "Something went wrong. Please try again."); return
       }
-      const result = await signIn("credentials", { redirect: false, email: data.email, password: data.password })
+      // OTP sent — advance to the verify step.
+      setRegisteredEmail(json.email || data.email)
+      setOtp("")
+      setOtpError(null)
+      setResendNote(null)
+      setResendCooldown(30)
+      setStep(2)
+    } catch {
+      setApiError("Something went wrong. Please try again.")
+    }
+  }
+
+  // Step 2 — confirm the OTP, which creates the account, then sign in.
+  const handleVerify = async () => {
+    if (otp.length !== 6 || verifying) return
+    setOtpError(null)
+    setVerifying(true)
+    try {
+      const res = await fetch("/api/auth/register/verify-otp", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: registeredEmail, otp }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setOtpError(json.error || "Verification failed. Please try again.")
+        setVerifying(false)
+        return
+      }
+      // Account created — auto sign-in with the credentials still held in the form.
+      const result = await signIn("credentials", { redirect: false, email: registeredEmail, password: watch("password") })
       if (result?.ok) router.push("/app/dashboard")
       else router.push("/login?registered=true")
     } catch {
-      setApiError("Something went wrong. Please try again.")
+      setOtpError("Something went wrong. Please try again.")
+      setVerifying(false)
+    }
+  }
+
+  const handleResend = async () => {
+    if (resendCooldown > 0) return
+    setOtpError(null)
+    setResendNote(null)
+    try {
+      const res = await fetch("/api/auth/register/resend-otp", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: registeredEmail }),
+      })
+      if (res.status === 429) {
+        const json = await res.json()
+        setResendCooldown(30)
+        setOtpError(json.error || "Please wait before requesting another code.")
+        return
+      }
+      setResendNote("A new code is on its way to your inbox.")
+      setResendCooldown(30)
+    } catch {
+      setOtpError("Could not resend the code. Please try again.")
     }
   }
 
@@ -463,11 +532,69 @@ export default function RegisterPage() {
                   onMouseEnter={(e) => { if (!isSubmitting) e.currentTarget.style.backgroundColor = "var(--sh-bronze-10)" }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent" }}
                 >
-                  {isSubmitting ? (<><Loader2 className="w-4 h-4 animate-spin" /> Creating…</>) : "Create account"}
+                  {isSubmitting ? (<><Loader2 className="w-4 h-4 animate-spin" /> Sending code…</>) : "Create account"}
                 </button>
               </div>
             </div>
           </form>
+        )}
+
+        {/* STEP 3 — Verify email */}
+        {step === 2 && (
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-[2rem] leading-[1.1]" style={{ fontFamily: DISPLAY, fontWeight: 300, color: INK }}>Verify your email</h1>
+              <p className="mt-2 text-[15px]" style={{ color: "var(--sh-ink-50)" }}>
+                We sent a 6-digit code to <span style={{ color: INK }}>{registeredEmail}</span>. Enter it below to finish creating your account.
+              </p>
+            </div>
+
+            {otpError && (
+              <div className="flex items-center gap-3 px-4 py-3.5" style={{ backgroundColor: "var(--sh-error-bg)", borderRadius: "2px" }}>
+                <AlertCircle className="w-5 h-5 flex-shrink-0" strokeWidth={1.5} style={{ color: "var(--sh-error)" }} />
+                <p className="text-[14px]" style={{ color: "var(--sh-error)" }}>{otpError}</p>
+              </div>
+            )}
+            {resendNote && !otpError && (
+              <div className="flex items-center gap-3 px-4 py-3.5" style={{ backgroundColor: "var(--sh-surface)", border: "0.5px solid var(--sh-ink-10)", borderRadius: "2px" }}>
+                <CheckCircle2 className="w-5 h-5 flex-shrink-0" strokeWidth={1.5} style={{ color: BRONZE }} />
+                <p className="text-[14px]" style={{ color: INK }}>{resendNote}</p>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <label htmlFor="otp" className={LABEL} style={{ color: "var(--sh-ink-50)" }}>Verification code</label>
+              <input
+                id="otp" type="text" inputMode="numeric" autoComplete="one-time-code" autoFocus maxLength={6} placeholder="••••••"
+                value={otp}
+                onChange={(e) => { setOtp(e.target.value.replace(/\D/g, "").slice(0, 6)); setOtpError(null) }}
+                onKeyDown={(e) => { if (e.key === "Enter") handleVerify() }}
+                className="w-full h-14 px-4 text-center text-2xl tracking-[0.5em] focus:outline-none transition-colors placeholder:text-[#17140F80]"
+                style={{ ...inputSt(`0.5px solid ${otpError ? "var(--sh-error)" : BRONZE}`), fontFamily: MONO }}
+              />
+            </div>
+
+            <button
+              type="button" onClick={handleVerify} disabled={otp.length !== 6 || verifying}
+              className={`${LABEL} w-full h-12 inline-flex items-center justify-center gap-2 transition-colors`}
+              style={{ color: "var(--sh-bronze-dark)", border: `0.5px solid ${BRONZE}`, borderRadius: "2px", opacity: (otp.length !== 6 || verifying) ? 0.5 : 1 }}
+              onMouseEnter={(e) => { if (otp.length === 6 && !verifying) e.currentTarget.style.backgroundColor = "var(--sh-bronze-10)" }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent" }}
+            >
+              {verifying ? (<><Loader2 className="w-4 h-4 animate-spin" /> Verifying…</>) : "Verify & create account"}
+            </button>
+
+            <div className="flex items-center justify-between text-[13px]">
+              <button type="button" onClick={() => { setStep(1); setOtp(""); setOtpError(null) }} className="inline-flex items-center gap-1.5" style={{ color: "var(--sh-ink-50)" }}>
+                <ArrowLeft className="w-3.5 h-3.5" strokeWidth={1.5} /> Edit details
+              </button>
+              {resendCooldown > 0 ? (
+                <span style={{ color: "var(--sh-ink-50)" }}>Resend code in {resendCooldown}s</span>
+              ) : (
+                <button type="button" onClick={handleResend} style={{ color: "var(--sh-bronze-dark)", fontWeight: 500 }}>Resend code</button>
+              )}
+            </div>
+          </div>
         )}
       </div>
     </>

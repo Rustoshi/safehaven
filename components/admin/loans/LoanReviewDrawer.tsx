@@ -163,7 +163,7 @@ export function LoanReviewDrawer({ loanId, onClose, onAction }: Props) {
             {/* Applicant card */}
             <div className="bg-gray-50 rounded-xl p-4 space-y-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#0F4C81] text-white flex items-center justify-center font-semibold text-sm">
+                <div className="w-10 h-10 rounded-full bg-[#1A2CCE] text-white flex items-center justify-center font-semibold text-sm">
                   {loan.userFirstName?.[0]}{loan.userLastName?.[0]}
                 </div>
                 <div className="flex-1">
@@ -188,7 +188,7 @@ export function LoanReviewDrawer({ loanId, onClose, onAction }: Props) {
               <a
                 href={`/admin/users/${loan.userId}`}
                 target="_blank"
-                className="flex items-center gap-1 text-xs text-[#0F4C81] hover:underline"
+                className="flex items-center gap-1 text-xs text-[#1A2CCE] hover:underline"
               >
                 View user profile <ExternalLink className="w-3 h-3" />
               </a>
@@ -251,7 +251,7 @@ export function LoanReviewDrawer({ loanId, onClose, onAction }: Props) {
                         className={[
                           "text-xs px-2 py-0.5 rounded border transition-colors",
                           interestRate === String(r)
-                            ? "bg-[#0F4C81] text-white border-[#0F4C81]"
+                            ? "bg-[#1A2CCE] text-white border-[#1A2CCE]"
                             : "bg-white text-gray-600 border-gray-200 hover:border-gray-400",
                         ].join(" ")}
                       >
@@ -268,7 +268,7 @@ export function LoanReviewDrawer({ loanId, onClose, onAction }: Props) {
                     type="range" min={1} max={360} step={1}
                     value={termMonths}
                     onChange={(e) => setTermMonths(e.target.value)}
-                    className="w-full accent-[#0F4C81]"
+                    className="w-full accent-[#1A2CCE]"
                   />
                   <div className="flex flex-wrap gap-1.5 mt-1.5">
                     {TERM_PRESETS.map((t) => (
@@ -278,7 +278,7 @@ export function LoanReviewDrawer({ loanId, onClose, onAction }: Props) {
                         className={[
                           "text-xs px-2 py-0.5 rounded border transition-colors",
                           termMonths === String(t)
-                            ? "bg-[#0F4C81] text-white border-[#0F4C81]"
+                            ? "bg-[#1A2CCE] text-white border-[#1A2CCE]"
                             : "bg-white text-gray-600 border-gray-200 hover:border-gray-400",
                         ].join(" ")}
                       >
@@ -291,12 +291,12 @@ export function LoanReviewDrawer({ loanId, onClose, onAction }: Props) {
 
               {/* Calculation result box */}
               {calc && (
-                <div className="bg-[#0F4C81]/5 border border-[#0F4C81]/20 rounded-xl p-4 space-y-2">
+                <div className="bg-[#1A2CCE]/5 border border-[#1A2CCE]/20 rounded-xl p-4 space-y-2">
                   <div className="text-center">
                     <p className="text-xs text-gray-500 mb-0.5">Monthly payment</p>
-                    <p className="text-3xl font-bold text-[#0F4C81]">{fmt(calc.monthly)}</p>
+                    <p className="text-3xl font-bold text-[#1A2CCE]">{fmt(calc.monthly)}</p>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#0F4C81]/10">
+                  <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#1A2CCE]/10">
                     <Stat label="Total repayment" value={fmt(calc.total)} />
                     <Stat label="Total interest"  value={fmt(calc.interest)} />
                     <Stat label="First payment"   value={firstPaymentDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })} />

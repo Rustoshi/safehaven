@@ -18,7 +18,7 @@ const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", curren
 
 const STATUS_STYLES: Record<string, string> = {
   pending:   "bg-amber-100  text-amber-700",
-  active:    "bg-blue-100   text-blue-700",
+  active:    "bg-indigo-100   text-indigo-700",
   closed:    "bg-gray-100   text-gray-600",
   defaulted: "bg-red-100    text-red-700",
   rejected:  "bg-red-50     text-red-500",
@@ -93,7 +93,7 @@ export function LoanDetailDrawer({ loanId, onClose, onAction }: Props) {
             <div className="flex-1 p-5 space-y-5">
               {/* Status + user */}
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#0F4C81] text-white flex items-center justify-center font-semibold text-sm flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-[#1A2CCE] text-white flex items-center justify-center font-semibold text-sm flex-shrink-0">
                   {loan.userFirstName?.[0]}{loan.userLastName?.[0]}
                 </div>
                 <div className="flex-1">
@@ -138,7 +138,7 @@ export function LoanDetailDrawer({ loanId, onClose, onAction }: Props) {
                   <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all"
-                      style={{ width: `${paidPct}%`, backgroundColor: "#00C896" }}
+                      style={{ width: `${paidPct}%`, backgroundColor: "#12B76A" }}
                     />
                   </div>
                   <div className="flex justify-between text-xs mt-1 text-gray-500">
@@ -152,10 +152,10 @@ export function LoanDetailDrawer({ loanId, onClose, onAction }: Props) {
               {loan.status === "active" && loan.nextPaymentDate && (
                 <div className={[
                   "rounded-lg px-4 py-3 text-sm",
-                  loan.isOverdue ? "bg-red-50 border border-red-200" : "bg-blue-50 border border-blue-100",
+                  loan.isOverdue ? "bg-red-50 border border-red-200" : "bg-indigo-50 border border-indigo-100",
                 ].join(" ")}>
                   <p className="text-xs font-medium mb-0.5 text-gray-500">Next payment due</p>
-                  <p className={`font-semibold ${loan.isOverdue ? "text-red-700" : "text-blue-800"}`}>
+                  <p className={`font-semibold ${loan.isOverdue ? "text-red-700" : "text-indigo-800"}`}>
                     {new Date(loan.nextPaymentDate).toLocaleDateString("en-US", { weekday: "short", month: "long", day: "numeric", year: "numeric" })}
                     {loan.isOverdue && ` — ${loan.daysOverdue} days overdue`}
                   </p>
@@ -238,7 +238,7 @@ export function LoanDetailDrawer({ loanId, onClose, onAction }: Props) {
               <div className="flex flex-col sm:flex-row gap-2">
                 <Button
                   onClick={() => setPaymentOpen(true)}
-                  className="w-full sm:flex-1 bg-[#0F4C81] hover:bg-[#0F4C81]/90"
+                  className="w-full sm:flex-1 bg-[#1A2CCE] hover:bg-[#1A2CCE]/90"
                 >
                   Record payment
                 </Button>

@@ -47,7 +47,7 @@ export function VolumeChart({ days = 30, refreshSignal = 0 }: Props) {
       <div className="mt-5 h-52">
         {loading ? (
           <div className="flex h-full items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-[#0F4C81]" />
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-[#1A2CCE]" />
           </div>
         ) : error ? (
           <div className="flex h-full items-center justify-center text-sm text-red-500">
@@ -58,22 +58,22 @@ export function VolumeChart({ days = 30, refreshSignal = 0 }: Props) {
             <AreaChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="volumeGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#0F4C81" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#0F4C81" stopOpacity={0}   />
+                  <stop offset="5%"  stopColor="#1A2CCE" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#1A2CCE" stopOpacity={0}   />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#f9fafb" vertical={false} />
               <XAxis
                 dataKey="date"
                 tickFormatter={fmtLabel}
-                tick={{ fontSize: 11, fill: "#94a3b8" }}
+                tick={{ fontSize: 11, fill: "#98A2B3" }}
                 axisLine={false}
                 tickLine={false}
                 interval={Math.floor(data.length / 6)}
               />
               <YAxis
                 tickFormatter={fmt}
-                tick={{ fontSize: 11, fill: "#94a3b8" }}
+                tick={{ fontSize: 11, fill: "#98A2B3" }}
                 axisLine={false}
                 tickLine={false}
                 width={60}
@@ -83,18 +83,18 @@ export function VolumeChart({ days = 30, refreshSignal = 0 }: Props) {
                 labelFormatter={(l: string) => l}
                 contentStyle={{
                   borderRadius: "8px",
-                  border: "1px solid #e2e8f0",
+                  border: "1px solid #EAECF0",
                   fontSize: "12px",
                 }}
               />
               <Area
                 type="monotone"
                 dataKey="volume"
-                stroke="#0F4C81"
+                stroke="#1A2CCE"
                 strokeWidth={2}
                 fill="url(#volumeGrad)"
                 dot={false}
-                activeDot={{ r: 4, fill: "#0F4C81" }}
+                activeDot={{ r: 4, fill: "#1A2CCE" }}
               />
             </AreaChart>
           </ResponsiveContainer>

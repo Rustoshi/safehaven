@@ -14,7 +14,7 @@ const ICONS: Record<PersonaKey, React.ReactNode> = {
 }
 
 const ACCENT: Record<PersonaKey, string> = {
-  student:      "border-blue-500   bg-blue-50   text-blue-700",
+  student:      "border-indigo-500   bg-indigo-50   text-indigo-700",
   freelancer:   "border-violet-500 bg-violet-50 text-violet-700",
   professional: "border-emerald-500 bg-emerald-50 text-emerald-700",
   business:     "border-amber-500  bg-amber-50  text-amber-700",
@@ -22,7 +22,7 @@ const ACCENT: Record<PersonaKey, string> = {
 }
 
 const ACCENT_RING: Record<PersonaKey, string> = {
-  student:      "ring-blue-500",
+  student:      "ring-indigo-500",
   freelancer:   "ring-violet-500",
   professional: "ring-emerald-500",
   business:     "ring-amber-500",

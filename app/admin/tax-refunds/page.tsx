@@ -181,7 +181,7 @@ export default function AdminTaxRefundsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name, email, reference, year..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
         <div className="relative">
@@ -189,7 +189,7 @@ export default function AdminTaxRefundsPage() {
           <select
             value={statusFilter}
             onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }}
-            className="pl-10 pr-8 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="pl-10 pr-8 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             {STATUS_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -368,8 +368,8 @@ export default function AdminTaxRefundsPage() {
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50 hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
                       >
-                        <FileText className="h-4 w-4 text-blue-500" />
-                        <span className="text-sm font-medium text-blue-600">{doc.name}</span>
+                        <FileText className="h-4 w-4 text-indigo-500" />
+                        <span className="text-sm font-medium text-indigo-600">{doc.name}</span>
                       </a>
                     ))}
                   </div>
@@ -384,9 +384,9 @@ export default function AdminTaxRefundsPage() {
               )}
 
               {selectedRefund.adminNote && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
-                  <p className="text-xs font-medium text-blue-600 uppercase mb-1">Admin Note</p>
-                  <p className="text-blue-700 dark:text-blue-400">{selectedRefund.adminNote}</p>
+                <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-4">
+                  <p className="text-xs font-medium text-indigo-600 uppercase mb-1">Admin Note</p>
+                  <p className="text-indigo-700 dark:text-indigo-400">{selectedRefund.adminNote}</p>
                 </div>
               )}
 
@@ -440,7 +440,7 @@ export default function AdminTaxRefundsPage() {
                   <button
                     onClick={() => handleAction("review")}
                     disabled={actionLoading}
-                    className="w-full sm:flex-1 py-3 sm:py-2.5 rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="w-full sm:flex-1 py-3 sm:py-2.5 rounded-lg bg-indigo-500 text-white font-medium hover:bg-indigo-600 disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
                     Start Review

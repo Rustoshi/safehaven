@@ -10,45 +10,45 @@
 
 /* ── CSS Custom Properties ─────────────────────────────────────────────────── */
 :root {
-  /* Backgrounds - Light theme */
-  --admin-bg-base:        #F8FAFC;
+  /* Backgrounds — Grey system (dashboard-design.md → --dash-*) */
+  --admin-bg-base:        #F5F6F8;
   --admin-bg-card:        #FFFFFF;
-  --admin-bg-elevated:    #F1F5F9;
-  --admin-bg-hover:       #E2E8F0;
-  --admin-bg-active:      #CBD5E1;
+  --admin-bg-elevated:    #F9FAFB;
+  --admin-bg-hover:       #F2F4F7;
+  --admin-bg-active:      #EAECF0;
   --admin-bg-input:       #FFFFFF;
-  
+
   /* Borders */
-  --admin-border:         #E2E8F0;
-  --admin-border-strong:  #CBD5E1;
-  --admin-border-focus:   #0F4C81;
-  
+  --admin-border:         #EAECF0;
+  --admin-border-strong:  #D0D5DD;
+  --admin-border-focus:   #1A2CCE;
+
   /* Text */
-  --admin-text-primary:   #0F172A;
-  --admin-text-secondary: #475569;
-  --admin-text-muted:     #94A3B8;
-  --admin-text-disabled:  #CBD5E1;
-  
-  /* Accent Colors - Professional Blue */
-  --admin-accent:         #0F4C81;
-  --admin-accent-hover:   #0D3F6B;
-  --admin-accent-bg:      rgba(15, 76, 129, 0.08);
-  
+  --admin-text-primary:   #101828;
+  --admin-text-secondary: #667085;
+  --admin-text-muted:     #98A2B3;
+  --admin-text-disabled:  #D0D5DD;
+
+  /* Accent — Grey indigo */
+  --admin-accent:         #1A2CCE;
+  --admin-accent-hover:   #3D50E0;
+  --admin-accent-bg:      #EEF0FE;
+
   /* Status Colors */
-  --admin-success:        #16A34A;
-  --admin-success-bg:     rgba(22, 163, 74, 0.1);
-  --admin-warning:        #D97706;
-  --admin-warning-bg:     rgba(217, 119, 6, 0.1);
-  --admin-danger:         #DC2626;
-  --admin-danger-bg:      rgba(220, 38, 38, 0.1);
-  --admin-info:           #0284C7;
-  --admin-info-bg:        rgba(2, 132, 199, 0.1);
-  
-  /* Shadows - Light theme shadows */
-  --admin-shadow-sm:      0 1px 2px rgba(0, 0, 0, 0.05);
-  --admin-shadow-md:      0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  --admin-shadow-lg:      0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
-  --admin-shadow-glow:    0 0 20px rgba(15, 76, 129, 0.1);
+  --admin-success:        #12B76A;
+  --admin-success-bg:     #ECFDF3;
+  --admin-warning:        #F79009;
+  --admin-warning-bg:     #FFFAEB;
+  --admin-danger:         #F04438;
+  --admin-danger-bg:      #FEF3F2;
+  --admin-info:           #2775CA;
+  --admin-info-bg:        #EFF8FF;
+
+  /* Shadows — soft */
+  --admin-shadow-sm:      0 1px 2px rgba(16,24,40,0.05);
+  --admin-shadow-md:      0 1px 3px rgba(16,24,40,0.08), 0 1px 2px rgba(16,24,40,0.04);
+  --admin-shadow-lg:      0 4px 12px rgba(16,24,40,0.10), 0 2px 4px rgba(16,24,40,0.06);
+  --admin-shadow-glow:    0 0 0 rgba(0,0,0,0);
   
   /* Spacing */
   --admin-spacing-xs:     4px;
@@ -61,7 +61,7 @@
   
   /* Border Radius */
   --admin-radius-sm:      6px;
-  --admin-radius-md:      8px;
+  --admin-radius-md:      10px;
   --admin-radius-lg:      12px;
   --admin-radius-xl:      16px;
   --admin-radius-full:    9999px;
@@ -129,7 +129,7 @@
   width: 36px;
   height: 36px;
   border-radius: var(--admin-radius-md);
-  background: linear-gradient(135deg, var(--admin-accent) 0%, #0D3F6B 100%);
+  background: var(--admin-accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -526,7 +526,7 @@
   position: fixed;
   inset: 0;
   z-index: 35;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(16, 24, 40, 0.5);
   backdrop-filter: blur(4px);
   opacity: 0;
   visibility: hidden;
@@ -804,7 +804,7 @@
 }
 
 .admin-btn-danger:hover:not(:disabled) {
-  background: #DC2626;
+  background: var(--admin-danger);
 }
 
 .admin-btn-ghost {
@@ -904,21 +904,21 @@
 .admin-shell input,
 .admin-shell textarea,
 .admin-shell select {
-  color: #0F172A !important;
+  color: #101828 !important;
   background: #FFFFFF !important;
-  border: 1px solid #E2E8F0 !important;
+  border: 1px solid #EAECF0 !important;
   border-radius: 8px;
 }
 
 .admin-shell input::placeholder,
 .admin-shell textarea::placeholder {
-  color: #94A3B8 !important;
+  color: #98A2B3 !important;
 }
 
 .admin-shell input:focus,
 .admin-shell textarea:focus,
 .admin-shell select:focus {
-  border-color: #0F4C81 !important;
+  border-color: #1A2CCE !important;
   box-shadow: 0 0 0 3px rgba(15, 76, 129, 0.08) !important;
   outline: none !important;
 }
@@ -926,13 +926,13 @@
 /* Override ALL buttons to light theme by default */
 .admin-shell button {
   background: #FFFFFF !important;
-  color: #475569 !important;
-  border: 1px solid #E2E8F0 !important;
+  color: #667085 !important;
+  border: 1px solid #EAECF0 !important;
 }
 
 .admin-shell button:hover {
-  background: #F1F5F9 !important;
-  border-color: #CBD5E1 !important;
+  background: #F9FAFB !important;
+  border-color: #D0D5DD !important;
 }
 
 /* Primary action buttons - blue filled */
@@ -940,16 +940,16 @@
 .admin-shell button[class*="text-white"][class*="bg-"],
 .admin-shell button.bg-primary,
 .admin-shell .admin-btn-primary {
-  background: #0F4C81 !important;
+  background: #1A2CCE !important;
   color: white !important;
-  border-color: #0F4C81 !important;
+  border-color: #1A2CCE !important;
 }
 
 .admin-shell button[class*="bg-blue"]:hover,
 .admin-shell button.bg-primary:hover,
 .admin-shell .admin-btn-primary:hover {
-  background: #0D3F6B !important;
-  border-color: #0D3F6B !important;
+  background: #3D50E0 !important;
+  border-color: #3D50E0 !important;
 }
 
 /* Success buttons - green */
@@ -958,8 +958,8 @@
 .admin-shell button[class*="bg-green"],
 .admin-shell button[class*="bg-emerald"] {
   background: #FFFFFF !important;
-  color: #16A34A !important;
-  border: 1px solid #16A34A !important;
+  color: #12B76A !important;
+  border: 1px solid #12B76A !important;
 }
 
 .admin-shell button[class*="text-green"]:hover,
@@ -973,8 +973,8 @@
 .admin-shell button[class*="bg-red"],
 .admin-shell button[class*="bg-rose"] {
   background: #FFFFFF !important;
-  color: #DC2626 !important;
-  border: 1px solid #DC2626 !important;
+  color: #F04438 !important;
+  border: 1px solid #F04438 !important;
 }
 
 .admin-shell button[class*="text-red"]:hover,
@@ -986,8 +986,8 @@
 .admin-shell button[class*="text-amber"],
 .admin-shell button[class*="text-yellow"] {
   background: #FFFFFF !important;
-  color: #D97706 !important;
-  border: 1px solid #D97706 !important;
+  color: #F79009 !important;
+  border: 1px solid #F79009 !important;
 }
 
 /* Preserve specific admin button styles */
@@ -999,20 +999,20 @@
 
 .admin-shell .admin-header-avatar {
   background: rgba(15, 76, 129, 0.08) !important;
-  color: #0F4C81 !important;
+  color: #1A2CCE !important;
   border: none !important;
 }
 
 .admin-shell .admin-sidebar-signout {
   background: transparent !important;
-  color: #94A3B8 !important;
-  border: 1px solid #E2E8F0 !important;
+  color: #98A2B3 !important;
+  border: 1px solid #EAECF0 !important;
 }
 
 .admin-shell .admin-sidebar-signout:hover {
   background: rgba(220, 38, 38, 0.1) !important;
-  color: #DC2626 !important;
-  border-color: #DC2626 !important;
+  color: #F04438 !important;
+  border-color: #F04438 !important;
 }
 
 /* ── Force light theme on Radix Dialog portals (render outside admin-shell) ── */
@@ -1037,7 +1037,7 @@
 /* Dialog content background */
 [data-radix-portal] [role="dialog"] {
   background: #FFFFFF !important;
-  color: #0F172A !important;
+  color: #101828 !important;
 }
 
 /* Form inputs - comprehensive styling with high specificity */
@@ -1046,23 +1046,23 @@
 [data-radix-portal] select,
 [data-radix-portal] .flex input,
 [data-radix-portal] div input {
-  color: #0F172A !important;
+  color: #101828 !important;
   background-color: #FFFFFF !important;
-  border: 1px solid #E2E8F0 !important;
+  border: 1px solid #EAECF0 !important;
   border-radius: 8px !important;
   font-size: 14px !important;
 }
 
 [data-radix-portal] input::placeholder,
 [data-radix-portal] textarea::placeholder {
-  color: #94A3B8 !important;
+  color: #98A2B3 !important;
   opacity: 1 !important;
 }
 
 [data-radix-portal] input:focus,
 [data-radix-portal] textarea:focus,
 [data-radix-portal] select:focus {
-  border-color: #0F4C81 !important;
+  border-color: #1A2CCE !important;
   box-shadow: 0 0 0 3px rgba(15, 76, 129, 0.08) !important;
   outline: none !important;
   background-color: #FFFFFF !important;
@@ -1070,14 +1070,14 @@
 
 /* Disabled inputs */
 [data-radix-portal] input:disabled {
-  background-color: #F8FAFC !important;
-  color: #94A3B8 !important;
+  background-color: #F5F6F8 !important;
+  color: #98A2B3 !important;
   cursor: not-allowed !important;
 }
 
 /* Labels */
 [data-radix-portal] label {
-  color: #0F172A !important;
+  color: #101828 !important;
 }
 
 /* Helper/description text */
@@ -1088,7 +1088,7 @@
 /* Dialog title */
 [data-radix-portal] h2,
 [data-radix-portal] h3 {
-  color: #0F172A !important;
+  color: #101828 !important;
 }
 
 /* Span text */
@@ -1104,33 +1104,33 @@
 }
 
 [data-radix-portal] button:has(> svg):not(.admin-btn):hover {
-  color: #0F172A !important;
-  background: #F1F5F9 !important;
+  color: #101828 !important;
+  background: #F9FAFB !important;
 }
 
 /* Primary action buttons (Save, Create, etc) */
 [data-radix-portal] button.bg-primary,
 [data-radix-portal] button.bg-blue-600,
 [data-radix-portal] .admin-btn-primary {
-  background: #0F4C81 !important;
+  background: #1A2CCE !important;
   color: white !important;
-  border: 1px solid #0F4C81 !important;
+  border: 1px solid #1A2CCE !important;
 }
 
 [data-radix-portal] button.bg-primary:hover,
 [data-radix-portal] button.bg-blue-600:hover,
 [data-radix-portal] .admin-btn-primary:hover {
-  background: #0D3F6B !important;
-  border-color: #0D3F6B !important;
+  background: #3D50E0 !important;
+  border-color: #3D50E0 !important;
 }
 
 /* Destructive buttons */
 [data-radix-portal] button.bg-red-500,
 [data-radix-portal] button.bg-red-600,
 [data-radix-portal] .admin-btn-danger {
-  background: #DC2626 !important;
+  background: #F04438 !important;
   color: white !important;
-  border: 1px solid #DC2626 !important;
+  border: 1px solid #F04438 !important;
 }
 
 [data-radix-portal] button.bg-red-500:hover,
@@ -1145,42 +1145,42 @@
 [data-radix-portal] button.border-gray-300,
 [data-radix-portal] .admin-btn-outline {
   background: #FFFFFF !important;
-  color: #475569 !important;
-  border: 1px solid #E2E8F0 !important;
+  color: #667085 !important;
+  border: 1px solid #EAECF0 !important;
 }
 
 [data-radix-portal] button.border-gray-200:hover,
 [data-radix-portal] button.border-gray-300:hover,
 [data-radix-portal] .admin-btn-outline:hover {
-  background: #F8FAFC !important;
-  border-color: #CBD5E1 !important;
+  background: #F5F6F8 !important;
+  border-color: #D0D5DD !important;
 }
 
 /* Toggle/pill buttons (fee type, etc) */
 [data-radix-portal] button.capitalize {
   background: #FFFFFF !important;
-  color: #475569 !important;
-  border: 1px solid #E2E8F0 !important;
+  color: #667085 !important;
+  border: 1px solid #EAECF0 !important;
 }
 
-[data-radix-portal] button.capitalize.bg-\[\#0F4C81\],
+[data-radix-portal] button.capitalize.bg-\[\#1A2CCE\],
 [data-radix-portal] button.capitalize.text-white {
-  background: #0F4C81 !important;
+  background: #1A2CCE !important;
   color: white !important;
-  border-color: #0F4C81 !important;
+  border-color: #1A2CCE !important;
 }
 
 /* Upload button (dashed border) */
 [data-radix-portal] button.border-dashed {
   background: #FFFFFF !important;
-  border: 2px dashed #CBD5E1 !important;
+  border: 2px dashed #D0D5DD !important;
   color: #64748B !important;
 }
 
 [data-radix-portal] button.border-dashed:hover {
-  border-color: #94A3B8 !important;
-  color: #475569 !important;
-  background: #F8FAFC !important;
+  border-color: #98A2B3 !important;
+  color: #667085 !important;
+  background: #F5F6F8 !important;
 }
 
 /* Small icon-only buttons */
@@ -1196,15 +1196,15 @@
 /* Markdown toolbar buttons */
 [data-radix-portal] button.h-7.w-7,
 [data-radix-portal] button.h-8.w-8 {
-  background: #F8FAFC !important;
-  border: 1px solid #E2E8F0 !important;
+  background: #F5F6F8 !important;
+  border: 1px solid #EAECF0 !important;
   color: #64748B !important;
 }
 
 [data-radix-portal] button.h-7.w-7:hover,
 [data-radix-portal] button.h-8.w-8:hover {
-  background: #E2E8F0 !important;
-  color: #0F172A !important;
+  background: #EAECF0 !important;
+  color: #101828 !important;
 }
 
 /* Radio/checkbox labels with borders */
@@ -1212,8 +1212,8 @@
   background: #FFFFFF !important;
 }
 
-[data-radix-portal] label.cursor-pointer.border-\[\#0F4C81\] {
-  border-color: #0F4C81 !important;
+[data-radix-portal] label.cursor-pointer.border-\[\#1A2CCE\] {
+  border-color: #1A2CCE !important;
   background: rgba(15, 76, 129, 0.05) !important;
 }
 
@@ -1231,7 +1231,7 @@
 
 /* Background colors for info boxes */
 [data-radix-portal] .bg-gray-50 {
-  background: #F8FAFC !important;
+  background: #F5F6F8 !important;
 }
 
 [data-radix-portal] .bg-blue-50 {
@@ -1240,11 +1240,11 @@
 
 /* Border colors */
 [data-radix-portal] .border-gray-100 {
-  border-color: #E2E8F0 !important;
+  border-color: #EAECF0 !important;
 }
 
 [data-radix-portal] .border-gray-200 {
-  border-color: #E2E8F0 !important;
+  border-color: #EAECF0 !important;
 }
 
 .admin-input-error {

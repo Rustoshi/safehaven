@@ -17,7 +17,7 @@ export default async function CardsPage() {
     cards: [], total: 0, pages: 0,
     stats: {
       pendingCount: 0, approvedCount: 0, rejectedCount: 0,
-      activeCount: 0, frozenCount: 0, cancelledCount: 0,
+      activeCount: 0, frozenCount: 0, blockedCount: 0, cancelledCount: 0,
       totalCreditIssued: 0,
     },
   }))

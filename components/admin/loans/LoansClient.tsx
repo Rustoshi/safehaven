@@ -25,7 +25,7 @@ type Tab   = typeof TABS[number]
 
 const STATUS_PILL: Record<string, string> = {
   pending:   "bg-amber-100  text-amber-700",
-  active:    "bg-blue-100   text-blue-700",
+  active:    "bg-indigo-100   text-indigo-700",
   closed:    "bg-gray-100   text-gray-600",
   defaulted: "bg-red-100    text-red-700",
   rejected:  "bg-red-50     text-red-500",
@@ -188,7 +188,7 @@ export function LoansClient({ initialData }: { initialData: InitialData }) {
               className={[
                 "px-3 py-2 text-xs sm:text-sm rounded-t capitalize transition-colors whitespace-nowrap",
                 activeTab === tab
-                  ? "border-b-2 border-[#0F4C81] text-[#0F4C81] font-medium"
+                  ? "border-b-2 border-[#1A2CCE] text-[#1A2CCE] font-medium"
                   : "text-gray-500 hover:text-gray-700",
               ].join(" ")}
             >
@@ -239,7 +239,7 @@ export function LoansClient({ initialData }: { initialData: InitialData }) {
       {/* Table - Desktop */}
       <div className="hidden md:block bg-white border border-gray-200 rounded-xl overflow-hidden">
         {loading && (
-          <div className="h-1 bg-[#0F4C81] animate-pulse" />
+          <div className="h-1 bg-[#1A2CCE] animate-pulse" />
         )}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -266,7 +266,7 @@ export function LoansClient({ initialData }: { initialData: InitialData }) {
                   {/* Applicant */}
                   <td className="px-4 py-3 whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-[#0F4C81]/10 text-[#0F4C81] flex items-center justify-center text-xs font-semibold">
+                      <div className="w-7 h-7 rounded-full bg-[#1A2CCE]/10 text-[#1A2CCE] flex items-center justify-center text-xs font-semibold">
                         {loan.userName.charAt(0)}
                       </div>
                       <div>
@@ -309,7 +309,7 @@ export function LoansClient({ initialData }: { initialData: InitialData }) {
                         <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-1" style={{ width: 100 }}>
                           <div
                             className="h-full rounded-full"
-                            style={{ width: `${loan.paidPercent}%`, backgroundColor: "#00C896" }}
+                            style={{ width: `${loan.paidPercent}%`, backgroundColor: "#12B76A" }}
                           />
                         </div>
                         <p className="text-xs text-gray-500">{fmt(loan.outstandingBalance)} left</p>
@@ -322,7 +322,7 @@ export function LoansClient({ initialData }: { initialData: InitialData }) {
                   <td className="px-4 py-3">
                     {loan.status === "pending" ? (
                       <div className="flex gap-1.5">
-                        <Button size="sm" className="h-7 text-xs bg-[#0F4C81] hover:bg-[#0F4C81]/90"
+                        <Button size="sm" className="h-7 text-xs bg-[#1A2CCE] hover:bg-[#1A2CCE]/90"
                           onClick={() => setReviewId(loan.id)}>
                           Review
                         </Button>
@@ -398,7 +398,7 @@ export function LoansClient({ initialData }: { initialData: InitialData }) {
       {/* Mobile Card Layout */}
       <div className="md:hidden space-y-3">
         {loading && (
-          <div className="h-1 bg-[#0F4C81] animate-pulse rounded-full" />
+          <div className="h-1 bg-[#1A2CCE] animate-pulse rounded-full" />
         )}
         {data.loans.length === 0 && (
           <div className="bg-white border border-gray-200 rounded-xl px-4 py-12 text-center">
@@ -413,7 +413,7 @@ export function LoansClient({ initialData }: { initialData: InitialData }) {
             {/* Header: Applicant + Status */}
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-9 h-9 rounded-full bg-[#0F4C81]/10 text-[#0F4C81] flex items-center justify-center text-sm font-semibold flex-shrink-0">
+                <div className="w-9 h-9 rounded-full bg-[#1A2CCE]/10 text-[#1A2CCE] flex items-center justify-center text-sm font-semibold flex-shrink-0">
                   {loan.userName.charAt(0)}
                 </div>
                 <div className="min-w-0">
@@ -468,7 +468,7 @@ export function LoansClient({ initialData }: { initialData: InitialData }) {
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full"
-                    style={{ width: `${loan.paidPercent}%`, backgroundColor: "#00C896" }}
+                    style={{ width: `${loan.paidPercent}%`, backgroundColor: "#12B76A" }}
                   />
                 </div>
                 {loan.isOverdue && (
@@ -481,7 +481,7 @@ export function LoansClient({ initialData }: { initialData: InitialData }) {
             <div className="flex gap-2 pt-1">
               {loan.status === "pending" ? (
                 <>
-                  <Button size="sm" className="flex-1 h-9 text-xs bg-[#0F4C81] hover:bg-[#0F4C81]/90"
+                  <Button size="sm" className="flex-1 h-9 text-xs bg-[#1A2CCE] hover:bg-[#1A2CCE]/90"
                     onClick={() => setReviewId(loan.id)}>
                     Review
                   </Button>

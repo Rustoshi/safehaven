@@ -47,7 +47,7 @@ export function Sheet({ open, onClose, children, width = "560px", className }: S
           open ? "translate-x-0" : "translate-x-full",
           className
         )}
-        style={{ width }}
+        style={{ width, maxWidth: "100vw" }}
       >
         {children}
       </aside>

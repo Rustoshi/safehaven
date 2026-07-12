@@ -41,7 +41,7 @@ function ToggleSwitch({
       onClick={() => onChange(!checked)}
       className={[
         "relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
-        checked ? "bg-[#00C896]" : "bg-gray-200",
+        checked ? "bg-[#12B76A]" : "bg-gray-200",
       ].join(" ")}
     >
       <span className={[
@@ -87,7 +87,7 @@ function MethodRow({
       onDrop={() => onDrop(id)}
       className={[
         "flex items-center gap-4 bg-white border rounded-xl px-4 py-3 transition-all",
-        isDragging ? "opacity-40 border-dashed border-[#0F4C81]" : "border-gray-200 hover:border-gray-300 hover:shadow-sm",
+        isDragging ? "opacity-40 border-dashed border-[#1A2CCE]" : "border-gray-200 hover:border-gray-300 hover:shadow-sm",
       ].join(" ")}
     >
       {/* Drag handle */}
@@ -117,7 +117,7 @@ function MethodRow({
 
       {/* Middle info */}
       <div className="hidden lg:flex flex-col gap-0.5 text-xs min-w-[120px]">
-        <span className={`font-medium ${method.depositTarget === "bitcoin" ? "text-amber-600" : "text-blue-600"}`}>
+        <span className={`font-medium ${method.depositTarget === "bitcoin" ? "text-amber-600" : "text-indigo-600"}`}>
           → {method.depositTarget === "bitcoin" ? "Bitcoin" : "Fiat account"}
         </span>
         <span className="text-gray-500">{feeLabel(method)}</span>
@@ -268,7 +268,7 @@ export function PaymentMethodsClient({ initialMethods }: Props) {
           <h1 className="text-2xl font-semibold text-gray-900">Payment methods</h1>
           <p className="text-sm text-gray-500 mt-1">Configure deposit options shown to users</p>
         </div>
-        <Button onClick={() => setCreateOpen(true)} className="gap-2 bg-[#0F4C81] hover:bg-[#0F4C81]/90">
+        <Button onClick={() => setCreateOpen(true)} className="gap-2 bg-[#1A2CCE] hover:bg-[#1A2CCE]/90">
           <Plus className="w-4 h-4" /> Add payment method
         </Button>
       </div>
@@ -280,11 +280,11 @@ export function PaymentMethodsClient({ initialMethods }: Props) {
       {/* Tabs */}
       <div className="flex gap-1 border-b border-gray-200">
         <button onClick={() => setActiveTab("active")}
-          className={`px-4 py-2 text-sm transition-colors ${activeTab === "active" ? "border-b-2 border-[#0F4C81] text-[#0F4C81] font-medium" : "text-gray-500 hover:text-gray-700"}`}>
+          className={`px-4 py-2 text-sm transition-colors ${activeTab === "active" ? "border-b-2 border-[#1A2CCE] text-[#1A2CCE] font-medium" : "text-gray-500 hover:text-gray-700"}`}>
           Active ({active.length})
         </button>
         <button onClick={() => setActiveTab("inactive")}
-          className={`px-4 py-2 text-sm transition-colors ${activeTab === "inactive" ? "border-b-2 border-[#0F4C81] text-[#0F4C81] font-medium" : "text-gray-500 hover:text-gray-700"}`}>
+          className={`px-4 py-2 text-sm transition-colors ${activeTab === "inactive" ? "border-b-2 border-[#1A2CCE] text-[#1A2CCE] font-medium" : "text-gray-500 hover:text-gray-700"}`}>
           Inactive ({inactive.length})
         </button>
       </div>
