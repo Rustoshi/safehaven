@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import {
   MessageCircle, Plus, Clock, CheckCircle2, AlertCircle, Headphones,
   Send, ChevronRight, ChevronDown, Ticket, X, Shield, CreditCard,
-  ArrowLeftRight, HelpCircle, Smartphone, Globe, Loader2,
+  ArrowLeftRight, HelpCircle, Smartphone, Globe, Loader2, Phone,
 } from "lucide-react"
 import { UserHeader } from "@/components/user/UserHeader"
 import { useThemeColors } from "@/components/shared/ThemeProvider"
@@ -64,6 +64,21 @@ export default function SupportPage() {
   const [subject, setSubject]   = useState("")
   const [message, setMessage]   = useState("")
   const [priority, setPriority] = useState("normal")
+
+  // Admin-configurable contact details
+  const [contact, setContact] = useState<{
+    phone: string; textPhone: string; email: string
+    phoneHref: string; textHref: string; emailHref: string; canText: boolean
+  } | null>(null)
+
+  useEffect(() => {
+    let active = true
+    fetch("/api/public/settings")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (active && d?.contact) setContact(d.contact) })
+      .catch(() => { /* fall back to defaults below */ })
+    return () => { active = false }
+  }, [])
 
   const fetchTickets = useCallback(async () => {
     try {
@@ -508,14 +523,16 @@ export default function SupportPage() {
             </div>
           </button>
 
-          {/* Live Chat (non-interactive) */}
-          <div
+          {/* Live Chat */}
+          <button
+            type="button"
+            onClick={openLiveChat}
             style={{
               background: colors.isDark
                 ? "linear-gradient(180deg, rgba(0,200,150,0.08) 0%, rgba(0,200,150,0.02) 100%)"
                 : "linear-gradient(180deg, rgba(18,183,106,0.08) 0%, rgba(18,183,106,0.03) 100%)",
               border: `1px solid ${colors.green}26`,
-              borderRadius: 20, padding: "24px 16px",
+              borderRadius: 20, padding: "24px 16px", cursor: "pointer",
               display: "flex", flexDirection: "column", alignItems: "center", gap: 10,
               textAlign: "center",
             }}
@@ -538,7 +555,7 @@ export default function SupportPage() {
                 Chat with an agent in real time
               </p>
             </div>
-          </div>
+          </button>
         </div>
 
         {/* Active tickets banner */}
@@ -638,17 +655,67 @@ export default function SupportPage() {
           </div>
         </div>
 
-        {/* Contact info */}
+        {/* Contact info — call, text, or email a specialist */}
         <div style={{
-          marginTop: 28, textAlign: "center", padding: "20px 0",
+          marginTop: 28, padding: "20px 0",
           borderTop: `1px solid ${colors.border}`,
         }}>
-          <p style={{ fontSize: 12, color: colors.textMuted, margin: "0 0 4px" }}>
-            Available 24/7 for urgent issues
+          <p style={{ fontSize: 12, color: colors.textMuted, margin: "0 0 12px", textAlign: "center" }}>
+            Speak directly or text with a support specialist — available 24/7 for urgent issues
           </p>
-          <p style={{ fontSize: 11, color: colors.textMuted, margin: 0, opacity: 0.7 }}>
-            {SUPPORT_EMAIL}
-          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <a
+              href={contact?.phoneHref ?? "#"}
+              style={{
+                display: "flex", alignItems: "center", gap: 12, textDecoration: "none",
+                background: colors.bgElevated, border: `1px solid ${colors.border}`,
+                borderRadius: 12, padding: "12px 14px",
+              }}
+            >
+              <div style={{ width: 34, height: 34, borderRadius: 9, flexShrink: 0, background: colors.blueBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Phone style={{ width: 16, height: 16, color: colors.blue }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 13, fontWeight: 600, color: colors.textPrimary, margin: 0 }}>Call support</p>
+                <p style={{ fontSize: 12, color: colors.textMuted, margin: "1px 0 0" }}>{contact?.phone ?? "—"}</p>
+              </div>
+              <ChevronRight style={{ width: 15, height: 15, color: colors.textMuted, flexShrink: 0 }} />
+            </a>
+            <a
+              href={contact?.textHref ?? "#"}
+              style={{
+                display: "flex", alignItems: "center", gap: 12, textDecoration: "none",
+                background: colors.bgElevated, border: `1px solid ${colors.border}`,
+                borderRadius: 12, padding: "12px 14px",
+              }}
+            >
+              <div style={{ width: 34, height: 34, borderRadius: 9, flexShrink: 0, background: colors.greenBg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <MessageCircle style={{ width: 16, height: 16, color: colors.green }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 13, fontWeight: 600, color: colors.textPrimary, margin: 0 }}>Text a specialist</p>
+                <p style={{ fontSize: 12, color: colors.textMuted, margin: "1px 0 0" }}>{contact?.textPhone ?? "—"}</p>
+              </div>
+              <ChevronRight style={{ width: 15, height: 15, color: colors.textMuted, flexShrink: 0 }} />
+            </a>
+            <a
+              href={contact?.emailHref ?? `mailto:${SUPPORT_EMAIL}`}
+              style={{
+                display: "flex", alignItems: "center", gap: 12, textDecoration: "none",
+                background: colors.bgElevated, border: `1px solid ${colors.border}`,
+                borderRadius: 12, padding: "12px 14px",
+              }}
+            >
+              <div style={{ width: 34, height: 34, borderRadius: 9, flexShrink: 0, background: colors.bgHover, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Send style={{ width: 15, height: 15, color: colors.textSecondary }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 13, fontWeight: 600, color: colors.textPrimary, margin: 0 }}>Email us</p>
+                <p style={{ fontSize: 12, color: colors.textMuted, margin: "1px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{contact?.email ?? SUPPORT_EMAIL}</p>
+              </div>
+              <ChevronRight style={{ width: 15, height: 15, color: colors.textMuted, flexShrink: 0 }} />
+            </a>
+          </div>
         </div>
       </div>
     </>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, createContext, useContext, Suspense } from "react"
+import { useState, useEffect, useCallback, createContext, useContext, Suspense } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { signOut } from "next-auth/react"
 import Image from "next/image"
@@ -74,6 +74,19 @@ export function UserAppShell({ session, children }: Props) {
   const initials = `${session.user.firstName?.[0] || ""}${session.user.lastName?.[0] || ""}`
   const displayName = `${session.user.firstName} ${session.user.lastName}`.slice(0, 22)
 
+  // Profile photo — fetched once, and updated live when changed on the profile page.
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  useEffect(() => {
+    let active = true
+    fetch("/api/user/profile")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (active && d && "avatarUrl" in d) setAvatarUrl(d.avatarUrl) })
+      .catch(() => { /* keep initials */ })
+    const onUpdate = (e: Event) => setAvatarUrl((e as CustomEvent<string | null>).detail ?? null)
+    window.addEventListener("avatar-updated", onUpdate as EventListener)
+    return () => { active = false; window.removeEventListener("avatar-updated", onUpdate as EventListener) }
+  }, [])
+
   return (
     <PlatformSettingsProvider initialCurrency={session.user.preferredCurrency}>
       <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -140,9 +153,14 @@ export function UserAppShell({ session, children }: Props) {
             {/* Bottom: user + settings + sign out */}
             <div className="px-3 pb-4 pt-2" style={{ borderTop: "1px solid var(--dash-border)" }}>
               <div className="flex items-center gap-3 px-2.5 py-2 mb-1">
-                <div className="flex h-9 w-9 items-center justify-center text-[12px] flex-shrink-0" style={{ borderRadius: "50%", backgroundColor: "var(--dash-primary-bg)", color: "var(--dash-primary)", fontWeight: 600 }}>
-                  {initials}
-                </div>
+                {avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={avatarUrl} alt={displayName} className="h-9 w-9 flex-shrink-0 rounded-full object-cover" />
+                ) : (
+                  <div className="flex h-9 w-9 items-center justify-center text-[12px] flex-shrink-0" style={{ borderRadius: "50%", backgroundColor: "var(--dash-primary-bg)", color: "var(--dash-primary)", fontWeight: 600 }}>
+                    {initials}
+                  </div>
+                )}
                 <div className="min-w-0">
                   <p className="truncate text-[13px]" style={{ color: "var(--dash-text)", fontWeight: 600 }}>{displayName}</p>
                   <p className="truncate text-[11px]" style={{ color: "var(--dash-text-3)" }}>{session.user.email?.slice(0, 24)}</p>

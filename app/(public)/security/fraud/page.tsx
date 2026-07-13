@@ -1,7 +1,8 @@
 import { Metadata } from "next"
 import Link from "next/link"
 import Image from "next/image"
-import { BANK_NAME, SUPPORT_EMAIL } from "@/lib/brand"
+import { BANK_NAME } from "@/lib/brand"
+import { getContactInfo } from "@/lib/contact"
 import {
   AlertTriangle,
   Phone,
@@ -60,7 +61,7 @@ const STEPS_IF_FRAUD = [
     step: 1,
     title: "Contact Us Immediately",
     description:
-      "Call our 24/7 fraud hotline at 1-800-123-4567 or use the in-app chat to report the issue.",
+      "Call or text our 24/7 fraud hotline, or use the in-app chat to report the issue.",
   },
   {
     step: 2,
@@ -88,7 +89,8 @@ const STEPS_IF_FRAUD = [
   },
 ]
 
-export default function FraudPage() {
+export default async function FraudPage() {
+  const contact = await getContactInfo()
   return (
     <>
       {/* Hero */}
@@ -114,15 +116,22 @@ export default function FraudPage() {
               </p>
               <div className="flex flex-wrap items-center gap-6">
                 <a
-                  href="tel:+18001234567"
+                  href={contact.phoneHref}
                   className={LABEL + " inline-flex items-center px-7 py-3.5"}
                   style={{ color: "var(--sh-bronze-dark)", border: "0.5px solid " + BRONZE, borderRadius: "2px" }}
                 >
                   <Phone className="h-4 w-4 mr-2" strokeWidth={1.25} />
-                  1-800-123-4567
+                  {contact.phone}
                 </a>
                 <a
-                  href={`mailto:${SUPPORT_EMAIL}`}
+                  href={contact.textHref}
+                  className="text-[14px] inline-flex items-center gap-1"
+                  style={{ color: INK }}
+                >
+                  Text {contact.textPhone} →
+                </a>
+                <a
+                  href={contact.emailHref}
                   className="text-[14px] inline-flex items-center gap-1"
                   style={{ color: INK }}
                 >
@@ -164,15 +173,15 @@ export default function FraudPage() {
             </div>
             <div className="flex flex-col sm:flex-row gap-4">
               <a
-                href="tel:+18001234567"
+                href={contact.phoneHref}
                 className={LABEL + " inline-flex items-center justify-center px-7 py-3.5"}
                 style={{ color: BRONZE, border: "0.5px solid " + BRONZE, borderRadius: "2px" }}
               >
                 <Phone className="h-4 w-4 mr-2" strokeWidth={1.25} />
-                1-800-123-4567
+                {contact.phone}
               </a>
               <a
-                href={`mailto:${SUPPORT_EMAIL}`}
+                href={contact.emailHref}
                 className={LABEL + " inline-flex items-center justify-center px-7 py-3.5"}
                 style={{ color: "var(--sh-linen)", border: "0.5px solid var(--sh-linen-50)", borderRadius: "2px" }}
               >

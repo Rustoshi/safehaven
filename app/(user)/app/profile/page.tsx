@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import {
   User, Mail, Shield, Key, LogOut,
   ChevronRight, CheckCircle2, AlertTriangle, Clock,
-  Eye, EyeOff, Lock,
+  Eye, EyeOff, Lock, Camera, Loader2,
 } from "lucide-react"
 import { UserHeader } from "@/components/user/UserHeader"
 import { useThemeColors } from "@/components/shared/ThemeProvider"
@@ -35,14 +35,79 @@ export default function ProfilePage() {
   // value from the server so the profile always shows the real status.
   const [liveKycStatus, setLiveKycStatus] = useState<string | null>(null)
 
+  // Profile picture
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const [avatarError, setAvatarError] = useState("")
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   useEffect(() => {
     let active = true
     fetch("/api/user/profile")
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (active && d?.kycStatus) setLiveKycStatus(d.kycStatus) })
+      .then((d) => {
+        if (!active || !d) return
+        if (d.kycStatus) setLiveKycStatus(d.kycStatus)
+        if (d.avatarUrl) setAvatarUrl(d.avatarUrl)
+      })
       .catch(() => { /* fall back to session value */ })
     return () => { active = false }
   }, [])
+
+  const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = "" // allow re-selecting the same file
+    if (!file) return
+
+    if (!file.type.startsWith("image/")) {
+      setAvatarError("Please choose an image file")
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError("Image must be under 5MB")
+      return
+    }
+
+    setAvatarError("")
+    setAvatarUploading(true)
+    try {
+      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+      const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
+      if (!cloudName || !uploadPreset) throw new Error("Upload service not configured. Please contact support.")
+
+      // 1. Upload directly to Cloudinary (unsigned preset), same as KYC docs
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("upload_preset", uploadPreset)
+      formData.append("folder", "avatars")
+
+      const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: "POST",
+        body: formData,
+      })
+      const uploadData = await uploadRes.json()
+      if (!uploadRes.ok) throw new Error(uploadData.error?.message || "Failed to upload image")
+
+      // 2. Save the URL to the user
+      const saveRes = await fetch("/api/user/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatarUrl: uploadData.secure_url }),
+      })
+      if (!saveRes.ok) {
+        const data = await saveRes.json().catch(() => ({}))
+        throw new Error(data.error || "Failed to save photo")
+      }
+
+      setAvatarUrl(uploadData.secure_url)
+      // Let the app shell (sidebar) update its avatar immediately.
+      window.dispatchEvent(new CustomEvent("avatar-updated", { detail: uploadData.secure_url }))
+    } catch (err) {
+      setAvatarError(err instanceof Error ? err.message : "Failed to update photo")
+    } finally {
+      setAvatarUploading(false)
+    }
+  }
 
   const user = session?.user
 
@@ -81,18 +146,68 @@ export default function ProfilePage() {
       <div className="px-4 py-5 lg:px-6 space-y-5 max-w-[600px] mx-auto">
         {/* Avatar + name */}
         <div className="text-center py-4">
-          <div
-            className="mx-auto flex h-20 w-20 items-center justify-center rounded-full text-2xl font-bold text-white"
-            style={{ background: `linear-gradient(135deg, ${colors.blue} 0%, ${colors.isDark ? '#1a6fcc' : '#2563eb'} 100%)` }}
+          <button
+            type="button"
+            onClick={() => !avatarUploading && fileInputRef.current?.click()}
+            className="relative mx-auto block h-20 w-20 rounded-full"
+            style={{ cursor: avatarUploading ? "default" : "pointer" }}
+            aria-label="Change profile photo"
           >
-            {user?.firstName?.[0]?.toUpperCase()}{user?.lastName?.[0]?.toUpperCase()}
-          </div>
+            {avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={avatarUrl}
+                alt="Profile"
+                className="h-20 w-20 rounded-full object-cover"
+                style={{ border: `1px solid ${colors.border}` }}
+              />
+            ) : (
+              <span
+                className="flex h-20 w-20 items-center justify-center rounded-full text-2xl font-bold text-white"
+                style={{ background: `linear-gradient(135deg, ${colors.blue} 0%, ${colors.isDark ? '#1a6fcc' : '#2563eb'} 100%)` }}
+              >
+                {user?.firstName?.[0]?.toUpperCase()}{user?.lastName?.[0]?.toUpperCase()}
+              </span>
+            )}
+
+            {/* Camera badge */}
+            <span
+              className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full"
+              style={{ background: colors.blue, border: `2px solid ${colors.bgBase}` }}
+            >
+              {avatarUploading
+                ? <Loader2 className="h-3.5 w-3.5 text-white animate-spin" />
+                : <Camera className="h-3.5 w-3.5 text-white" />}
+            </span>
+          </button>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="user"
+            className="hidden"
+            onChange={handleAvatarSelect}
+          />
+
+          {avatarError && (
+            <p className="mt-2 text-[12px]" style={{ color: colors.red }}>{avatarError}</p>
+          )}
+
           <p className="mt-3 text-[18px] font-semibold" style={{ color: colors.textPrimary }}>
             {user?.firstName} {user?.lastName}
           </p>
           <p className="text-[14px] mt-0.5" style={{ color: colors.textTertiary }}>
             {user?.email}
           </p>
+          <button
+            type="button"
+            onClick={() => !avatarUploading && fileInputRef.current?.click()}
+            className="mt-2 text-[13px] font-medium"
+            style={{ color: colors.blue }}
+          >
+            {avatarUploading ? "Uploading…" : avatarUrl ? "Change photo" : "Add photo"}
+          </button>
         </div>
 
         {/* Info card */}

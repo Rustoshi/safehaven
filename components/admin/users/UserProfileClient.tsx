@@ -6,7 +6,7 @@ import Link                   from "next/link"
 import { format, formatDistanceToNow } from "date-fns"
 import {
   Mail, Phone, Calendar, Copy, Check, ArrowLeft,
-  ExternalLink, AlertTriangle,
+  ExternalLink, AlertTriangle, ShieldCheck,
 } from "lucide-react"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Badge }              from "@/components/ui/badge"
@@ -19,6 +19,7 @@ import { EditUserModal }      from "./modals/EditUserModal"
 import { TransactionModal }   from "./modals/TransactionModal"
 import { ResetPasswordModal } from "./modals/ResetPasswordModal"
 import { SuspendModal }       from "./modals/SuspendModal"
+import { AdminVerifyModal }   from "@/components/admin/kyc/modals/AdminVerifyModal"
 import { cn }                 from "@/lib/utils"
 import { formatCurrency, getCurrencySymbol } from "@/lib/utils/currency"
 import type { UserDetail, TransactionData, KycDocData } from "@/lib/services/user.service"
@@ -220,7 +221,7 @@ export function UserProfileClient({ user: initialUser }: Props) {
 
   // Modal state
   const [modal, setModal] = useState<
-    "edit" | "credit" | "debit" | "reset" | "suspend" | null
+    "edit" | "credit" | "debit" | "reset" | "suspend" | "verify-kyc" | null
   >(null)
   const [balanceAccountId, setBalanceAccountId] = useState<string | undefined>()
 
@@ -257,7 +258,7 @@ export function UserProfileClient({ user: initialUser }: Props) {
         {/* ── Section 1: Profile header ── */}
         <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row sm:flex-wrap items-start gap-4 sm:gap-6">
-            <UserAvatar firstName={user.firstName} lastName={user.lastName} size="lg" />
+            <UserAvatar firstName={user.firstName} lastName={user.lastName} size="lg" avatarUrl={user.avatarUrl} />
 
             <div className="flex-1 min-w-0 w-full sm:w-auto">
               <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
@@ -307,6 +308,15 @@ export function UserProfileClient({ user: initialUser }: Props) {
             {/* Action buttons */}
             <div className="flex flex-wrap gap-2 w-full sm:w-auto sm:self-start">
               <Button onClick={() => setModal("edit")} size="sm" className="flex-1 sm:flex-none">Edit</Button>
+              {user.kycStatus !== "verified" && (
+                <Button
+                  onClick={() => setModal("verify-kyc")}
+                  size="sm"
+                  className="flex-1 sm:flex-none gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+                >
+                  <ShieldCheck className="h-3.5 w-3.5" /> Verify KYC
+                </Button>
+              )}
               <Button variant="outline" onClick={() => openCredit()} size="sm" className="flex-1 sm:flex-none border-emerald-200 text-emerald-700 hover:bg-emerald-50">Credit</Button>
               <Button variant="outline" onClick={() => openDebit()} size="sm" className="flex-1 sm:flex-none border-red-200 text-red-700 hover:bg-red-50">Debit</Button>
               <Button variant="outline" onClick={() => setModal("reset")} size="sm" className="flex-1 sm:flex-none">Reset PW</Button>
@@ -585,6 +595,14 @@ export function UserProfileClient({ user: initialUser }: Props) {
           userName={`${user.firstName} ${user.lastName}`}
         />
       )}
+
+      <AdminVerifyModal
+        userId={user.id}
+        userName={`${user.firstName} ${user.lastName}`}
+        open={modal === "verify-kyc"}
+        onOpenChange={(v) => setModal(v ? "verify-kyc" : null)}
+        onSuccess={refresh}
+      />
     </>
   )
 }

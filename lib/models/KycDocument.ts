@@ -23,6 +23,7 @@ export interface IKycDocument extends Document {
   reviewedAt?: Date
   // Personal info submitted with KYC
   dateOfBirth?: Date
+  ssn?: string
   address?: {
     street?: string
     city?: string
@@ -49,6 +50,7 @@ const KycDocumentSchema = new Schema<IKycDocument>(
     reviewedAt:  { type: Date },
     // Personal info submitted with KYC
     dateOfBirth: { type: Date },
+    ssn:         { type: String },
     address: {
       street:  { type: String },
       city:    { type: String },

@@ -3,6 +3,8 @@ import { renderWelcomeEmail } from "./templates/WelcomeEmail"
 import { renderPasswordResetEmail } from "./templates/PasswordResetEmail"
 import { renderEmailVerificationSuccessEmail } from "./templates/EmailVerificationSuccessEmail"
 import { renderOtpEmail } from "./templates/OtpEmail"
+import { renderKycApprovedEmail } from "./templates/KycApprovedEmail"
+import { renderAdminAlertEmail, type AdminAlertRow } from "./templates/AdminAlertEmail"
 import { BANK_NAME } from "@/lib/brand"
 
 // ── Configuration ─────────────────────────────────────────────────────────────
@@ -136,6 +138,38 @@ export async function sendOtpEmail(
     subject: `${otp} is your ${BANK_NAME} verification code`,
     html,
   })
+}
+
+// ── sendKycApprovedEmail ──────────────────────────────────────────────────────
+
+export async function sendKycApprovedEmail(
+  to:        string,
+  firstName: string,
+  tier?:     number
+): Promise<boolean> {
+  const html = renderKycApprovedEmail({ firstName, tier })
+
+  return sendEmail({
+    to,
+    subject: `Your ${BANK_NAME} identity has been verified`,
+    html,
+  })
+}
+
+// ── sendAdminAlertEmail (notifies the ADMIN_EMAIL of key activity) ────────────
+
+export async function sendAdminAlertEmail(
+  title: string,
+  rows:  AdminAlertRow[],
+  intro?: string
+): Promise<boolean> {
+  const to = process.env.ADMIN_EMAIL
+  if (!to) {
+    console.warn("[Email] ADMIN_EMAIL not set — skipping admin alert")
+    return false
+  }
+  const html = renderAdminAlertEmail({ title, intro, rows })
+  return sendEmail({ to, subject: `[${BANK_NAME} Admin] ${title}`, html })
 }
 
 // ── Generic email sender for custom emails ────────────────────────────────────

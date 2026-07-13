@@ -26,7 +26,7 @@ const registerSchema = z.object({
   firstName:       z.string().min(2, "At least 2 characters").max(50, "Max 50 characters"),
   lastName:        z.string().min(2, "At least 2 characters").max(50, "Max 50 characters"),
   email:           z.string().email("Enter a valid email address"),
-  phone:           z.string().optional(),
+  phone:           z.string().min(1, "Phone number is required").regex(/^[+]?[\d\s()-]{7,20}$/, "Enter a valid phone number"),
   currency:        z.string().min(3, "Select a currency").max(3, "Invalid currency code"),
   password:        z.string().min(8, "At least 8 characters"),
   confirmPassword: z.string(),
@@ -349,12 +349,13 @@ export default function RegisterPage() {
 
               {/* Phone */}
               <div className="space-y-2">
-                <label htmlFor="phone" className={LABEL} style={{ color: focusedField === "phone" ? "var(--sh-bronze-dark)" : "var(--sh-ink-50)" }}>Phone number <span style={{ color: "var(--sh-ink-20)" }}>(optional)</span></label>
+                <label htmlFor="phone" className={LABEL} style={{ color: focusedField === "phone" ? "var(--sh-bronze-dark)" : "var(--sh-ink-50)" }}>Phone number</label>
                 <div className="relative">
                   <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" strokeWidth={1.5} style={{ color: focusedField === "phone" ? BRONZE : "var(--sh-ink-50)" }} />
-                  <input id="phone" type="tel" placeholder="+1 (555) 000-0000" {...register("phone")} onFocus={() => setFocusedField("phone")} onBlur={() => setFocusedField(null)}
-                    className={`${inputCls} pl-11 pr-4`} style={inputSt(bd("phone", false))} />
+                  <input id="phone" type="tel" autoComplete="tel" placeholder="+1 (555) 000-0000" {...register("phone")} onFocus={() => setFocusedField("phone")} onBlur={() => setFocusedField(null)}
+                    className={`${inputCls} pl-11 pr-4`} style={inputSt(bd("phone", !!errors.phone))} />
                 </div>
+                {errors.phone && <p className="text-[12px] flex items-center gap-1" style={{ color: "var(--sh-error)" }}><AlertCircle className="w-3 h-3" strokeWidth={1.5} />{errors.phone.message}</p>}
               </div>
 
               {/* Currency */}

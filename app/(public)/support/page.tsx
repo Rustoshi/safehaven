@@ -1,10 +1,13 @@
 import { Metadata } from "next"
 import Link from "next/link"
 import Image from "next/image"
-import { BANK_NAME, SUPPORT_EMAIL } from "@/lib/brand"
+import { BANK_NAME } from "@/lib/brand"
+import { getContactInfo } from "@/lib/contact"
+import { ChatLink } from "@/components/shared/ChatLink"
 import {
   MessageCircle,
   Phone,
+  MessageSquare,
   Mail,
   FileText,
   CreditCard,
@@ -70,37 +73,48 @@ const POPULAR_QUESTIONS = [
   { question: "How do I update my address?", href: "/support/update-address" },
 ]
 
-const CONTACT_OPTIONS = [
-  {
-    icon: MessageCircle,
-    title: "Live Chat",
-    description: "Chat with our support team",
-    availability: "Available 24/7",
-    action: "Start Chat",
-    href: "#chat",
-    primary: true,
-  },
-  {
-    icon: Phone,
-    title: "Phone Support",
-    description: "Call us at 1-800-123-4567",
-    availability: "Mon-Fri, 8am-8pm ET",
-    action: "Call Now",
-    href: "tel:+18001234567",
-    primary: false,
-  },
-  {
-    icon: Mail,
-    title: "Email Support",
-    description: `Email us at ${SUPPORT_EMAIL}`,
-    availability: "Response within 24 hours",
-    action: "Send Email",
-    href: `mailto:${SUPPORT_EMAIL}`,
-    primary: false,
-  },
-]
+export default async function SupportPage() {
+  const contact = await getContactInfo()
 
-export default function SupportPage() {
+  const CONTACT_OPTIONS = [
+    {
+      icon: MessageCircle,
+      title: "Live Chat",
+      description: "Chat with our support team",
+      availability: "Available 24/7",
+      action: "Start Chat",
+      href: "#chat",
+      primary: true,
+    },
+    {
+      icon: Phone,
+      title: "Phone Support",
+      description: `Call us at ${contact.phone}`,
+      availability: "Mon-Fri, 8am-8pm ET",
+      action: "Call Now",
+      href: contact.phoneHref,
+      primary: false,
+    },
+    {
+      icon: MessageSquare,
+      title: "Text Support",
+      description: `Text a specialist at ${contact.textPhone}`,
+      availability: "Speak directly or text with a specialist",
+      action: "Text Us",
+      href: contact.textHref,
+      primary: false,
+    },
+    {
+      icon: Mail,
+      title: "Email Support",
+      description: `Email us at ${contact.email}`,
+      availability: "Response within 24 hours",
+      action: "Send Email",
+      href: contact.emailHref,
+      primary: false,
+    },
+  ]
+
   return (
     <>
       {/* Hero */}
@@ -270,19 +284,16 @@ export default function SupportPage() {
               <div className="space-y-4">
                 {CONTACT_OPTIONS.map((option) => {
                   const Icon = option.icon
-                  return (
-                    <a
-                      key={option.title}
-                      href={option.href}
-                      className="flex items-center gap-4 px-5 py-4 transition-colors"
-                      style={{
-                        backgroundColor: option.primary ? "var(--sh-bronze-10)" : "var(--sh-surface)",
-                        border: option.primary
-                          ? "0.5px solid " + BRONZE
-                          : "0.5px solid var(--sh-ink-10)",
-                        borderRadius: "8px",
-                      }}
-                    >
+                  const rowClass = "flex items-center gap-4 px-5 py-4 transition-colors"
+                  const rowStyle = {
+                    backgroundColor: option.primary ? "var(--sh-bronze-10)" : "var(--sh-surface)",
+                    border: option.primary
+                      ? "0.5px solid " + BRONZE
+                      : "0.5px solid var(--sh-ink-10)",
+                    borderRadius: "8px",
+                  }
+                  const inner = (
+                    <>
                       <Icon className="h-6 w-6 shrink-0" strokeWidth={1.25} style={{ color: BRONZE }} />
                       <div className="flex-1">
                         <p className="text-[15px] font-medium" style={{ color: INK }}>
@@ -292,15 +303,15 @@ export default function SupportPage() {
                           {option.availability}
                         </p>
                       </div>
-                      <span
-                        className={LABEL}
-                        style={{
-                          color: option.primary ? "var(--sh-bronze-dark)" : INK,
-                        }}
-                      >
+                      <span className={LABEL} style={{ color: option.primary ? "var(--sh-bronze-dark)" : INK }}>
                         {option.action}
                       </span>
-                    </a>
+                    </>
+                  )
+                  return option.href === "#chat" ? (
+                    <ChatLink key={option.title} className={rowClass} style={rowStyle}>{inner}</ChatLink>
+                  ) : (
+                    <a key={option.title} href={option.href} className={rowClass} style={rowStyle}>{inner}</a>
                   )
                 })}
               </div>
@@ -329,7 +340,7 @@ export default function SupportPage() {
             </div>
             <div className="flex flex-col sm:flex-row gap-4">
               <a
-                href="tel:+18001234567"
+                href={contact.phoneHref}
                 className={LABEL + " inline-flex items-center justify-center px-7 py-3.5"}
                 style={{ color: ERROR, border: "0.5px solid " + ERROR, borderRadius: "2px" }}
               >

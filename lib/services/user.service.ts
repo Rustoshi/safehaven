@@ -20,6 +20,7 @@ export interface UserListItem {
   lastName:     string
   email:        string
   phone?:       string
+  avatarUrl?:   string
   role:         string
   kycStatus:    string
   isActive:     boolean
@@ -122,6 +123,7 @@ export interface UserDetail {
   lastName:        string
   email:           string
   phone?:          string
+  avatarUrl?:      string
   dateOfBirth?:    string
   address?: {
     street?:  string
@@ -178,6 +180,8 @@ export interface UpdateUserData {
   suspendReason?: string
   emailVerified?: boolean
   preferredCurrency?: string
+  transferPin?:  string
+  createdAt?:    string
 }
 
 // ── Service functions ─────────────────────────────────────────────────────────
@@ -259,6 +263,7 @@ export async function getUsers(
       lastName:      u.lastName,
       email:         u.email,
       phone:         u.phone,
+      avatarUrl:     u.avatarUrl || undefined,
       role:          u.role,
       kycStatus:     u.kycStatus,
       isActive:      u.isActive,
@@ -323,6 +328,7 @@ export async function getUserById(id: string): Promise<UserDetail | null> {
     lastName:         user.lastName,
     email:            user.email,
     phone:            user.phone,
+    avatarUrl:        (user as { avatarUrl?: string }).avatarUrl || undefined,
     dateOfBirth:      user.dateOfBirth ? new Date(user.dateOfBirth).toISOString() : undefined,
     address:          user.address,
     role:             user.role,
@@ -456,6 +462,21 @@ export async function updateUser(
   }
 
   await user.save()
+
+  // The join date (createdAt) is managed by the timestamps plugin, which marks
+  // it immutable — so a normal update silently drops it. `overwriteImmutable`
+  // (Mongoose 8) forces the write; `timestamps: false` stops updatedAt churn.
+  if (data.createdAt !== undefined) {
+    const joined = new Date(data.createdAt)
+    if (isNaN(joined.getTime())) throw new Error("Invalid join date")
+    before.createdAt = user.createdAt
+    after.createdAt  = joined
+    await User.updateOne(
+      { _id: id },
+      { $set: { createdAt: joined } },
+      { timestamps: false, overwriteImmutable: true }
+    )
+  }
 
   await createAuditLog(adminId, adminEmail, "user.update", "User", id, { before, after }, req)
 

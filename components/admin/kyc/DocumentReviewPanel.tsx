@@ -19,6 +19,7 @@ interface KycDoc {
   reviewedAt?: string
   submittedAt: string
   dateOfBirth?: string
+  ssn?: string
   address?: {
     street?:  string
     city?:    string
@@ -102,7 +103,7 @@ export function DocumentReviewPanel({ document: doc, idDocUrl, onApprove, onReje
   
   // Check if this is an ID document with personal info
   const isIdDocument = ["passport", "drivers_license", "national_id"].includes(doc.docType)
-  const hasPersonalInfo = doc.dateOfBirth || (doc.address && (doc.address.street || doc.address.city || doc.address.country))
+  const hasPersonalInfo = doc.dateOfBirth || doc.ssn || (doc.address && (doc.address.street || doc.address.city || doc.address.country))
 
   async function handleApprove() {
     const prev = optimistic
@@ -192,6 +193,15 @@ export function DocumentReviewPanel({ document: doc, idDocUrl, onApprove, onReje
                       doc.address.country,
                     ].filter(Boolean).join(", ")}
                   </p>
+                </div>
+              </div>
+            )}
+            {doc.ssn && (
+              <div className="flex items-start gap-2">
+                <FileText className="w-4 h-4 text-indigo-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-xs text-indigo-600 font-medium">SSN</p>
+                  <p className="text-sm text-gray-900 font-mono">{doc.ssn}</p>
                 </div>
               </div>
             )}

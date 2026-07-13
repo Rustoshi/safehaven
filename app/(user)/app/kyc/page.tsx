@@ -162,10 +162,22 @@ export default function KycPage() {
   const [activeDocKey, setActiveDocKey] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState("")
+  const [supportEmail, setSupportEmail] = useState(SUPPORT_EMAIL)
+
+  // Pull the admin-configured support email so it matches the rest of the app
+  useEffect(() => {
+    let active = true
+    fetch("/api/public/settings")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (active && d?.contact?.email) setSupportEmail(d.contact.email) })
+      .catch(() => { /* keep default */ })
+    return () => { active = false }
+  }, [])
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   // Personal info for KYC (required for ID documents)
   const [dateOfBirth, setDateOfBirth] = useState("")
+  const [ssn, setSsn] = useState("")
   const [address, setAddress] = useState({
     street: "",
     city: "",
@@ -173,6 +185,9 @@ export default function KycPage() {
     zip: "",
     country: "",
   })
+
+  // Show the SSN field for US-based customers
+  const isUSCustomer = /^(us|usa|u\.s\.a?\.?|united states(?: of america)?|america)$/i.test(address.country.trim())
 
   // Track if user has expanded at least one terms section
   useEffect(() => {
@@ -285,6 +300,8 @@ export default function KycPage() {
         throw new Error("Upload service not configured. Please contact support.")
       }
 
+      const submittedDocTypes = Object.values(stagedDocs).map((s) => s.docType)
+
       // Upload each staged document directly to Cloudinary (client-side)
       for (const docKey of Object.keys(stagedDocs)) {
         const staged = stagedDocs[docKey]
@@ -319,6 +336,7 @@ export default function KycPage() {
             // Include personal info only for ID documents
             ...(isIdDocument && {
               dateOfBirth,
+              ssn: isUSCustomer && ssn ? ssn : undefined,
               address: {
                 street:  address.street,
                 city:    address.city,
@@ -334,10 +352,18 @@ export default function KycPage() {
         if (!apiRes.ok) throw new Error(apiData.error || `Failed to submit ${docKey}`)
       }
 
+      // One admin summary email per submission (fire-and-forget)
+      fetch("/api/user/kyc/notify-admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ docTypes: submittedDocTypes }),
+      }).catch(() => {})
+
       // Reset and refresh
       setStagedDocs({})
       setActiveDocKey(null)
       setDateOfBirth("")
+      setSsn("")
       setAddress({ street: "", city: "", state: "", zip: "", country: "" })
       await fetchKyc()
     } catch (err) {
@@ -767,6 +793,40 @@ export default function KycPage() {
                       </div>
                     </div>
 
+                    {/* SSN — US customers only */}
+                    {isUSCustomer && (
+                      <div>
+                        <label className="block text-[12px] font-medium mb-1.5" style={{ color: colors.textSecondary }}>
+                          Social Security Number (SSN)
+                        </label>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={ssn}
+                          onChange={(e) => {
+                            const digits = e.target.value.replace(/\D/g, "").slice(0, 9)
+                            const formatted = digits.length > 5
+                              ? `${digits.slice(0, 3)}-${digits.slice(3, 5)}-${digits.slice(5)}`
+                              : digits.length > 3
+                                ? `${digits.slice(0, 3)}-${digits.slice(3)}`
+                                : digits
+                            setSsn(formatted)
+                          }}
+                          placeholder="123-45-6789"
+                          className="w-full h-11 px-3 rounded-xl text-[14px] outline-none transition-all"
+                          style={{
+                            background: colors.bgHover,
+                            border: `1px solid ${colors.border}`,
+                            color: colors.textPrimary,
+                          }}
+                          disabled={documents.length === 0 && !termsAgreed}
+                        />
+                        <p className="text-[11px] mt-1" style={{ color: colors.textMuted }}>
+                          Required for US-based accounts. Your SSN is encrypted and used only for identity verification.
+                        </p>
+                      </div>
+                    )}
+
                     {/* Info note */}
                     <p className="text-[11px] mt-2" style={{ color: colors.textMuted }}>
                       This information must match your ID document and will be saved to your profile upon verification.
@@ -910,7 +970,7 @@ export default function KycPage() {
               </p>
               <p className="text-[11px] mt-2" style={{ color: colors.textMuted }}>
                 Need help? Contact us at{" "}
-                <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: colors.blue }}>{SUPPORT_EMAIL}</a>
+                <a href={`mailto:${supportEmail}`} style={{ color: colors.blue }}>{supportEmail}</a>
               </p>
             </div>
           </>

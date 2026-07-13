@@ -17,11 +17,16 @@ export default async function SettingsPage() {
     getSettingsHistory(10).catch(() => []),
   ])
 
+  // Convert the Mongoose lean docs (ObjectId `_id`, Date fields, nested
+  // subdocuments) into plain JSON so they can cross to the Client Component.
+  const plainSettings = JSON.parse(JSON.stringify(settings)) as Record<string, unknown>
+  const plainHistory  = JSON.parse(JSON.stringify(history))  as Record<string, unknown>[]
+
   return (
     <div className="px-6 py-8 max-w-screen-xl mx-auto">
       <SettingsClient
-        settings={settings as Record<string, unknown>}
-        history={history as Record<string, unknown>[]}
+        settings={plainSettings}
+        history={plainHistory}
       />
     </div>
   )

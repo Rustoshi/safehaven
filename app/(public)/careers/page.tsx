@@ -2,6 +2,7 @@ import { Metadata } from "next"
 import Link from "next/link"
 import Image from "next/image"
 import { BANK_NAME } from "@/lib/brand"
+import { getContactInfo } from "@/lib/contact"
 import {
   ArrowRight,
   MapPin,
@@ -144,7 +145,8 @@ const STATS = [
   { value: "38", label: "Open Positions" },
 ]
 
-export default function CareersPage() {
+export default async function CareersPage() {
+  const contact = await getContactInfo()
   return (
     <>
       {/* Hero */}
@@ -192,7 +194,7 @@ export default function CareersPage() {
                   View Open Positions
                 </Link>
                 <Link
-                  href="mailto:careers@securebank.com"
+                  href={contact.careers.href}
                   className="inline-flex items-center gap-1 text-[14px]"
                   style={{ color: INK }}
                 >
@@ -532,7 +534,7 @@ export default function CareersPage() {
               and we'll reach out when we have a role that fits.
             </p>
             <Link
-              href="mailto:careers@securebank.com"
+              href={contact.careers.href}
               className={LABEL + " inline-flex items-center px-7 py-3.5"}
               style={{ color: BRONZE, border: "0.5px solid " + BRONZE, borderRadius: "2px" }}
             >

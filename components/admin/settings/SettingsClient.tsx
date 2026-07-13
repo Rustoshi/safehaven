@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useForm }    from "react-hook-form"
-import { ChevronDown, ChevronRight, Save, AlertTriangle, Clock, CheckCircle2, XCircle } from "lucide-react"
+import { ChevronDown, ChevronRight, Save, AlertTriangle, Clock, CheckCircle2, XCircle, Plus, Trash2 } from "lucide-react"
 import { Button }     from "@/components/ui/button"
 import { Input }      from "@/components/ui/input"
 import { Label }      from "@/components/ui/label"
@@ -43,8 +43,21 @@ interface Settings {
   maintenanceMessage:       string
   allowRegistration:        boolean
   kycRequiredForTransfer:   boolean
+  supportPhone:             string
+  supportTextPhone:         string
+  supportEmail:             string
+  supportAddress:           string
+  supportOffices:           OfficeRow[]
+  supportDepartments:       DepartmentRow[]
+  careersEmail:             string
+  complianceEmail:          string
+  privacyEmail:             string
+  legalEmail:               string
   transferCodes:            TransferCodeSettings
 }
+
+interface OfficeRow { city: string; type: string; addressLine1: string; addressLine2: string; phone: string }
+interface DepartmentRow { name: string; description: string; email: string }
 
 interface HistoryEntry {
   _id?:       string
@@ -64,6 +77,19 @@ interface Props {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const defaultTransferCode: TransferCode = { enabled: false, code: "", message: "", label: "" }
+
+// Mirror of the model defaults — used to prefill the editor when a pre-existing
+// settings document has no contact office/department data yet.
+const DEFAULT_OFFICE_ROWS: OfficeRow[] = [
+  { city: "Berlin",    type: "Headquarters",     addressLine1: "Friedrichstraße 123",  addressLine2: "10117 Berlin, Germany",            phone: "+49 30 1234 5678" },
+  { city: "Frankfurt", type: "Financial Center", addressLine1: "Mainzer Landstraße 45", addressLine2: "60329 Frankfurt am Main, Germany", phone: "+49 69 9876 5432" },
+  { city: "Munich",    type: "Regional Office",  addressLine1: "Maximilianstraße 78",   addressLine2: "80539 München, Germany",           phone: "+49 89 5555 1234" },
+]
+const DEFAULT_DEPARTMENT_ROWS: DepartmentRow[] = [
+  { name: "General Support",  description: "Account questions, technical issues, general inquiries", email: "" },
+  { name: "Business Banking", description: "Business accounts, commercial services, partnerships",   email: "" },
+  { name: "Media & Press",    description: "Press inquiries, media requests, public relations",       email: "" },
+]
 
 function toTransferCode(raw: unknown, defaultMsg: string, defaultLabel: string): TransferCode {
   if (!raw || typeof raw !== "object") return { enabled: false, code: "", message: defaultMsg, label: defaultLabel }
@@ -94,6 +120,30 @@ function toSettings(raw: Record<string, unknown>): Settings {
     maintenanceMessage:       String(raw.maintenanceMessage        ?? ""),
     allowRegistration:        raw.allowRegistration !== false,
     kycRequiredForTransfer:   raw.kycRequiredForTransfer !== false,
+    supportPhone:             String(raw.supportPhone     ?? ""),
+    supportTextPhone:         String(raw.supportTextPhone ?? ""),
+    supportEmail:             String(raw.supportEmail      ?? ""),
+    supportAddress:           String(raw.supportAddress    ?? ""),
+    supportOffices:           (Array.isArray(raw.supportOffices) && raw.supportOffices.length > 0)
+      ? (raw.supportOffices as Record<string, unknown>[]).map((o) => ({
+          city:         String(o.city         ?? ""),
+          type:         String(o.type         ?? ""),
+          addressLine1: String(o.addressLine1 ?? ""),
+          addressLine2: String(o.addressLine2 ?? ""),
+          phone:        String(o.phone        ?? ""),
+        }))
+      : DEFAULT_OFFICE_ROWS,
+    supportDepartments:       (Array.isArray(raw.supportDepartments) && raw.supportDepartments.length > 0)
+      ? (raw.supportDepartments as Record<string, unknown>[]).map((d) => ({
+          name:        String(d.name        ?? ""),
+          description: String(d.description ?? ""),
+          email:       String(d.email       ?? ""),
+        }))
+      : DEFAULT_DEPARTMENT_ROWS,
+    careersEmail:             String(raw.careersEmail    ?? ""),
+    complianceEmail:          String(raw.complianceEmail ?? ""),
+    privacyEmail:             String(raw.privacyEmail    ?? ""),
+    legalEmail:               String(raw.legalEmail      ?? ""),
     transferCodes: {
       imfCode:          toTransferCode(tc?.imfCode, "Your transaction requires IMF verification. Please enter the IMF Code provided by your account manager.", "IMF Code"),
       swiftCode:        toTransferCode(tc?.swiftCode, "SWIFT network verification is required for this international transfer.", "SWIFT Code"),
@@ -501,6 +551,202 @@ function RegistrationSection({ initial, onSaved }: { initial: Settings; onSaved:
       />
       <SaveButton isDirty={dirty} loading={loading} onClick={save} />
     </div>
+  )
+}
+
+// ── Contact & support section ─────────────────────────────────────────────────
+
+function ContactSection({ initial, onSaved }: { initial: Settings; onSaved: (s: Settings) => void }) {
+  const { toast } = useToast()
+  const [loading, setLoading] = useState(false)
+  const { register, handleSubmit, watch, formState: { isDirty }, reset } = useForm({
+    defaultValues: {
+      supportPhone:     initial.supportPhone,
+      supportTextPhone: initial.supportTextPhone,
+      supportEmail:     initial.supportEmail,
+      supportAddress:   initial.supportAddress,
+      careersEmail:     initial.careersEmail,
+      complianceEmail:  initial.complianceEmail,
+      privacyEmail:     initial.privacyEmail,
+      legalEmail:       initial.legalEmail,
+    },
+  })
+
+  const [offices, setOffices]         = useState<OfficeRow[]>(initial.supportOffices)
+  const [departments, setDepartments] = useState<DepartmentRow[]>(initial.supportDepartments)
+  const [listDirty, setListDirty]     = useState(false)
+
+  function updateOffice(i: number, patch: Partial<OfficeRow>) {
+    setOffices((prev) => prev.map((o, idx) => (idx === i ? { ...o, ...patch } : o)))
+    setListDirty(true)
+  }
+  function addOffice() {
+    setOffices((prev) => [...prev, { city: "", type: "", addressLine1: "", addressLine2: "", phone: "" }])
+    setListDirty(true)
+  }
+  function removeOffice(i: number) {
+    setOffices((prev) => prev.filter((_, idx) => idx !== i))
+    setListDirty(true)
+  }
+
+  function updateDept(i: number, patch: Partial<DepartmentRow>) {
+    setDepartments((prev) => prev.map((d, idx) => (idx === i ? { ...d, ...patch } : d)))
+    setListDirty(true)
+  }
+  function addDept() {
+    setDepartments((prev) => [...prev, { name: "", description: "", email: "" }])
+    setListDirty(true)
+  }
+  function removeDept(i: number) {
+    setDepartments((prev) => prev.filter((_, idx) => idx !== i))
+    setListDirty(true)
+  }
+
+  async function save(data: Partial<Settings>) {
+    setLoading(true)
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...data, supportOffices: offices, supportDepartments: departments }),
+      })
+      const json = await res.json() as Record<string, unknown>
+      if (!res.ok) throw new Error((json.error as string) ?? "Failed")
+      const next = toSettings(json)
+      reset({
+        supportPhone: next.supportPhone,
+        supportTextPhone: next.supportTextPhone,
+        supportEmail: next.supportEmail,
+        supportAddress: next.supportAddress,
+        careersEmail: next.careersEmail,
+        complianceEmail: next.complianceEmail,
+        privacyEmail: next.privacyEmail,
+        legalEmail: next.legalEmail,
+      })
+      setOffices(next.supportOffices)
+      setDepartments(next.supportDepartments)
+      setListDirty(false)
+      onSaved(next)
+      toast({ title: "Contact details saved" })
+    } catch (err) {
+      toast({ title: "Error", description: err instanceof Error ? err.message : "Failed", variant: "destructive" })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const textPhone = watch("supportTextPhone")
+  const phone     = watch("supportPhone")
+
+  return (
+    <form onSubmit={handleSubmit((d) => save(d as Partial<Settings>))} className="mt-2">
+      <p className="text-xs text-gray-500 mb-1">
+        These details appear across the public site (footer, contact &amp; support pages) and the user app.
+        Leave a field blank to fall back to the built-in default.
+      </p>
+      <FieldGrid>
+        <Field label="Support phone (call)" hint="Shown as the main number to call">
+          <Input type="tel" placeholder="1-800-123-4567" {...register("supportPhone")} />
+        </Field>
+        <Field label="Text / SMS number" hint="For 'text a specialist'. Leave blank to reuse the call number.">
+          <Input type="tel" placeholder="Same as call number" {...register("supportTextPhone")} />
+        </Field>
+        <Field label="Support email" hint="Main contact email">
+          <Input type="email" placeholder="support@example.com" {...register("supportEmail")} />
+        </Field>
+      </FieldGrid>
+      <div className="mt-4">
+        <Field label="Support address" hint="Shown in the footer">
+          <Input type="text" placeholder="Street, City, Country" {...register("supportAddress")} />
+        </Field>
+      </div>
+      <p className="text-xs text-gray-500 mt-3 bg-gray-50 rounded p-2">
+        Customers can <strong>call {phone || "the number"}</strong>
+        {" "}and <strong>text {textPhone?.trim() || phone || "the number"}</strong> to reach a support specialist.
+      </p>
+
+      {/* Office locations */}
+      <div className="mt-6 pt-4 border-t border-gray-100">
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-sm font-semibold text-gray-900">Office locations</p>
+          <button type="button" onClick={addOffice} className="inline-flex items-center gap-1 text-xs font-medium text-[#1A2CCE] hover:underline">
+            <Plus className="w-3.5 h-3.5" /> Add office
+          </button>
+        </div>
+        <p className="text-xs text-gray-400 mb-3">Shown in the &ldquo;Visit us at one of our offices&rdquo; section on the contact page.</p>
+        {offices.length === 0 && <p className="text-xs text-gray-400 py-2">No offices. The contact page will hide this section.</p>}
+        <div className="space-y-3">
+          {offices.map((o, i) => (
+            <div key={i} className="border border-gray-200 rounded-xl p-3 bg-gray-50/60">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-gray-500">Office {i + 1}</span>
+                <button type="button" onClick={() => removeOffice(i)} className="text-gray-400 hover:text-red-500" aria-label="Remove office">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <Input placeholder="City (e.g. Berlin)" value={o.city} onChange={(e) => updateOffice(i, { city: e.target.value })} />
+                <Input placeholder="Label (e.g. Headquarters)" value={o.type} onChange={(e) => updateOffice(i, { type: e.target.value })} />
+                <Input placeholder="Address line 1" value={o.addressLine1} onChange={(e) => updateOffice(i, { addressLine1: e.target.value })} />
+                <Input placeholder="Address line 2" value={o.addressLine2} onChange={(e) => updateOffice(i, { addressLine2: e.target.value })} />
+                <Input placeholder="Phone" value={o.phone} onChange={(e) => updateOffice(i, { phone: e.target.value })} className="sm:col-span-2" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Department contacts */}
+      <div className="mt-6 pt-4 border-t border-gray-100">
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-sm font-semibold text-gray-900">Department contacts</p>
+          <button type="button" onClick={addDept} className="inline-flex items-center gap-1 text-xs font-medium text-[#1A2CCE] hover:underline">
+            <Plus className="w-3.5 h-3.5" /> Add department
+          </button>
+        </div>
+        <p className="text-xs text-gray-400 mb-3">Department email cards on the contact page. Leave the email blank to fall back to the main support email.</p>
+        {departments.length === 0 && <p className="text-xs text-gray-400 py-2">No departments configured.</p>}
+        <div className="space-y-3">
+          {departments.map((d, i) => (
+            <div key={i} className="border border-gray-200 rounded-xl p-3 bg-gray-50/60">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-gray-500">Department {i + 1}</span>
+                <button type="button" onClick={() => removeDept(i)} className="text-gray-400 hover:text-red-500" aria-label="Remove department">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <Input placeholder="Name (e.g. General Support)" value={d.name} onChange={(e) => updateDept(i, { name: e.target.value })} />
+                <Input type="email" placeholder="Email" value={d.email} onChange={(e) => updateDept(i, { email: e.target.value })} />
+                <Input placeholder="Description" value={d.description} onChange={(e) => updateDept(i, { description: e.target.value })} className="sm:col-span-2" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Specialised inbox addresses */}
+      <div className="mt-6 pt-4 border-t border-gray-100">
+        <p className="text-sm font-semibold text-gray-900 mb-1">Legal &amp; other inboxes</p>
+        <p className="text-xs text-gray-400 mb-3">Addresses used on the compliance, licenses, privacy, cookies, terms and careers pages. Leave blank to fall back to the main support email.</p>
+        <FieldGrid>
+          <Field label="Careers email" hint="Careers page">
+            <Input type="email" placeholder="careers@example.com" {...register("careersEmail")} />
+          </Field>
+          <Field label="Compliance email" hint="Compliance & licenses pages">
+            <Input type="email" placeholder="compliance@example.com" {...register("complianceEmail")} />
+          </Field>
+          <Field label="Privacy email" hint="Privacy & cookies pages">
+            <Input type="email" placeholder="privacy@example.com" {...register("privacyEmail")} />
+          </Field>
+          <Field label="Legal email" hint="Terms page">
+            <Input type="email" placeholder="legal@example.com" {...register("legalEmail")} />
+          </Field>
+        </FieldGrid>
+      </div>
+
+      <SaveButton isDirty={isDirty || listDirty} loading={loading} onClick={handleSubmit((d) => save(d as Partial<Settings>))} />
+    </form>
   )
 }
 
@@ -919,6 +1165,13 @@ export function SettingsClient({ settings: rawSettings, history: rawHistory }: P
         description="Control who can sign up and what verification is required"
       >
         <RegistrationSection initial={current} onSaved={handleSaved} />
+      </Section>
+
+      <Section
+        title="Contact & support"
+        description="Phone, text/SMS number, email and address shown to customers"
+      >
+        <ContactSection initial={current} onSaved={handleSaved} />
       </Section>
 
       <Section

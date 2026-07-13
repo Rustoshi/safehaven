@@ -34,7 +34,7 @@ const registerSchema = z.object({
   confirmPassword: z.string(),
   pin:             z.string().length(4, "PIN must be exactly 4 digits").regex(/^\d{4}$/, "PIN must contain only numbers"),
   confirmPin:      z.string(),
-  phone:           z.string().optional(),
+  phone:           z.string().min(1, "Phone number is required").regex(/^[+]?[\d\s()-]{7,20}$/, "Enter a valid phone number"),
   currency:        z.string().min(3, "Select a currency").max(3, "Invalid currency code"),
   agreeToTerms:    z.literal(true, {
     errorMap: () => ({ message: "You must agree to the Terms of Service" }),

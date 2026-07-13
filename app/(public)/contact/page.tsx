@@ -1,7 +1,9 @@
 import { Metadata } from "next"
 import Link from "next/link"
 import Image from "next/image"
-import { BANK_NAME, SUPPORT_EMAIL } from "@/lib/brand"
+import { BANK_NAME } from "@/lib/brand"
+import { getContactInfo } from "@/lib/contact"
+import { ChatLink } from "@/components/shared/ChatLink"
 import {
   Mail,
   Phone,
@@ -25,80 +27,8 @@ export const metadata: Metadata = {
   description: `Get in touch with ${BANK_NAME}. We're here to help with any questions about your account, products, or services.`,
 }
 
-const CONTACT_METHODS = [
-  {
-    icon: MessageCircle,
-    title: "Live Chat",
-    description: "Chat with our support team for instant help",
-    detail: "Available 24/7",
-    detailIsMono: false,
-    action: "Start Chat",
-    href: "#chat",
-  },
-  {
-    icon: Phone,
-    title: "Phone Support",
-    description: "Speak directly with a support specialist",
-    detail: "1-800-123-4567",
-    detailIsMono: true,
-    action: "Call Now",
-    href: "tel:+18001234567",
-  },
-  {
-    icon: Mail,
-    title: "Email Us",
-    description: "Send us a detailed message",
-    detail: SUPPORT_EMAIL,
-    detailIsMono: false,
-    action: "Send Email",
-    href: `mailto:${SUPPORT_EMAIL}`,
-  },
-]
-
-const OFFICES = [
-  {
-    city: "Berlin",
-    address: "Friedrichstraße 123",
-    address2: "10117 Berlin, Germany",
-    phone: "+49 30 1234 5678",
-    type: "Headquarters",
-  },
-  {
-    city: "Frankfurt",
-    address: "Mainzer Landstraße 45",
-    address2: "60329 Frankfurt am Main, Germany",
-    phone: "+49 69 9876 5432",
-    type: "Financial Center",
-  },
-  {
-    city: "Munich",
-    address: "Maximilianstraße 78",
-    address2: "80539 München, Germany",
-    phone: "+49 89 5555 1234",
-    type: "Regional Office",
-  },
-]
-
-const DEPARTMENTS = [
-  {
-    icon: HelpCircle,
-    name: "General Support",
-    email: "support@securebank.com",
-    description: "Account questions, technical issues, general inquiries",
-  },
-  {
-    icon: Building2,
-    name: "Business Banking",
-    email: "business@securebank.com",
-    description: "Business accounts, commercial services, partnerships",
-  },
-  {
-    icon: MessageCircle,
-    name: "Media & Press",
-    email: "press@securebank.com",
-    description: "Press inquiries, media requests, public relations",
-  },
-]
+// Icons cycled across the admin-configured department contacts
+const DEPT_ICONS = [HelpCircle, Building2, MessageCircle]
 
 const HOURS = [
   { label: "Live Chat", value: "24/7" },
@@ -106,7 +36,48 @@ const HOURS = [
   { label: "Email Response", value: "Within 24 hours" },
 ]
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const contact = await getContactInfo()
+
+  const CONTACT_METHODS = [
+    {
+      icon: MessageCircle,
+      title: "Live Chat",
+      description: "Chat with our support team for instant help",
+      detail: "Available 24/7",
+      detailIsMono: false,
+      action: "Start Chat",
+      href: "#chat",
+      isChat: true,
+      action2: undefined as string | undefined,
+      href2:   undefined as string | undefined,
+    },
+    {
+      icon: Phone,
+      title: "Phone Support",
+      description: "Speak directly or text with a support specialist",
+      detail: contact.phone,
+      detailIsMono: true,
+      action: "Call Now",
+      href: contact.phoneHref,
+      isChat: false,
+      action2: "Text Us" as string | undefined,
+      href2:   contact.textHref as string | undefined,
+    },
+    {
+      icon: Mail,
+      title: "Email Us",
+      description: "Send us a detailed message",
+      detail: contact.email,
+      detailIsMono: false,
+      action: "Send Email",
+      href: contact.emailHref,
+      isChat: false,
+      action2: undefined as string | undefined,
+      href2:   undefined as string | undefined,
+    },
+  ]
+
   return (
     <>
       {/* Hero */}
@@ -138,8 +109,8 @@ export default function ContactPage() {
                 >
                   Send a message
                 </Link>
-                <a href="tel:+18001234567" className="text-[14px] inline-flex items-center gap-1" style={{ color: INK }}>
-                  Call 1-800-123-4567 <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.25} />
+                <a href={contact.phoneHref} className="text-[14px] inline-flex items-center gap-1" style={{ color: INK }}>
+                  Call {contact.phone} <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.25} />
                 </a>
               </div>
             </div>
@@ -180,9 +151,8 @@ export default function ContactPage() {
             {CONTACT_METHODS.map((method) => {
               const Icon = method.icon
               return (
-                <a
+                <div
                   key={method.title}
-                  href={method.href}
                   className="group p-7 block transition-colors"
                   style={{ backgroundColor: "var(--sh-linen)", border: "0.5px solid var(--sh-ink-10)", borderRadius: "8px" }}
                 >
@@ -203,11 +173,26 @@ export default function ContactPage() {
                   >
                     {method.detail}
                   </p>
-                  <span className={LABEL + " inline-flex items-center gap-1"} style={{ color: "var(--sh-bronze-dark)" }}>
-                    {method.action}
-                    <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" strokeWidth={1.25} />
-                  </span>
-                </a>
+                  <div className="flex items-center gap-6">
+                    {method.isChat ? (
+                      <ChatLink className={LABEL + " inline-flex items-center gap-1"} style={{ color: "var(--sh-bronze-dark)" }}>
+                        {method.action}
+                        <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" strokeWidth={1.25} />
+                      </ChatLink>
+                    ) : (
+                      <a href={method.href} className={LABEL + " inline-flex items-center gap-1"} style={{ color: "var(--sh-bronze-dark)" }}>
+                        {method.action}
+                        <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" strokeWidth={1.25} />
+                      </a>
+                    )}
+                    {method.href2 && (
+                      <a href={method.href2} className={LABEL + " inline-flex items-center gap-1"} style={{ color: "var(--sh-bronze-dark)" }}>
+                        {method.action2}
+                        <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" strokeWidth={1.25} />
+                      </a>
+                    )}
+                  </div>
+                </div>
               )
             })}
           </div>
@@ -250,11 +235,11 @@ export default function ContactPage() {
 
               {/* Department Contacts */}
               <div className="space-y-4">
-                {DEPARTMENTS.map((dept) => {
-                  const Icon = dept.icon
+                {contact.departments.map((dept, i) => {
+                  const Icon = DEPT_ICONS[i % DEPT_ICONS.length]
                   return (
                     <div
-                      key={dept.name}
+                      key={dept.name || i}
                       className="p-4"
                       style={{ backgroundColor: "var(--sh-surface)", border: "0.5px solid var(--sh-ink-10)", borderRadius: "8px" }}
                     >
@@ -267,7 +252,7 @@ export default function ContactPage() {
                           <p className="text-[14px] mb-1" style={{ color: "var(--sh-ink-50)" }}>
                             {dept.description}
                           </p>
-                          <a href={`mailto:${dept.email}`} className="text-[14px] hover:underline" style={{ color: "var(--sh-bronze-dark)" }}>
+                          <a href={dept.emailHref} className="text-[14px] hover:underline" style={{ color: "var(--sh-bronze-dark)" }}>
                             {dept.email}
                           </a>
                         </div>
@@ -367,6 +352,7 @@ export default function ContactPage() {
       </section>
 
       {/* Office Locations */}
+      {contact.offices.length > 0 && (
       <section style={{ backgroundColor: "var(--sh-surface)", fontFamily: UI }} className="py-20 lg:py-24">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           <div className="flex items-center gap-3 mb-4">
@@ -386,9 +372,9 @@ export default function ContactPage() {
           </p>
 
           <div className="grid md:grid-cols-3 gap-6">
-            {OFFICES.map((office) => (
+            {contact.offices.map((office, i) => (
               <div
-                key={office.city}
+                key={office.city || i}
                 className="p-7"
                 style={{ backgroundColor: "var(--sh-linen)", border: "0.5px solid var(--sh-ink-10)", borderRadius: "8px" }}
               >
@@ -404,18 +390,25 @@ export default function ContactPage() {
                   </div>
                 </div>
                 <div className="space-y-2 text-[14px]" style={{ color: "var(--sh-ink-80)" }}>
-                  <p>{office.address}</p>
-                  <p>{office.address2}</p>
-                  <p className="flex items-center gap-2 pt-2" style={{ fontFamily: MONO, color: INK }}>
-                    <Phone className="h-4 w-4" strokeWidth={1.25} style={{ color: BRONZE }} />
-                    {office.phone}
-                  </p>
+                  {office.addressLine1 && <p>{office.addressLine1}</p>}
+                  {office.addressLine2 && <p>{office.addressLine2}</p>}
+                  {office.phone && (
+                    <a
+                      href={`tel:${office.phone.replace(/[^\d+]/g, "")}`}
+                      className="flex items-center gap-2 pt-2"
+                      style={{ fontFamily: MONO, color: INK }}
+                    >
+                      <Phone className="h-4 w-4" strokeWidth={1.25} style={{ color: BRONZE }} />
+                      {office.phone}
+                    </a>
+                  )}
                 </div>
               </div>
             ))}
           </div>
         </div>
       </section>
+      )}
 
       {/* Support Hours — dark anchor */}
       <section style={{ backgroundColor: "var(--sh-ink)", fontFamily: UI }} className="py-20 lg:py-24">

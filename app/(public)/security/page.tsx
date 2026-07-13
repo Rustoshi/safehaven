@@ -2,6 +2,7 @@ import { Metadata } from "next"
 import Link from "next/link"
 import Image from "next/image"
 import { BANK_NAME } from "@/lib/brand"
+import { getContactInfo } from "@/lib/contact"
 import {
   Shield,
   Lock,
@@ -74,7 +75,8 @@ const TIPS = [
   "Keep your contact information up to date",
 ]
 
-export default function SecurityPage() {
+export default async function SecurityPage() {
+  const contact = await getContactInfo()
   return (
     <>
       {/* Hero */}
@@ -269,11 +271,18 @@ export default function SecurityPage() {
               </p>
               <div className="space-y-3">
                 <a
-                  href="tel:+18001234567"
+                  href={contact.phoneHref}
                   className={LABEL + " flex items-center justify-center w-full px-6 py-3.5"}
                   style={{ color: "var(--sh-bronze-dark)", border: "0.5px solid " + BRONZE, borderRadius: "2px" }}
                 >
-                  Call 1-800-123-4567
+                  Call {contact.phone}
+                </a>
+                <a
+                  href={contact.textHref}
+                  className={LABEL + " flex items-center justify-center w-full px-6 py-3.5"}
+                  style={{ color: "var(--sh-bronze-dark)", border: "0.5px solid " + BRONZE, borderRadius: "2px" }}
+                >
+                  Text {contact.textPhone}
                 </a>
                 <Link
                   href="/security/fraud"

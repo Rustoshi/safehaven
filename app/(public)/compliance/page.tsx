@@ -2,6 +2,7 @@ import { Metadata } from "next"
 import Link from "next/link"
 import Image from "next/image"
 import { BANK_NAME, LEGAL_NAME } from "@/lib/brand"
+import { getContactInfo } from "@/lib/contact"
 import {
   Shield,
   FileText,
@@ -151,7 +152,8 @@ function Eyebrow({ label }: { label: string }) {
   )
 }
 
-export default function CompliancePage() {
+export default async function CompliancePage() {
+  const contact = await getContactInfo()
   return (
     <>
       {/* Hero */}
@@ -173,7 +175,7 @@ export default function CompliancePage() {
               </p>
               <div className="flex flex-wrap items-center gap-6">
                 <a
-                  href="mailto:compliance@securebank.com"
+                  href={contact.compliance.href}
                   className={LABEL + " inline-flex items-center px-7 py-3.5"}
                   style={{ color: "var(--sh-bronze-dark)", border: "0.5px solid " + BRONZE, borderRadius: "2px" }}
                 >
@@ -358,11 +360,11 @@ export default function CompliancePage() {
                     Email
                   </p>
                   <a
-                    href="mailto:compliance@securebank.com"
+                    href={contact.compliance.href}
                     className="text-[15px]"
                     style={{ color: "var(--sh-bronze-dark)" }}
                   >
-                    compliance@securebank.com
+                    {contact.compliance.address}
                   </a>
                 </div>
                 <div>
@@ -370,11 +372,11 @@ export default function CompliancePage() {
                     Phone
                   </p>
                   <a
-                    href="tel:+18001234567"
+                    href={contact.phoneHref}
                     className="text-[15px]"
                     style={{ color: "var(--sh-bronze-dark)", fontFamily: MONO }}
                   >
-                    1-800-123-4567
+                    {contact.phone}
                   </a>
                 </div>
                 <div>

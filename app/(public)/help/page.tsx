@@ -1,7 +1,8 @@
 import { Metadata } from "next"
 import Link from "next/link"
 import Image from "next/image"
-import { BANK_NAME, SUPPORT_EMAIL } from "@/lib/brand"
+import { BANK_NAME } from "@/lib/brand"
+import { getContactInfo } from "@/lib/contact"
 import {
   Search,
   Wallet,
@@ -105,7 +106,8 @@ const VIDEOS = [
   { title: "Using the Mobile App", duration: "4:15" },
 ]
 
-export default function HelpCenterPage() {
+export default async function HelpCenterPage() {
+  const contact = await getContactInfo()
   return (
     <>
       {/* Hero */}
@@ -330,26 +332,38 @@ export default function HelpCenterPage() {
                   <span className={LABEL} style={{ color: "var(--sh-bronze-dark)" }}>Online</span>
                 </a>
                 <a
-                  href="tel:+18001234567"
+                  href={contact.phoneHref}
                   style={{ backgroundColor: "var(--sh-surface)", border: "0.5px solid var(--sh-ink-10)", borderRadius: "8px" }}
                   className="flex items-center gap-4 p-5 hover:border-[#A67C3D] transition-colors"
                 >
                   <Phone className="h-6 w-6 shrink-0" strokeWidth={1.25} style={{ color: BRONZE }} />
                   <div className="flex-1">
                     <p className="text-[15px] font-medium" style={{ color: INK }}>Phone Support</p>
-                    <p style={{ fontFamily: MONO, color: "var(--sh-ink-50)" }} className="text-[13px]">1-800-123-4567</p>
+                    <p style={{ fontFamily: MONO, color: "var(--sh-ink-50)" }} className="text-[13px]">{contact.phone}</p>
                   </div>
                   <span className="text-[12px]" style={{ color: "var(--sh-ink-50)" }}>Mon&ndash;Fri, 8am&ndash;8pm</span>
                 </a>
                 <a
-                  href={`mailto:${SUPPORT_EMAIL}`}
+                  href={contact.textHref}
+                  style={{ backgroundColor: "var(--sh-surface)", border: "0.5px solid var(--sh-ink-10)", borderRadius: "8px" }}
+                  className="flex items-center gap-4 p-5 hover:border-[#A67C3D] transition-colors"
+                >
+                  <MessageCircle className="h-6 w-6 shrink-0" strokeWidth={1.25} style={{ color: BRONZE }} />
+                  <div className="flex-1">
+                    <p className="text-[15px] font-medium" style={{ color: INK }}>Text Support</p>
+                    <p style={{ fontFamily: MONO, color: "var(--sh-ink-50)" }} className="text-[13px]">{contact.textPhone}</p>
+                  </div>
+                  <span className="text-[12px]" style={{ color: "var(--sh-ink-50)" }}>Text a specialist</span>
+                </a>
+                <a
+                  href={contact.emailHref}
                   style={{ backgroundColor: "var(--sh-surface)", border: "0.5px solid var(--sh-ink-10)", borderRadius: "8px" }}
                   className="flex items-center gap-4 p-5 hover:border-[#A67C3D] transition-colors"
                 >
                   <Mail className="h-6 w-6 shrink-0" strokeWidth={1.25} style={{ color: BRONZE }} />
                   <div className="flex-1">
                     <p className="text-[15px] font-medium" style={{ color: INK }}>Email Support</p>
-                    <p className="text-[13px]" style={{ color: "var(--sh-ink-50)" }}>{SUPPORT_EMAIL}</p>
+                    <p className="text-[13px]" style={{ color: "var(--sh-ink-50)" }}>{contact.email}</p>
                   </div>
                   <span className="text-[12px]" style={{ color: "var(--sh-ink-50)" }}>Within 24 hours</span>
                 </a>

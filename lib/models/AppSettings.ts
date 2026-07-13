@@ -18,6 +18,20 @@ export interface ILoanProduct {
   maxAmount: number
 }
 
+export interface ISupportOffice {
+  city: string
+  type: string
+  addressLine1: string
+  addressLine2: string
+  phone: string
+}
+
+export interface ISupportDepartment {
+  name: string
+  description: string
+  email: string
+}
+
 export type ServiceStatus = "available" | "restricted" | "coming_soon" | "maintenance" | "disabled"
 
 export interface IServiceConfig {
@@ -75,6 +89,17 @@ export interface IAppSettings extends Document {
   cardApplicationFee: number
   cardMaxPerUser: number
   cardRequiredKycTier: number
+  // Contact / support details (shown on public + user pages)
+  supportPhone: string
+  supportTextPhone: string
+  supportEmail: string
+  supportAddress: string
+  supportOffices: ISupportOffice[]
+  supportDepartments: ISupportDepartment[]
+  careersEmail: string
+  complianceEmail: string
+  privacyEmail: string
+  legalEmail: string
   // Per-service dashboard config
   loansService: IServiceConfig
   grantsService: IServiceConfig
@@ -85,6 +110,26 @@ export interface IAppSettings extends Document {
   updatedAt: Date
   updatedBy?: mongoose.Types.ObjectId
 }
+
+const SupportOfficeSchema = new Schema<ISupportOffice>(
+  {
+    city:         { type: String, trim: true, default: "" },
+    type:         { type: String, trim: true, default: "" },
+    addressLine1: { type: String, trim: true, default: "" },
+    addressLine2: { type: String, trim: true, default: "" },
+    phone:        { type: String, trim: true, default: "" },
+  },
+  { _id: false }
+)
+
+const SupportDepartmentSchema = new Schema<ISupportDepartment>(
+  {
+    name:        { type: String, trim: true, default: "" },
+    description: { type: String, trim: true, default: "" },
+    email:       { type: String, trim: true, default: "" },
+  },
+  { _id: false }
+)
 
 const AppSettingsSchema = new Schema<IAppSettings>(
   {
@@ -239,6 +284,32 @@ const AppSettingsSchema = new Schema<IAppSettings>(
     cardApplicationFee:    { type: Number, default: 0, min: 0 },
     cardMaxPerUser:        { type: Number, default: 5, min: 1, max: 20 },
     cardRequiredKycTier:   { type: Number, default: 1, min: 1, max: 3 },
+    // Contact / support details (shown on public + user pages)
+    supportPhone:          { type: String, default: "1-800-123-4567", trim: true },
+    supportTextPhone:      { type: String, default: "", trim: true },
+    supportEmail:          { type: String, default: "", trim: true },
+    supportAddress:        { type: String, default: "Friedrichstraße 123, 10117 Berlin, Germany", trim: true },
+    supportOffices:        {
+      type: [SupportOfficeSchema],
+      default: [
+        { city: "Berlin",    type: "Headquarters",     addressLine1: "Friedrichstraße 123",   addressLine2: "10117 Berlin, Germany",             phone: "+49 30 1234 5678" },
+        { city: "Frankfurt", type: "Financial Center", addressLine1: "Mainzer Landstraße 45",  addressLine2: "60329 Frankfurt am Main, Germany",  phone: "+49 69 9876 5432" },
+        { city: "Munich",    type: "Regional Office",  addressLine1: "Maximilianstraße 78",    addressLine2: "80539 München, Germany",            phone: "+49 89 5555 1234" },
+      ],
+    },
+    supportDepartments:    {
+      type: [SupportDepartmentSchema],
+      default: [
+        { name: "General Support",  description: "Account questions, technical issues, general inquiries", email: "" },
+        { name: "Business Banking", description: "Business accounts, commercial services, partnerships",   email: "" },
+        { name: "Media & Press",    description: "Press inquiries, media requests, public relations",       email: "" },
+      ],
+    },
+    // Specialised inbox addresses (legal / careers pages). Blank → main support email.
+    careersEmail:          { type: String, default: "", trim: true },
+    complianceEmail:       { type: String, default: "", trim: true },
+    privacyEmail:          { type: String, default: "", trim: true },
+    legalEmail:            { type: String, default: "", trim: true },
     // Per-service dashboard config
     loansService: {
       enabled:     { type: Boolean, default: true },

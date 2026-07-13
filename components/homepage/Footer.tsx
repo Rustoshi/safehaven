@@ -1,7 +1,8 @@
 import Link from "next/link"
 import Image from "next/image"
 import { Facebook, Twitter, Instagram, Linkedin, Youtube, Mail, Phone, MapPin, Check } from "lucide-react"
-import { BANK_NAME, SUPPORT_EMAIL, LEGAL_NAME } from "@/lib/brand"
+import { BANK_NAME, LEGAL_NAME } from "@/lib/brand"
+import { getContactInfo } from "@/lib/contact"
 
 /* Safe Haven Private — footer. design.md §5: ink background, linen text at
    50–100% opacity, bronze on hover. Hairline dividers, no shadows/fills. */
@@ -52,8 +53,9 @@ const SOCIAL_LINKS = [
 
 const TRUST_BADGES = ["FDIC Insured", "256-bit SSL", "PCI Compliant"]
 
-export function Footer() {
+export async function Footer() {
   const currentYear = new Date().getFullYear()
+  const contact = await getContactInfo()
 
   return (
     <footer style={{ backgroundColor: INK, fontFamily: UI_FONT }}>
@@ -74,17 +76,17 @@ export function Footer() {
             </p>
 
             <div className="mt-7 space-y-3">
-              <a href={`mailto:${SUPPORT_EMAIL}`} className="flex items-center gap-3 text-[14px] sh-foot-link" style={{ color: "var(--sh-linen-70)" }}>
+              <a href={contact.emailHref} className="flex items-center gap-3 text-[14px] sh-foot-link" style={{ color: "var(--sh-linen-70)" }}>
                 <Mail className="h-4 w-4" strokeWidth={1.5} />
-                <span>{SUPPORT_EMAIL}</span>
+                <span>{contact.email}</span>
               </a>
-              <a href="tel:+18001234567" className="flex items-center gap-3 text-[14px] sh-foot-link" style={{ color: "var(--sh-linen-70)" }}>
+              <a href={contact.phoneHref} className="flex items-center gap-3 text-[14px] sh-foot-link" style={{ color: "var(--sh-linen-70)" }}>
                 <Phone className="h-4 w-4" strokeWidth={1.5} />
-                <span>1-800-123-4567</span>
+                <span>{contact.phone}</span>
               </a>
               <div className="flex items-center gap-3 text-[14px]" style={{ color: "var(--sh-linen-70)" }}>
                 <MapPin className="h-4 w-4" strokeWidth={1.5} />
-                <span>Friedrichstraße 123, 10117 Berlin, Germany</span>
+                <span>{contact.address}</span>
               </div>
             </div>
           </div>

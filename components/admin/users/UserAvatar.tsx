@@ -7,6 +7,7 @@ interface UserAvatarProps {
   lastName:  string
   size?:     AvatarSize
   className?: string
+  avatarUrl?: string | null
 }
 
 // 8 deterministic background colours — picked by name hash
@@ -35,9 +36,24 @@ const SIZE_CLASSES: Record<AvatarSize, string> = {
   lg: "h-20 w-20 text-2xl",
 }
 
-export function UserAvatar({ firstName, lastName, size = "md", className }: UserAvatarProps) {
+export function UserAvatar({ firstName, lastName, size = "md", className, avatarUrl }: UserAvatarProps) {
   const initials = `${firstName[0] ?? ""}${lastName[0] ?? ""}`.toUpperCase()
   const color    = PALETTE[hashName(`${firstName}${lastName}`) % PALETTE.length]
+
+  if (avatarUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={avatarUrl}
+        alt={`${firstName} ${lastName}`}
+        className={cn(
+          "inline-block flex-shrink-0 rounded-full object-cover",
+          SIZE_CLASSES[size],
+          className
+        )}
+      />
+    )
+  }
 
   return (
     <span

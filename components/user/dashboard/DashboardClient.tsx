@@ -81,6 +81,19 @@ export function DashboardClient({ data, btcRate: initialBtcRate, session }: Prop
   const [balanceHidden, setBalanceHidden] = useState(false)
   const [unreadCount, setUnreadCount] = useState(data.pendingActions.unreadNotifications)
 
+  // Profile photo — fetched once, updated live when changed on the profile page.
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  useEffect(() => {
+    let active = true
+    fetch("/api/user/profile")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (active && d && "avatarUrl" in d) setAvatarUrl(d.avatarUrl) })
+      .catch(() => { /* keep initials */ })
+    const onUpdate = (e: Event) => setAvatarUrl((e as CustomEvent<string | null>).detail ?? null)
+    window.addEventListener("avatar-updated", onUpdate as EventListener)
+    return () => { active = false; window.removeEventListener("avatar-updated", onUpdate as EventListener) }
+  }, [])
+
   useEffect(() => {
     let mounted = true
     const refresh = async () => {
@@ -149,8 +162,11 @@ export function DashboardClient({ data, btcRate: initialBtcRate, session }: Prop
             <button onClick={() => navigate("/app/profile")} className="hidden sm:flex items-center justify-center w-9 h-9" style={ghostBtn} aria-label="Settings">
               <Settings className="w-[18px] h-[18px]" style={{ color: "var(--dash-text-2)" }} strokeWidth={1.8} />
             </button>
-            <button onClick={() => navigate("/app/profile")} className="flex items-center justify-center w-9 h-9 text-[12px]" style={{ borderRadius: "50%", backgroundColor: "var(--dash-primary-bg)", color: "var(--dash-primary)", fontWeight: 600 }} aria-label="Profile">
-              {session.user.firstName?.[0]}{session.user.lastName?.[0]}
+            <button onClick={() => navigate("/app/profile")} className="flex items-center justify-center w-9 h-9 overflow-hidden text-[12px]" style={{ borderRadius: "50%", backgroundColor: "var(--dash-primary-bg)", color: "var(--dash-primary)", fontWeight: 600 }} aria-label="Profile">
+              {avatarUrl
+                // eslint-disable-next-line @next/next/no-img-element
+                ? <img src={avatarUrl} alt="Profile" className="w-9 h-9 rounded-full object-cover" />
+                : <>{session.user.firstName?.[0]}{session.user.lastName?.[0]}</>}
             </button>
           </div>
         </header>

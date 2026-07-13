@@ -7,6 +7,7 @@ import User          from "@/lib/models/User"
 import Account       from "@/lib/models/Account"
 import Transaction   from "@/lib/models/Transaction"
 import { getAppSettings } from "@/lib/services/settings.service"
+import { sendAdminAlertEmail } from "@/lib/email"
 
 const transferSchema = z.object({
   fromWalletType:      z.enum(["fiat", "bitcoin"]),
@@ -110,26 +111,13 @@ export async function POST(req: NextRequest) {
 
     // Handle international transfers (external - no recipient account in our system)
     if (isInternational) {
-      // Fetch app settings for international transfer fees
-      const appSettings = await getAppSettings()
-      const feeType = (appSettings.internationalTransferFeeType as "flat" | "percentage") || "flat"
-      const flatFee = Number(appSettings.internationalTransferFee ?? 15)
-      const percentFee = Number(appSettings.internationalTransferFeePercent ?? 2.5)
-      
-      // Calculate fee based on type
-      let feeAmount = 0
-      if (feeType === "flat") {
-        feeAmount = flatFee
-      } else {
-        feeAmount = amount * (percentFee / 100)
-      }
-      const feeSmallest = Math.round(feeAmount * 100) // Convert to cents
-      const totalDebit = amountSmallest + feeSmallest
-      
-      // Check if user has enough balance for amount + fee
+      // Transfers are fee-free — no fee is charged on any transfer.
+      const totalDebit = amountSmallest
+
+      // Check if user has enough balance
       if (currentBalance < totalDebit) {
         return NextResponse.json({
-          error: `Insufficient balance. Transfer amount: $${amount.toFixed(2)}, Fee: $${feeAmount.toFixed(2)}, Total: $${((amountSmallest + feeSmallest) / 100).toFixed(2)}. Available: $${(currentBalance / 100).toFixed(2)}`,
+          error: `Insufficient balance. Transfer amount: $${amount.toFixed(2)}. Available: $${(currentBalance / 100).toFixed(2)}`,
         }, { status: 400 })
       }
 
@@ -163,8 +151,7 @@ export async function POST(req: NextRequest) {
           reference:   outRef,
           transferType: "international",
           isGenerated: false,
-          fee: feeSmallest,
-          feeType: feeType,
+          fee: 0,
           externalRecipient: {
             name: recipientName,
             bankName: String(fields?.bankName || fields?.institution || "International Bank"),
@@ -175,44 +162,31 @@ export async function POST(req: NextRequest) {
           },
           metadata: {
             intlMethod,
-            feeAmount,
-            feeType,
             ...(fields || {}),
           },
         }], { session: dbSession })
 
-        // Create fee transaction if fee > 0
-        if (feeSmallest > 0) {
-          await Transaction.create([{
-            accountId:   senderAccount._id,
-            userId:      new mongoose.Types.ObjectId(session.user.id),
-            type:        "fee",
-            amount:      feeSmallest,
-            currency,
-            status:      "completed",
-            description: `International transfer fee (${feeType === "flat" ? `$${flatFee}` : `${percentFee}%`})`,
-            reference:   `${outRef}-FEE`,
-            isGenerated: true,
-            metadata: {
-              relatedTransfer: outRef,
-              feeType,
-              feeRate: feeType === "flat" ? flatFee : percentFee,
-            },
-          }], { session: dbSession })
-        }
-
         await dbSession.commitTransaction()
+
+        // Notify admin of the transfer (fire-and-forget)
+        sendAdminAlertEmail("New international transfer", [
+          { label: "Client",    value: `${s.firstName} ${s.lastName}` },
+          { label: "Email",     value: session.user.email || "—" },
+          { label: "Amount",    value: `${amount.toLocaleString()} ${currency}` },
+          { label: "Method",    value: `International — ${intlMethod || "wire"}` },
+          { label: "Recipient", value: recipientName },
+          { label: "Reference", value: outRef },
+          { label: "Date",      value: new Date().toLocaleString() },
+        ], "A client just initiated an international transfer.").catch(() => {})
 
         return NextResponse.json({
           success:   true,
           reference: outRef,
           amount,
-          fee: feeAmount,
-          feeType,
-          total: amount + feeAmount,
+          total: amount,
           currency,
           recipientName,
-          message:   `$${amount.toLocaleString()} international transfer initiated. Fee: $${feeAmount.toFixed(2)}. Processing may take 1-3 business days.`,
+          message:   `$${amount.toLocaleString()} international transfer initiated. Processing may take 1-3 business days.`,
         })
       } catch (err) {
         await dbSession.abortTransaction()
@@ -316,6 +290,17 @@ export async function POST(req: NextRequest) {
     } finally {
       dbSession.endSession()
     }
+
+    // Notify admin of the transfer (fire-and-forget)
+    sendAdminAlertEmail("New transfer", [
+      { label: "Client",    value: `${s.firstName} ${s.lastName}` },
+      { label: "Email",     value: session.user.email || "—" },
+      { label: "Amount",    value: `${amount.toLocaleString()} ${currency}` },
+      { label: "Method",    value: "Internal / local" },
+      { label: "Recipient", value: recipientName },
+      { label: "Reference", value: outRef },
+      { label: "Date",      value: new Date().toLocaleString() },
+    ], "A client just sent a transfer.").catch(() => {})
 
     return NextResponse.json({
       success:   true,

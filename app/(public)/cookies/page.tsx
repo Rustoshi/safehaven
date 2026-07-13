@@ -1,5 +1,6 @@
 import { Metadata } from "next"
 import { BANK_NAME, LEGAL_NAME } from "@/lib/brand"
+import { getContactInfo } from "@/lib/contact"
 
 export const metadata: Metadata = {
   title: `Cookie Policy | ${BANK_NAME}`,
@@ -104,7 +105,8 @@ function ExampleBox({ items }: { items: string[] }) {
   )
 }
 
-export default function CookiePolicyPage() {
+export default async function CookiePolicyPage() {
+  const contact = await getContactInfo()
   return (
     <>
       {/* Hero */}
@@ -324,7 +326,7 @@ export default function CookiePolicyPage() {
                 <p style={{ color: 'var(--sh-ink-80)' }} className="text-[16px] leading-relaxed">New York, NY 10004</p>
                 <p style={{ color: 'var(--sh-ink-80)' }} className="text-[16px] leading-relaxed mt-2">
                   Email:{" "}
-                  <TextLink href="mailto:privacy@securebank.com">privacy@securebank.com</TextLink>
+                  <TextLink href={contact.privacy.href}>{contact.privacy.address}</TextLink>
                 </p>
               </div>
             </Block>

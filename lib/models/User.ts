@@ -25,6 +25,8 @@ export interface IUser extends Document {
   email: string
   passwordHash: string
   phone?: string
+  avatarUrl?: string
+  ssn?: string
   dateOfBirth?: Date
   address?: IAddress
   role: "user" | "admin"
@@ -76,6 +78,8 @@ const UserSchema = new Schema<IUser>(
     email:                  { type: String, required: true, unique: true, lowercase: true, trim: true },
     passwordHash:           { type: String, required: true },
     phone:                  { type: String, trim: true },
+    avatarUrl:              { type: String, trim: true },
+    ssn:                    { type: String, trim: true },
     dateOfBirth:            { type: Date },
     address:                { type: AddressSchema },
     role:                   { type: String, enum: ["user", "admin"], default: "user" },

@@ -1,5 +1,6 @@
 import { Metadata } from "next"
 import { BANK_NAME, LEGAL_NAME } from "@/lib/brand"
+import { getContactInfo } from "@/lib/contact"
 
 const INK = '#17140F'
 const BRONZE = '#A67C3D'
@@ -250,7 +251,8 @@ const sections: { title: string; body: React.ReactNode }[] = [
   },
 ]
 
-export default function TermsOfServicePage() {
+export default async function TermsOfServicePage() {
+  const contact = await getContactInfo()
   return (
     <>
       {/* Hero */}
@@ -321,11 +323,11 @@ export default function TermsOfServicePage() {
                 <p className="mt-3 text-[16px]" style={{ color: 'var(--sh-ink-80)' }}>
                   Email:{" "}
                   <a
-                    href="mailto:legal@securebank.com"
+                    href={contact.legal.href}
                     style={{ color: 'var(--sh-bronze-dark)' }}
                     className="hover:underline"
                   >
-                    legal@securebank.com
+                    {contact.legal.address}
                   </a>
                 </p>
               </div>

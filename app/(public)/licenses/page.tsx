@@ -2,6 +2,7 @@ import { Metadata } from "next"
 import Link from "next/link"
 import Image from "next/image"
 import { BANK_NAME, LEGAL_NAME } from "@/lib/brand"
+import { getContactInfo } from "@/lib/contact"
 import {
   FileText,
   Building2,
@@ -115,7 +116,8 @@ const STATE_LICENSES = [
   { state: "District of Columbia", status: "Licensed" },
 ]
 
-export default function LicensesPage() {
+export default async function LicensesPage() {
+  const contact = await getContactInfo()
   return (
     <>
       {/* Hero */}
@@ -148,7 +150,7 @@ export default function LicensesPage() {
                 >
                   View Compliance Info
                 </Link>
-                <a href="mailto:compliance@securebank.com" className="text-[14px]" style={{ color: INK }}>
+                <a href={contact.compliance.href} className="text-[14px]" style={{ color: INK }}>
                   Contact compliance →
                 </a>
               </div>
@@ -304,7 +306,7 @@ export default function LicensesPage() {
             </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-end">
               <a
-                href="mailto:compliance@securebank.com"
+                href={contact.compliance.href}
                 className={LABEL + " inline-flex items-center justify-center px-7 py-3.5"}
                 style={{ color: BRONZE, border: "0.5px solid " + BRONZE, borderRadius: "2px" }}
               >

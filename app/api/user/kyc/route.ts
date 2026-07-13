@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
     const body = await req.json()
-    const { docType, docUrl, docPublicId, dateOfBirth, address } = body
+    const { docType, docUrl, docPublicId, dateOfBirth, ssn, address } = body
 
     // Validate
     if (!docType || !docUrl)
@@ -110,6 +110,9 @@ export async function POST(req: NextRequest) {
     if (dateOfBirth) {
       docData.dateOfBirth = new Date(dateOfBirth)
     }
+    if (typeof ssn === "string" && ssn.trim()) {
+      docData.ssn = ssn.trim()
+    }
     if (address && typeof address === "object") {
       docData.address = {
         street: address.street || undefined,
@@ -128,6 +131,7 @@ export async function POST(req: NextRequest) {
       user.kycStatus = "pending"
       await user.save()
     }
+    // Admin is notified once per submission via /api/user/kyc/notify-admin (see client)
 
     return NextResponse.json({
       document: {

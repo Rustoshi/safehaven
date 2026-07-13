@@ -152,7 +152,7 @@ export function UsersListClient({ initialData }: Props) {
       label:  "User",
       render: (r: UserListItem) => (
         <Link href={`/admin/users/${r.id}`} className="flex items-center gap-3 hover:opacity-80">
-          <UserAvatar firstName={r.firstName} lastName={r.lastName} size="sm" />
+          <UserAvatar firstName={r.firstName} lastName={r.lastName} size="sm" avatarUrl={r.avatarUrl} />
           <div>
             <p className="font-medium text-slate-800">{r.firstName} {r.lastName}</p>
             <p className="text-xs text-slate-400">{r.email}</p>

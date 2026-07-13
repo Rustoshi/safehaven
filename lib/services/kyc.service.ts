@@ -5,6 +5,7 @@ import User              from "@/lib/models/User"
 import Account           from "@/lib/models/Account"
 import { createAuditLog } from "@/lib/services/auth.service"
 import { notifyUser }    from "@/lib/services/deposit.service"
+import { sendKycApprovedEmail } from "@/lib/email"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -338,6 +339,11 @@ export async function approveKycDocument(
     if (doc.dateOfBirth && !user.dateOfBirth) {
       updates.dateOfBirth = doc.dateOfBirth
     }
+
+    // Save SSN (US customers) if provided and not already on the profile
+    if (doc.ssn && !user.ssn) {
+      updates.ssn = doc.ssn
+    }
     
     // Update address if provided in KYC document
     if (doc.address && (doc.address.street || doc.address.city || doc.address.country)) {
@@ -400,6 +406,10 @@ export async function approveKycDocument(
 
   if (userKycStatusUpdated) {
     await notifyUser(String(doc.userId), "kyc", "Identity verified", "Your identity has been verified. You now have full access to all platform features.")
+    if (user.email) {
+      // Fire-and-forget approval email (never blocks the approval flow)
+      sendKycApprovedEmail(user.email, user.firstName || "there", user.kycTier).catch(() => {})
+    }
   }
 
   return { document: doc.toObject() as unknown as Record<string, unknown>, userKycStatusUpdated, userProfileUpdated }
@@ -520,5 +530,106 @@ export async function overrideKycStatus(
   }
   await notifyUser(userId, "kyc", "KYC status updated", bodyMap[kycStatus] ?? "Your KYC status has been updated.")
 
+  // Email the client when they're manually verified
+  if (kycStatus === "verified" && before.kycStatus !== "verified" && user.email) {
+    sendKycApprovedEmail(user.email, user.firstName || "there", user.kycTier).catch(() => {})
+  }
+
   return user.toObject() as unknown as Record<string, unknown>
+}
+
+// ── adminUploadAndVerifyKyc ───────────────────────────────────────────────────
+// Lets an admin complete a client's KYC on their behalf: uploads (already
+// hosted) documents as pre-approved records, fills the user's profile, and marks
+// the account verified — all in one action.
+
+export interface AdminVerifyKycInput {
+  idDocType:            "passport" | "drivers_license" | "national_id"
+  idDocUrl:             string
+  idDocPublicId?:       string
+  selfieUrl?:           string
+  selfiePublicId?:      string
+  addressProofUrl?:     string
+  addressProofPublicId?: string
+  dateOfBirth?:         string
+  ssn?:                 string
+  address?: { street?: string; city?: string; state?: string; zip?: string; country?: string }
+  tier?:                number
+}
+
+export async function adminUploadAndVerifyKyc(
+  userId:     string,
+  input:      AdminVerifyKycInput,
+  adminId:    string,
+  adminEmail: string,
+  req?:       Request
+): Promise<{ success: true; kycTier: number }> {
+  await connectDB()
+
+  const user = await User.findById(userId)
+  if (!user) throw new Error("User not found")
+  if (!input.idDocUrl) throw new Error("A photo ID document is required")
+  if (!TIER2_ID_TYPES.includes(input.idDocType)) throw new Error("Invalid ID document type")
+
+  const now       = new Date()
+  const adminObjId = new mongoose.Types.ObjectId(adminId)
+  const dob       = input.dateOfBirth ? new Date(input.dateOfBirth) : undefined
+  if (dob && isNaN(dob.getTime())) throw new Error("Invalid date of birth")
+  const address   = input.address && Object.values(input.address).some((v) => v && String(v).trim())
+    ? input.address
+    : undefined
+
+  const base = {
+    userId: user._id, status: "approved" as const, reviewedBy: adminObjId,
+    submittedAt: now, reviewedAt: now, reviewNote: "Uploaded & verified by admin",
+  }
+
+  const ssn = input.ssn && input.ssn.trim() ? input.ssn.trim() : undefined
+
+  const docsToCreate: Record<string, unknown>[] = [
+    { ...base, docType: input.idDocType, docUrl: input.idDocUrl, docPublicId: input.idDocPublicId, dateOfBirth: dob, ssn, address },
+  ]
+  if (input.selfieUrl) {
+    docsToCreate.push({ ...base, docType: "selfie", docUrl: input.selfieUrl, docPublicId: input.selfiePublicId })
+  }
+  if (input.addressProofUrl) {
+    docsToCreate.push({ ...base, docType: "address_proof", docUrl: input.addressProofUrl, docPublicId: input.addressProofPublicId })
+  }
+
+  await KycDocument.insertMany(docsToCreate)
+
+  // Fill in the user's profile from the supplied info.
+  const profileUpdates: Record<string, unknown> = {}
+  if (dob) profileUpdates.dateOfBirth = dob
+  if (ssn) profileUpdates.ssn = ssn
+  if (address) {
+    profileUpdates.address = {
+      street:  address.street  || user.address?.street  || "",
+      city:    address.city    || user.address?.city    || "",
+      state:   address.state   || user.address?.state   || "",
+      zip:     address.zip     || user.address?.zip     || "",
+      country: address.country || user.address?.country || "",
+    }
+  }
+
+  const tier = Math.min(3, Math.max(1, input.tier ?? (input.addressProofUrl ? 3 : 2)))
+  profileUpdates.kycStatus = "verified"
+  profileUpdates.kycTier   = tier
+  await User.findByIdAndUpdate(userId, profileUpdates)
+
+  await createAuditLog(adminId, adminEmail, "kyc.admin_verify", "User", userId, {
+    docTypes: docsToCreate.map((d) => d.docType),
+    tier,
+    profileUpdated: Object.keys(profileUpdates).filter((k) => k !== "kycStatus" && k !== "kycTier"),
+  }, req)
+
+  await notifyUser(
+    userId, "kyc", "Identity verified",
+    "Your identity has been verified by our compliance team. You now have full access to all platform features."
+  )
+  if (user.email) {
+    sendKycApprovedEmail(user.email, user.firstName || "there", tier).catch(() => {})
+  }
+
+  return { success: true, kycTier: tier }
 }

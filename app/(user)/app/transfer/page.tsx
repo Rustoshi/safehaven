@@ -152,9 +152,6 @@ function TransferPageContent() {
   const [codeError, setCodeError] = useState("")
   const [verifyingCode, setVerifyingCode] = useState(false)
 
-  // International transfer fee state
-  const [intlFee, setIntlFee] = useState<{ feeType: "flat" | "percentage"; flatFee: number; percentFee: number } | null>(null)
-
   // Processing state
   const [processingStep, setProcessingStep] = useState(0)
   const processingSteps = [
@@ -183,25 +180,6 @@ function TransferPageContent() {
       setLoading(false)
     })()
   }, [])
-
-  // Fetch international transfer fee settings when transfer type changes
-  useEffect(() => {
-    if (transferType === "international") {
-      (async () => {
-        try {
-          const res = await fetch("/api/user/transfer-fees")
-          if (res.ok) {
-            const data = await res.json()
-            setIntlFee({
-              feeType: data.internationalTransferFeeType || "flat",
-              flatFee: data.internationalTransferFee || 15,
-              percentFee: data.internationalTransferFeePercent || 2.5,
-            })
-          }
-        } catch { /* */ }
-      })()
-    }
-  }, [transferType])
 
   // Load beneficiary from URL params
   useEffect(() => {
@@ -717,17 +695,31 @@ function TransferPageContent() {
         )}
 
         {/* ── Error banner ──────────────────────────────────────── */}
-        {error && step !== "pin" && (
-          <div style={{
-            background: "rgba(240,68,56,0.08)", border: "1px solid rgba(240,68,56,0.15)",
-            borderRadius: 14, padding: "12px 16px", marginTop: 8, marginBottom: 4,
-            display: "flex", alignItems: "center", gap: 10,
-          }}>
-            <AlertTriangle style={{ width: 16, height: 16, color: "#F04438", flexShrink: 0 }} />
-            <span style={{ fontSize: 13, color: "#F04438", flex: 1 }}>{error}</span>
-            <X onClick={() => setError("")} style={{ width: 14, height: 14, color: "rgba(240,68,56,0.5)", cursor: "pointer", flexShrink: 0 }} />
-          </div>
-        )}
+        {error && step !== "pin" && (() => {
+          const isKycError = /identity verification|complete kyc|kyc verification/i.test(error)
+          return (
+            <div style={{
+              background: "rgba(240,68,56,0.08)", border: "1px solid rgba(240,68,56,0.15)",
+              borderRadius: 14, padding: "12px 16px", marginTop: 8, marginBottom: 4,
+              display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
+            }}>
+              <AlertTriangle style={{ width: 16, height: 16, color: "#F04438", flexShrink: 0 }} />
+              <span style={{ fontSize: 13, color: "#F04438", flex: 1, minWidth: 0 }}>{error}</span>
+              {isKycError && (
+                <button
+                  onClick={() => router.push("/app/kyc")}
+                  style={{
+                    fontSize: 12, fontWeight: 700, color: "#fff", background: "#F04438",
+                    border: "none", borderRadius: 8, padding: "6px 12px", cursor: "pointer", flexShrink: 0,
+                  }}
+                >
+                  Verify now
+                </button>
+              )}
+              <X onClick={() => setError("")} style={{ width: 14, height: 14, color: "rgba(240,68,56,0.5)", cursor: "pointer", flexShrink: 0 }} />
+            </div>
+          )
+        })()}
 
         {/* ═══ STEP 0 — CHOOSE TRANSFER TYPE ═══ */}
         {step === "choose" && (
@@ -1173,7 +1165,7 @@ function TransferPageContent() {
                   { key: "bankName", label: "Bank Name", placeholder: "e.g. HSBC, Barclays" },
                   { key: "accountNumber", label: "Account Number / IBAN", placeholder: "e.g. GB29NWBK60161331926819" },
                   { key: "swiftCode", label: "SWIFT / BIC Code", placeholder: "e.g. HBUKGB4B" },
-                  { key: "routingNumber", label: "Routing Number (optional)", placeholder: "e.g. 026009593" },
+                  { key: "routingNumber", label: "Routing Number", placeholder: "e.g. 026009593" },
                   { key: "bankAddress", label: "Bank Address", placeholder: "123 Bank Street, London" },
                 ],
                 crypto: [
@@ -1595,10 +1587,6 @@ function TransferPageContent() {
             }}>
               {transferType === "international" && intlMethod ? (() => {
                 const parsedAmount = parseFloat(amount) || 0
-                const calculatedFee = intlFee 
-                  ? (intlFee.feeType === "flat" ? intlFee.flatFee : parsedAmount * (intlFee.percentFee / 100))
-                  : 0
-                const total = parsedAmount + calculatedFee
                 return (
                   <>
                     <ConfirmRow label="Method" value={({ bank: "Bank Transfer", wire: "Wire Transfer", crypto: "Cryptocurrency", paypal: "PayPal", wise: "Wise Transfer", cashapp: "Cash App", zelle: "Zelle", venmo: "Venmo", revolut: "Revolut", westernunion: "Western Union", moneygram: "MoneyGram" } as Record<string, string>)[intlMethod]} />
@@ -1607,13 +1595,7 @@ function TransferPageContent() {
                     {intlMethod === "wire" && intlFields.swiftCode && <ConfirmRow label="SWIFT Code" value={intlFields.swiftCode} />}
                     {intlMethod === "wire" && intlFields.bankName && <ConfirmRow label="Bank" value={intlFields.bankName} />}
                     {intlMethod === "crypto" && intlFields.network && <ConfirmRow label="Network" value={intlFields.network} />}
-                    <ConfirmRow label="Transfer Amount" value={formatAmount(parsedAmount)} />
-                    <ConfirmRow 
-                      label={`Fee ${intlFee?.feeType === "percentage" ? `(${intlFee.percentFee}%)` : ""}`} 
-                      value={formatAmount(calculatedFee)} 
-                      valueColor={calculatedFee > 0 ? "#F79009" : "#12B76A"} 
-                    />
-                    <ConfirmRow label="Total Debit" value={formatAmount(total)} valueColor={colors.blue} />
+                    <ConfirmRow label="Total Debit" value={formatAmount(parsedAmount)} valueColor={colors.blue} />
                     {description && <ConfirmRow label="Note" value={description} />}
                     <ConfirmRow label="Estimated Arrival" value={
                       intlMethod === "crypto" ? "10-60 minutes"
@@ -1626,7 +1608,6 @@ function TransferPageContent() {
               })() : (
                 <>
                   <ConfirmRow label="Network" value="Internal" />
-                  <ConfirmRow label="Fee" value="$0.00" valueColor="#12B76A" />
                   {description && <ConfirmRow label="Note" value={description} />}
                   <ConfirmRow label="Estimated Arrival" value="Instant" noBorder />
                 </>

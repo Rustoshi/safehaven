@@ -7,6 +7,7 @@ import DepositRequest from "@/lib/models/DepositRequest"
 import Transaction    from "@/lib/models/Transaction"
 import Account        from "@/lib/models/Account"
 import PaymentMethod  from "@/lib/models/PaymentMethod"
+import { sendAdminAlertEmail } from "@/lib/email"
 
 async function generateRef(): Promise<string> {
   const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -111,6 +112,16 @@ export async function POST(req: NextRequest) {
         paymentMethodType: pm.type,
       },
     })
+
+    // Notify admin of the deposit request (fire-and-forget)
+    sendAdminAlertEmail("New deposit request", [
+      { label: "Client",  value: `${session.user.firstName ?? ""} ${session.user.lastName ?? ""}`.trim() || (session.user.email || "—") },
+      { label: "Email",   value: session.user.email || "—" },
+      { label: "Amount",  value: `${amount.toLocaleString()} ${currency}` },
+      { label: "Method",  value: pm.name },
+      { label: "Reference", value: reference },
+      { label: "Date",    value: new Date().toLocaleString() },
+    ], "A client submitted a deposit request awaiting review.").catch(() => {})
 
     return NextResponse.json({
       id:     String(depositReq._id),

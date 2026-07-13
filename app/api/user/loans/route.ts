@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/db/connection"
 import LoanApplication from "@/lib/models/LoanApplication"
 import AppSettings, { APP_SETTINGS_ID } from "@/lib/models/AppSettings"
 import User from "@/lib/models/User"
+import { sendAdminAlertEmail } from "@/lib/email"
 
 // ── GET — list user's loans ──────────────────────────────────────────────────
 
@@ -171,6 +172,15 @@ export async function POST(req: Request) {
       status: "pending",
       appliedAt: new Date(),
     })
+
+    sendAdminAlertEmail("New loan application", [
+      { label: "Client", value: `${user.firstName} ${user.lastName}` },
+      { label: "Email",  value: user.email },
+      { label: "Type",   value: String(loanType) },
+      { label: "Amount", value: `${Number(amount).toLocaleString()}` },
+      { label: "Term",   value: `${termMonths} months` },
+      { label: "Date",   value: new Date().toLocaleString() },
+    ], "A client submitted a loan application awaiting review.").catch(() => {})
 
     return NextResponse.json({
       loan: {

@@ -38,6 +38,16 @@ export interface AppSettingsUpdate {
   maintenanceMessage?:       string
   allowRegistration?:        boolean
   kycRequiredForTransfer?:   boolean
+  supportPhone?:             string
+  supportTextPhone?:         string
+  supportEmail?:             string
+  supportAddress?:           string
+  supportOffices?:           { city: string; type: string; addressLine1: string; addressLine2: string; phone: string }[]
+  supportDepartments?:       { name: string; description: string; email: string }[]
+  careersEmail?:             string
+  complianceEmail?:          string
+  privacyEmail?:             string
+  legalEmail?:               string
   transferCodes?:            TransferCodesUpdate
 }
 
@@ -102,6 +112,14 @@ export async function updateAppSettings(
       throw new Error("fallbackBtcRate must be 0–1,000,000")
   if (data.maintenanceMessage != null && data.maintenanceMessage.length > 500)
     throw new Error("maintenanceMessage max 500 chars")
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (data.supportEmail != null && data.supportEmail.trim() !== "" && !emailRe.test(data.supportEmail.trim()))
+    throw new Error("supportEmail must be a valid email address")
+  for (const key of ["careersEmail", "complianceEmail", "privacyEmail", "legalEmail"] as const) {
+    const v = data[key]
+    if (v != null && v.trim() !== "" && !emailRe.test(v.trim()))
+      throw new Error(`${key} must be a valid email address`)
+  }
 
   const before = await getAppSettings()
 
@@ -115,6 +133,9 @@ export async function updateAppSettings(
     "localTransferFee", "internationalTransferFee", "internationalTransferFeeType", "internationalTransferFeePercent", "maxDailyTransferAmount",
     "defaultCurrency", "supportedCurrencies", "btcPriceSource", "fallbackBtcRate",
     "maintenanceMode", "maintenanceMessage", "allowRegistration", "kycRequiredForTransfer",
+    "supportPhone", "supportTextPhone", "supportEmail", "supportAddress",
+    "supportOffices", "supportDepartments",
+    "careersEmail", "complianceEmail", "privacyEmail", "legalEmail",
   ]
   for (const field of fieldsToUpdate) {
     if (data[field] !== undefined) {

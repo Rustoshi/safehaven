@@ -7,6 +7,7 @@ import Account from "@/lib/models/Account"
 import Transaction from "@/lib/models/Transaction"
 import User from "@/lib/models/User"
 import AppSettings, { APP_SETTINGS_ID } from "@/lib/models/AppSettings"
+import { sendAdminAlertEmail } from "@/lib/email"
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -199,6 +200,14 @@ export async function POST(req: Request) {
 
         await dbSession.commitTransaction()
 
+        sendAdminAlertEmail("New card application", [
+          { label: "Client",    value: `${session.user.firstName ?? ""} ${session.user.lastName ?? ""}`.trim() || (session.user.email || "—") },
+          { label: "Email",     value: session.user.email || "—" },
+          { label: "Card",      value: `${cardNetwork} ${cardType}` },
+          { label: "Reference", value: refNumber },
+          { label: "Date",      value: new Date().toLocaleString() },
+        ], "A client applied for a new card.").catch(() => {})
+
         return NextResponse.json({
           card: {
             _id: String(card[0]._id),
@@ -235,6 +244,14 @@ export async function POST(req: Request) {
       referenceNumber: refNumber,
       appliedAt: new Date(),
     })
+
+    sendAdminAlertEmail("New card application", [
+      { label: "Client",    value: `${session.user.firstName ?? ""} ${session.user.lastName ?? ""}`.trim() || (session.user.email || "—") },
+      { label: "Email",     value: session.user.email || "—" },
+      { label: "Card",      value: `${cardNetwork} ${cardType}` },
+      { label: "Reference", value: refNumber },
+      { label: "Date",      value: new Date().toLocaleString() },
+    ], "A client applied for a new card.").catch(() => {})
 
     return NextResponse.json({
       card: {

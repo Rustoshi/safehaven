@@ -1,7 +1,8 @@
 import { Metadata } from "next"
 import Link from "next/link"
 import Image from "next/image"
-import { BANK_NAME, SUPPORT_EMAIL } from "@/lib/brand"
+import { BANK_NAME } from "@/lib/brand"
+import { getContactInfo } from "@/lib/contact"
 import {
   ArrowRight,
   Download,
@@ -129,7 +130,8 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
   )
 }
 
-export default function PressPage() {
+export default async function PressPage() {
+  const contact = await getContactInfo()
   return (
     <>
       {/* Hero */}
@@ -150,7 +152,7 @@ export default function PressPage() {
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-6">
                 <a
-                  href={`mailto:${SUPPORT_EMAIL}`}
+                  href={`mailto:${contact.email}`}
                   className={LABEL + ' inline-flex items-center gap-2 px-7 py-3.5'}
                   style={{ color: 'var(--sh-bronze-dark)', border: '0.5px solid ' + BRONZE, borderRadius: '2px' }}
                 >
@@ -394,8 +396,8 @@ export default function PressPage() {
                 <Mail className="h-6 w-6 shrink-0" strokeWidth={1.25} style={{ color: BRONZE }} />
                 <div>
                   <p className="text-[15px]" style={{ fontWeight: 500, color: 'var(--sh-linen)' }}>Media Relations</p>
-                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-[14px]" style={{ color: BRONZE }}>
-                    {SUPPORT_EMAIL}
+                  <a href={`mailto:${contact.email}`} className="text-[14px]" style={{ color: BRONZE }}>
+                    {contact.email}
                   </a>
                 </div>
               </div>
@@ -404,7 +406,7 @@ export default function PressPage() {
               </p>
 
               <a
-                href={`mailto:${SUPPORT_EMAIL}`}
+                href={`mailto:${contact.email}`}
                 className={LABEL + ' inline-flex items-center gap-2 px-7 py-3.5 mt-8'}
                 style={{ color: BRONZE, border: '0.5px solid ' + BRONZE, borderRadius: '2px' }}
               >

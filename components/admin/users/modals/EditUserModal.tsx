@@ -39,6 +39,7 @@ const Schema = z.object({
   twoFactorEnabled: z.boolean(),
   transferPin:   z.string().optional(),
   preferredCurrency: z.string().min(1, "Currency is required"),
+  joinedDate:    z.string().optional(),
 })
 
 type FormValues = z.infer<typeof Schema>
@@ -105,6 +106,7 @@ export function EditUserModal({ open, onClose, onSuccess, user }: Props) {
       twoFactorEnabled: u.twoFactorEnabled,
       transferPin:   (u as any).transferPin ?? "",
       preferredCurrency: u.preferredCurrency || "USD",
+      joinedDate:    u.createdAt ? u.createdAt.slice(0, 10) : "",
     }
   }
 
@@ -169,6 +171,7 @@ export function EditUserModal({ open, onClose, onSuccess, user }: Props) {
       emailVerified: values.emailVerified,
       transferPin:   values.transferPin || undefined,
       preferredCurrency: values.preferredCurrency,
+      createdAt:     values.joinedDate || undefined,
     }
 
     const res = await fetch(`/api/admin/users/${user.id}`, {
@@ -339,6 +342,13 @@ export function EditUserModal({ open, onClose, onSuccess, user }: Props) {
                     <TextInput id="eu-dob" type="date" {...register("dateOfBirth")} />
                   </Field>
                 </div>
+                <Field
+                  label="Joined date"
+                  htmlFor="eu-joined"
+                  hint="The account's registration date shown across the app"
+                >
+                  <TextInput id="eu-joined" type="date" {...register("joinedDate")} />
+                </Field>
               </>
             )}
 
@@ -478,7 +488,6 @@ export function EditUserModal({ open, onClose, onSuccess, user }: Props) {
                     {[
                       { label: "User ID",       value: user.id, mono: true },
                       { label: "Referral code", value: user.referralCode, mono: true },
-                      { label: "Joined",        value: new Date(user.createdAt).toLocaleDateString() },
                       { label: "Accounts",      value: String(user.accounts?.length ?? 0) },
                       { label: "Currency",      value: `${getCurrencySymbol(watchedCurrency)} ${watchedCurrency}` },
                     ].map((row) => (

@@ -8,6 +8,7 @@ import Notification from "@/lib/models/Notification"
 import AuditLog from "@/lib/models/AuditLog"
 import PendingRegistration from "@/lib/models/PendingRegistration"
 import { BANK_NAME } from "@/lib/brand"
+import { sendAdminAlertEmail } from "@/lib/email"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -250,6 +251,15 @@ export async function registerUser(
     "User",
     user._id.toString()
   )
+
+  // Notify admin of the new registration (fire-and-forget)
+  sendAdminAlertEmail("New client registration", [
+    { label: "Name",     value: `${user.firstName} ${user.lastName}` },
+    { label: "Email",    value: user.email },
+    { label: "Phone",    value: user.phone || "—" },
+    { label: "Currency", value: user.preferredCurrency },
+    { label: "Date",     value: new Date().toLocaleString() },
+  ], "A new client just created an account.").catch(() => {})
 
   return { user }
 }

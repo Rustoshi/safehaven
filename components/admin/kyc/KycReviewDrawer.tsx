@@ -5,9 +5,10 @@ import Link                    from "next/link"
 import { Sheet, SheetHeader, SheetTitle, SheetBody, SheetClose } from "@/components/ui/sheet"
 import { Button }              from "@/components/ui/button"
 import { useToast }            from "@/components/ui/use-toast"
-import { CheckCircle2, XCircle, Clock, ExternalLink, ChevronDown, ChevronRight, AlertTriangle } from "lucide-react"
+import { CheckCircle2, XCircle, Clock, ExternalLink, ChevronDown, ChevronRight, AlertTriangle, ShieldCheck } from "lucide-react"
 import { DocumentReviewPanel } from "./DocumentReviewPanel"
 import { RequestDocumentsModal } from "./modals/RequestDocumentsModal"
+import { AdminVerifyModal } from "./modals/AdminVerifyModal"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -84,6 +85,7 @@ export function KycReviewDrawer({ userId, open, onClose, onAction }: Props) {
   const [loading,      setLoading]     = useState(false)
   const [overrideOpen, setOverrideOpen] = useState(false)
   const [reqDocsOpen,  setReqDocsOpen] = useState(false)
+  const [adminVerifyOpen, setAdminVerifyOpen] = useState(false)
   const [bulkLoading,  setBulkLoading] = useState(false)
 
   // Override state
@@ -254,6 +256,16 @@ export function KycReviewDrawer({ userId, open, onClose, onAction }: Props) {
                 </div>
               </div>
 
+              {/* Admin one-click verify — upload the client's docs on their behalf */}
+              {kycStatus !== "verified" && (
+                <button
+                  onClick={() => setAdminVerifyOpen(true)}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
+                >
+                  <ShieldCheck className="w-4 h-4" /> Verify manually — upload documents
+                </button>
+              )}
+
               {/* Completion status */}
               {required.length > 0 && (
                 <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
@@ -405,6 +417,14 @@ export function KycReviewDrawer({ userId, open, onClose, onAction }: Props) {
         userName={`${firstName} ${lastName}`}
         open={reqDocsOpen}
         onOpenChange={setReqDocsOpen}
+        onSuccess={refresh}
+      />
+
+      <AdminVerifyModal
+        userId={userId}
+        userName={`${firstName} ${lastName}`}
+        open={adminVerifyOpen}
+        onOpenChange={setAdminVerifyOpen}
         onSuccess={refresh}
       />
     </>
