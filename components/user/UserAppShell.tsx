@@ -62,6 +62,12 @@ export function UserAppShell({ session, children }: Props) {
     [pathname]
   )
 
+  // Flag the body so the Smartsupp chat launcher is lifted above the mobile bottom nav.
+  useEffect(() => {
+    document.body.classList.add("has-mobile-nav")
+    return () => document.body.classList.remove("has-mobile-nav")
+  }, [])
+
   const navigate = (href: string) => {
     setSidebarOpen(false)
     router.push(href)

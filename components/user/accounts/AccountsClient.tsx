@@ -17,12 +17,14 @@ export function AccountsClient({ accounts, btcRate, adminBtcWallet }: Props) {
   const router = useRouter()
   const { symbol: currencySymbol, formatAmount } = useCurrency()
 
+  // Fiat balances are stored in minor units (cents) — convert to major units.
   const fiatTotal = accounts
     .filter((a) => a.walletType === "fiat")
-    .reduce((sum, a) => sum + a.balance, 0)
+    .reduce((sum, a) => sum + a.balance / 100, 0)
+  // BTC balances are stored in satoshis — convert to BTC.
   const btcTotal = accounts
     .filter((a) => a.walletType === "bitcoin")
-    .reduce((sum, a) => sum + a.btcBalance, 0)
+    .reduce((sum, a) => sum + a.btcBalance / 1e8, 0)
   const portfolioValue = fiatTotal + btcTotal * btcRate
   const animatedPortfolio = useCountUp(portfolioValue, 1000)
 

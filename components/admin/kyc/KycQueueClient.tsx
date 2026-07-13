@@ -289,7 +289,8 @@ export function KycQueueClient({ initialData, initialStats }: Props) {
         ) : items.length === 0 ? (
           <div className="text-center py-12 text-gray-400 text-sm">No users in this queue.</div>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto scrollbar-hide">
+          <table className="w-full min-w-[760px] text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="w-8 px-4 py-3"></th>
@@ -377,6 +378,7 @@ export function KycQueueClient({ initialData, initialStats }: Props) {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 

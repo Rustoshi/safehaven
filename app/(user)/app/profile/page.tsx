@@ -6,9 +6,10 @@ import { useRouter } from "next/navigation"
 import {
   User, Mail, Shield, Key, LogOut,
   ChevronRight, CheckCircle2, AlertTriangle, Clock,
-  Eye, EyeOff, Lock, Camera, Loader2,
+  Eye, EyeOff, Lock, Camera, Loader2, Image as ImageIcon, X, Calendar,
 } from "lucide-react"
 import { UserHeader } from "@/components/user/UserHeader"
+import { CameraCaptureModal } from "@/components/user/CameraCaptureModal"
 import { useThemeColors } from "@/components/shared/ThemeProvider"
 
 export default function ProfilePage() {
@@ -34,11 +35,14 @@ export default function ProfilePage() {
   // after submitting documents or an admin review). Fetch the authoritative
   // value from the server so the profile always shows the real status.
   const [liveKycStatus, setLiveKycStatus] = useState<string | null>(null)
+  const [joinedDate, setJoinedDate] = useState<string | null>(null)
 
   // Profile picture
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [avatarError, setAvatarError] = useState("")
+  const [photoMenuOpen, setPhotoMenuOpen] = useState(false)
+  const [cameraOpen, setCameraOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -49,16 +53,19 @@ export default function ProfilePage() {
         if (!active || !d) return
         if (d.kycStatus) setLiveKycStatus(d.kycStatus)
         if (d.avatarUrl) setAvatarUrl(d.avatarUrl)
+        if (d.createdAt) setJoinedDate(d.createdAt)
       })
       .catch(() => { /* fall back to session value */ })
     return () => { active = false }
   }, [])
 
-  const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGallerySelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     e.target.value = "" // allow re-selecting the same file
-    if (!file) return
+    if (file) uploadAvatarFile(file)
+  }
 
+  const uploadAvatarFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
       setAvatarError("Please choose an image file")
       return
@@ -148,7 +155,7 @@ export default function ProfilePage() {
         <div className="text-center py-4">
           <button
             type="button"
-            onClick={() => !avatarUploading && fileInputRef.current?.click()}
+            onClick={() => !avatarUploading && setPhotoMenuOpen(true)}
             className="relative mx-auto block h-20 w-20 rounded-full"
             style={{ cursor: avatarUploading ? "default" : "pointer" }}
             aria-label="Change profile photo"
@@ -181,13 +188,13 @@ export default function ProfilePage() {
             </span>
           </button>
 
+          {/* Gallery / file picker (no capture → opens gallery/files) */}
           <input
             ref={fileInputRef}
             type="file"
             accept="image/*"
-            capture="user"
             className="hidden"
-            onChange={handleAvatarSelect}
+            onChange={handleGallerySelect}
           />
 
           {avatarError && (
@@ -202,13 +209,72 @@ export default function ProfilePage() {
           </p>
           <button
             type="button"
-            onClick={() => !avatarUploading && fileInputRef.current?.click()}
+            onClick={() => !avatarUploading && setPhotoMenuOpen(true)}
             className="mt-2 text-[13px] font-medium"
             style={{ color: colors.blue }}
           >
             {avatarUploading ? "Uploading…" : avatarUrl ? "Change photo" : "Add photo"}
           </button>
         </div>
+
+        {/* Photo source chooser — centered dialog on desktop, bottom sheet on mobile */}
+        {photoMenuOpen && (
+          <div
+            className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4"
+            style={{ background: "rgba(16,24,40,0.45)", backdropFilter: "blur(2px)" }}
+            onClick={() => setPhotoMenuOpen(false)}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="w-full rounded-t-2xl p-2 pb-5 sm:w-full sm:max-w-[380px] sm:rounded-2xl sm:pb-2"
+              style={{ background: colors.bgElevated, border: `1px solid ${colors.border}`, boxShadow: "0 24px 48px rgba(16,24,40,0.24)" }}
+            >
+              {/* Mobile grabber */}
+              <div className="mx-auto mb-1 mt-1 h-1 w-9 rounded-full sm:hidden" style={{ background: colors.border }} />
+
+              <div className="flex items-center justify-between px-3 pt-2 pb-1">
+                <p className="text-[15px] font-semibold" style={{ color: colors.textPrimary }}>Change profile photo</p>
+                <button
+                  onClick={() => setPhotoMenuOpen(false)}
+                  aria-label="Close"
+                  className="flex h-8 w-8 items-center justify-center rounded-full transition-colors"
+                  style={{ color: colors.textSecondary }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = colors.bgHover }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent" }}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="p-1">
+                <PhotoOption
+                  icon={<Camera className="h-[18px] w-[18px]" style={{ color: colors.blue }} />}
+                  iconBg={colors.blueBg}
+                  label="Take a photo"
+                  hint="Use your camera"
+                  colors={colors}
+                  onClick={() => { setPhotoMenuOpen(false); setCameraOpen(true) }}
+                />
+                <PhotoOption
+                  icon={<ImageIcon className="h-[18px] w-[18px]" style={{ color: colors.green }} />}
+                  iconBg={colors.greenBg}
+                  label="Upload from gallery"
+                  hint="Choose an existing image"
+                  colors={colors}
+                  onClick={() => { setPhotoMenuOpen(false); fileInputRef.current?.click() }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        <CameraCaptureModal
+          open={cameraOpen}
+          onClose={() => setCameraOpen(false)}
+          onCapture={(file) => { setCameraOpen(false); uploadAvatarFile(file) }}
+        />
 
         {/* Info card */}
         <div className="rounded-2xl overflow-hidden" style={{ background: colors.bgElevated, border: `1px solid ${colors.border}` }}>
@@ -223,6 +289,14 @@ export default function ProfilePage() {
                 <span className="text-[11px] font-semibold" style={{ color: kycStatus.color }}>{kycStatus.label}</span>
               </span>
             }
+            colors={colors}
+          />
+          <InfoRow
+            icon={<Calendar className="h-4 w-4" />}
+            label="Date Joined"
+            value={joinedDate
+              ? new Date(joinedDate).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
+              : "—"}
             colors={colors}
           />
         </div>
@@ -358,6 +432,36 @@ function ActionRow({ icon, label, onClick, danger, colors }: { icon: React.React
       {icon}
       <span className="flex-1 text-[14px] font-medium" style={{ color: danger ? colors.red : colors.textPrimary }}>{label}</span>
       <ChevronRight className="h-4 w-4" style={{ color: colors.textMuted }} />
+    </button>
+  )
+}
+
+function PhotoOption({
+  icon, iconBg, label, hint, colors, onClick,
+}: {
+  icon: React.ReactNode
+  iconBg: string
+  label: string
+  hint: string
+  colors: ReturnType<typeof useThemeColors>
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors active:scale-[0.99]"
+      style={{ background: "transparent" }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = colors.bgHover }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent" }}
+    >
+      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full" style={{ background: iconBg }}>
+        {icon}
+      </span>
+      <span className="min-w-0">
+        <span className="block text-[14px] font-medium" style={{ color: colors.textPrimary }}>{label}</span>
+        <span className="block text-[12px]" style={{ color: colors.textTertiary }}>{hint}</span>
+      </span>
     </button>
   )
 }

@@ -66,7 +66,7 @@ export function DataTable<T extends Record<string, unknown>>({
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
       {/* ── Desktop Table View ── */}
-      <div className={cn("overflow-x-auto -mx-px", mobileCards && "hidden md:block")}>
+      <div className={cn("overflow-x-auto scrollbar-hide -mx-px", mobileCards && "hidden md:block")}>
         <table className="w-full min-w-[600px] text-sm">
           {/* ── Head ── */}
           <thead>

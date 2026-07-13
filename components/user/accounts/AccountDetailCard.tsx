@@ -54,8 +54,12 @@ export function AccountDetailCard({ account, btcRate, adminBtcWallet }: Props) {
     month: "short", year: "numeric",
   })
 
+  // Balances/totals are stored in minor units — fiat in cents, BTC in satoshis.
+  const btcMajor = account.btcBalance / 1e8
+  const totalDepositedMajor = isBtc ? account.totalDeposited / 1e8 : account.totalDeposited / 100
+  const totalWithdrawnMajor = isBtc ? account.totalWithdrawn / 1e8 : account.totalWithdrawn / 100
   const avgTx = account.transactionCount > 0
-    ? (account.totalDeposited + account.totalWithdrawn) / account.transactionCount
+    ? (totalDepositedMajor + totalWithdrawnMajor) / account.transactionCount
     : 0
 
   // ── Freeze/unfreeze ──────────────────────────────────────────────────────
@@ -99,6 +103,9 @@ export function AccountDetailCard({ account, btcRate, adminBtcWallet }: Props) {
           account={{
             ...account,
             _id: account._id,
+            // Balances are stored in minor units — WalletCard expects major units
+            balance: account.balance / 100,
+            btcBalance: btcMajor,
             isFrozen,
           }}
           btcUsdRate={btcRate}
@@ -215,10 +222,10 @@ export function AccountDetailCard({ account, btcRate, adminBtcWallet }: Props) {
               <div className="rounded-2xl p-4 space-y-1" style={{ background: "#F9FAFB", border: "1px solid #EAECF0" }}>
                 <p className="text-[12px]" style={{ color: "#98A2B3" }}>BTC Balance</p>
                 <p className="text-xl font-bold tabular-nums" style={{ color: "#101828" }}>
-                  {account.btcBalance.toFixed(8)} BTC
+                  {btcMajor.toFixed(8)} BTC
                 </p>
                 <p className="text-[13px] tabular-nums" style={{ color: "#667085" }}>
-                  ≈ ${(account.btcBalance * btcRate).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                  ≈ ${(btcMajor * btcRate).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
                 </p>
                 {btcRate > 0 && (
                   <p className="text-[10px] mt-1" style={{ color: "#98A2B3" }}>
@@ -235,13 +242,13 @@ export function AccountDetailCard({ account, btcRate, adminBtcWallet }: Props) {
             <div className="grid grid-cols-2 gap-2">
               <StatTile
                 label="Total deposited"
-                value={`${currencySymbol}${account.totalDeposited.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                value={`${currencySymbol}${totalDepositedMajor.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 icon={<ArrowDownToLine className="h-3.5 w-3.5" style={{ color: "#12B76A" }} />}
                 color="#12B76A"
               />
               <StatTile
                 label="Total withdrawn"
-                value={`${currencySymbol}${account.totalWithdrawn.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                value={`${currencySymbol}${totalWithdrawnMajor.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 icon={<ArrowUpFromLine className="h-3.5 w-3.5" style={{ color: "#F04438" }} />}
                 color="#F04438"
               />

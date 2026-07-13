@@ -13,7 +13,7 @@ export async function GET() {
 
     await connectDB()
     const user = await User.findById(session.user.id)
-      .select("preferredCurrency kycStatus kycTier firstName lastName email avatarUrl")
+      .select("preferredCurrency kycStatus kycTier firstName lastName email avatarUrl createdAt")
       .lean()
 
     if (!user) {
@@ -28,6 +28,7 @@ export async function GET() {
       lastName:          user.lastName,
       email:             user.email,
       avatarUrl:         user.avatarUrl || null,
+      createdAt:         user.createdAt ? new Date(user.createdAt).toISOString() : null,
     })
   } catch (err) {
     console.error("[User Profile API]", err)

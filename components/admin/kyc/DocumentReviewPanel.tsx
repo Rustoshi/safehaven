@@ -150,7 +150,7 @@ export function DocumentReviewPanel({ document: doc, idDocUrl, onApprove, onReje
   return (
     <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
+      <div className="flex items-center justify-between gap-2 px-4 py-3 bg-gray-50 border-b border-gray-200">
         <div className="flex items-center gap-2 flex-wrap">
           <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${typeInfo.bg} ${typeInfo.text}`}>
             {typeInfo.label}
@@ -159,9 +159,21 @@ export function DocumentReviewPanel({ document: doc, idDocUrl, onApprove, onReje
             {statusInfo.label}
           </span>
         </div>
-        <div className="text-right text-xs text-gray-500">
-          <p>Submitted {relativeDate(doc.submittedAt)}</p>
-          <p className="text-gray-400">{new Date(doc.submittedAt).toLocaleDateString()}</p>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {docUrl && (
+            <a
+              href={docUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 rounded-lg border border-indigo-200 px-2.5 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 whitespace-nowrap"
+            >
+              <ExternalLink className="w-3.5 h-3.5" /> View
+            </a>
+          )}
+          <div className="text-right text-xs text-gray-500 hidden sm:block">
+            <p>Submitted {relativeDate(doc.submittedAt)}</p>
+            <p className="text-gray-400">{new Date(doc.submittedAt).toLocaleDateString()}</p>
+          </div>
         </div>
       </div>
 
@@ -281,8 +293,12 @@ export function DocumentReviewPanel({ document: doc, idDocUrl, onApprove, onReje
             </div>
           </div>
         ) : (
-          <div className="flex items-center justify-center h-24 bg-gray-100 rounded-xl text-gray-400 text-sm">
-            Unknown file type
+          <div className="flex flex-col items-center justify-center gap-2 h-32 bg-gray-100 rounded-xl text-gray-500 text-sm">
+            <span>Preview unavailable</span>
+            <a href={docUrl} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50">
+              <ExternalLink className="w-3.5 h-3.5" /> Open document
+            </a>
           </div>
         )}
 

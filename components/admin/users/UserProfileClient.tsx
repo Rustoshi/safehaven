@@ -49,7 +49,6 @@ function CopyButton({ value }: { value: string }) {
 
 // ── KYC Document card ─────────────────────────────────────────────────────────
 function KycCard({ doc, userId }: { doc: KycDocData; userId: string }) {
-  const [lightbox, setLightbox] = useState(false)
   const [loading,  setLoading]  = useState(false)
 
   const review = async (action: "approve" | "reject", note?: string) => {
@@ -65,9 +64,9 @@ function KycCard({ doc, userId }: { doc: KycDocData; userId: string }) {
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
             <StatusBadge status={doc.docType.replace(/_/g, " ")} />
             <StatusBadge status={doc.status} />
           </div>
@@ -80,12 +79,14 @@ function KycCard({ doc, userId }: { doc: KycDocData; userId: string }) {
           )}
         </div>
         {doc.docUrl && (
-          <button
-            onClick={() => setLightbox(true)}
-            className="flex items-center gap-1 text-xs text-[#1A2CCE] hover:underline"
+          <a
+            href={doc.docUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#1A2CCE]/30 px-3 py-2 text-xs font-medium text-[#1A2CCE] hover:bg-[#1A2CCE]/5 sm:w-auto sm:shrink-0"
           >
-            View document <ExternalLink className="h-3 w-3" />
-          </button>
+            View document <ExternalLink className="h-3.5 w-3.5" />
+          </a>
         )}
       </div>
 
@@ -99,21 +100,6 @@ function KycCard({ doc, userId }: { doc: KycDocData; userId: string }) {
             className="border-red-200 text-red-600 hover:bg-red-50">
             Reject
           </Button>
-        </div>
-      )}
-
-      {/* Simple lightbox */}
-      {lightbox && doc.docUrl && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
-          onClick={() => setLightbox(false)}
-        >
-          <img
-            src={doc.docUrl}
-            alt="KYC document"
-            className="max-h-[85vh] max-w-[85vw] rounded-xl object-contain shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          />
         </div>
       )}
     </div>
@@ -419,7 +405,7 @@ export function UserProfileClient({ user: initialUser }: Props) {
 
         {/* ── Section 4: Tabbed details ── */}
         <Tabs defaultValue="transactions" className="min-w-0">
-          <TabsList className="flex-wrap overflow-x-auto">
+          <TabsList className="flex w-full flex-wrap gap-x-1 gap-y-0">
             <TabsTrigger value="transactions" className="text-xs sm:text-sm">Transactions</TabsTrigger>
             <TabsTrigger value="deposits" className="text-xs sm:text-sm">Deposits</TabsTrigger>
             <TabsTrigger value="kyc" className="text-xs sm:text-sm">KYC ({user.kycDocuments.length})</TabsTrigger>

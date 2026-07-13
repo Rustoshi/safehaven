@@ -78,10 +78,15 @@ export function WalletCard({ account, btcUsdRate, onTap, userName }: WalletCardP
   const glow1 = isBtc ? "rgba(247,144,9,0.25)" : "rgba(26,44,206,0.2)"
   const glow2 = isBtc ? "rgba(251,191,36,0.12)" : "rgba(18,183,106,0.15)"
 
+  // Only render an outer <button> when the card is actually tappable — otherwise
+  // the inner privacy-toggle button would be nested inside a button (invalid HTML).
+  const interactive = typeof onTap === "function"
+  const Wrapper: React.ElementType = interactive ? "button" : "div"
+
   return (
-    <button
-      onClick={onTap}
-      className="wallet-shimmer relative w-full overflow-hidden text-left text-white transition-transform active:scale-[0.98]"
+    <Wrapper
+      {...(interactive ? { type: "button", onClick: onTap } : {})}
+      className={`wallet-shimmer relative w-full overflow-hidden text-left text-white${interactive ? " transition-transform active:scale-[0.98]" : ""}`}
       style={{
         background: gradient,
         borderRadius: 20,
@@ -185,6 +190,6 @@ export function WalletCard({ account, btcUsdRate, onTap, userName }: WalletCardP
           <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.9)" }}>Frozen</span>
         </div>
       )}
-    </button>
+    </Wrapper>
   )
 }
