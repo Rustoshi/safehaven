@@ -10,6 +10,7 @@ import LoanApplication         from "@/lib/models/LoanApplication"
 import CardApplication         from "@/lib/models/CardApplication"
 import SupportTicket           from "@/lib/models/SupportTicket"
 import Notification            from "@/lib/models/Notification"
+import PaymentMethod           from "@/lib/models/PaymentMethod"
 import { createAuditLog }      from "@/lib/services/auth.service"
 
 // ── Shared types ─────────────────────────────────────────────────────────────
@@ -308,7 +309,7 @@ export async function getUserById(id: string): Promise<UserDetail | null> {
     DepositRequest.find({ userId: oid })
       .sort({ createdAt: -1 })
       .limit(10)
-      .populate("paymentMethodId", "name")
+      .populate({ path: "paymentMethodId", model: PaymentMethod, select: "name" })
       .lean(),
     SupportTicket.find({ userId: oid }).sort({ createdAt: -1 }).lean(),
     Transaction.aggregate([

@@ -1,6 +1,7 @@
 import mongoose, { type PipelineStage } from "mongoose"
 import { connectDB }     from "@/lib/db/connection"
 import AuditLog          from "@/lib/models/AuditLog"
+import User              from "@/lib/models/User"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -132,7 +133,7 @@ export async function getAuditLogs(params: {
 export async function getAuditLogById(id: string): Promise<Record<string, unknown> | null> {
   await connectDB()
   const doc = await AuditLog.findById(id)
-    .populate("adminId", "firstName lastName email")
+    .populate({ path: "adminId", model: User, select: "firstName lastName email" })
     .lean()
   return doc ? (doc as unknown as Record<string, unknown>) : null
 }

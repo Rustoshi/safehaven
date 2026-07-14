@@ -64,20 +64,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Maximum deposit is $${pm.maxAmount}` }, { status: 400 })
     }
 
-    // Find the target account
-    const depositTarget = pm.depositTarget || "fiat"
-    const walletType = depositTarget === "bitcoin" ? "bitcoin" : "fiat"
-    const account = await Account.findOne({ userId: session.user.id, walletType }).lean()
+    // Deposits are always denominated in the client's fiat currency — the
+    // payment method (Bitcoin, gift card, etc.) is only the rail used to pay,
+    // so the amount is the fiat value and it credits the fiat account.
+    const account = await Account.findOne({ userId: session.user.id, walletType: "fiat" }).lean()
     if (!account) {
       return NextResponse.json({ error: "No matching account found" }, { status: 400 })
     }
 
-    // Store amount in cents (fiat) or satoshis (btc)
-    const amountSmallest = walletType === "bitcoin"
-      ? Math.round(amount * 1e8)
-      : Math.round(amount * 100)
-
-    const currency = walletType === "bitcoin" ? "BTC" : (account.currency || "USD")
+    // Store amount in cents (fiat)
+    const amountSmallest = Math.round(amount * 100)
+    const currency = account.currency || "USD"
 
     // Generate unique transaction reference
     const reference = await generateRef()

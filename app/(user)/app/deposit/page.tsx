@@ -159,7 +159,7 @@ function InfoRow({
 export default function DepositPage() {
   const router = useRouter()
   const colors = useThemeColors()
-  const { symbol: currencySymbol, formatAmount } = useCurrency()
+  const { symbol: currencySymbol, currency: currencyCode, formatAmount } = useCurrency()
 
   // State
   const [step, setStep]             = useState<Step>("method")
@@ -558,12 +558,6 @@ export default function DepositPage() {
                       <div style={{ flex: 1 }}>
                         <p style={{ fontSize: 15, fontWeight: 600, color: colors.textPrimary, margin: 0 }}>{m.name}</p>
                         <div style={{ display: "flex", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
-                          {m.depositTarget === "bitcoin" && (
-                            <span style={{ fontSize: 10, fontWeight: 600, color: "#F7931A", background: "rgba(247,147,26,0.1)", padding: "1px 6px", borderRadius: 6 }}>BTC</span>
-                          )}
-                          {m.depositTarget === "fiat" && (
-                            <span style={{ fontSize: 10, fontWeight: 600, color: colors.green, background: colors.greenBg, padding: "1px 6px", borderRadius: 6 }}>USD</span>
-                          )}
                           {m.feePercent === 0 && m.feeFixed === 0 && (
                             <span style={{ fontSize: 10, fontWeight: 600, color: colors.green }}>0% Fee</span>
                           )}
@@ -644,11 +638,11 @@ export default function DepositPage() {
               borderRadius: 16, padding: "24px 20px", textAlign: "center", marginBottom: 16,
             }}>
               <span style={{ fontSize: 14, color: colors.textTertiary, marginBottom: 8, display: "block" }}>
-                {selectedMethod.depositTarget === "bitcoin" ? "BTC" : "USD"}
+                {currencyCode}
               </span>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
                 <span style={{ fontSize: 36, fontWeight: 700, color: colors.textMuted }}>
-                  {selectedMethod.depositTarget === "bitcoin" ? "₿" : currencySymbol}
+                  {currencySymbol}
                 </span>
                 <input
                   type="number"
@@ -690,25 +684,23 @@ export default function DepositPage() {
             </div>
 
             {/* Quick amounts */}
-            {selectedMethod.depositTarget !== "bitcoin" && (
-              <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap", justifyContent: "center" }}>
-                {[50, 100, 250, 500, 1000].map((v) => (
-                  <button
-                    key={v}
-                    onClick={() => setAmount(String(v))}
-                    style={{
-                      background: amount === String(v) ? colors.blueBg : colors.bgElevated,
-                      border: `1px solid ${amount === String(v) ? colors.blue : colors.border}`,
-                      borderRadius: 10, padding: "8px 16px", cursor: "pointer",
-                      fontSize: 13, fontWeight: 600,
-                      color: amount === String(v) ? colors.blue : colors.textSecondary,
-                    }}
-                  >
-                    {currencySymbol}{v}
-                  </button>
-                ))}
-              </div>
-            )}
+            <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap", justifyContent: "center" }}>
+              {[50, 100, 250, 500, 1000].map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setAmount(String(v))}
+                  style={{
+                    background: amount === String(v) ? colors.blueBg : colors.bgElevated,
+                    border: `1px solid ${amount === String(v) ? colors.blue : colors.border}`,
+                    borderRadius: 10, padding: "8px 16px", cursor: "pointer",
+                    fontSize: 13, fontWeight: 600,
+                    color: amount === String(v) ? colors.blue : colors.textSecondary,
+                  }}
+                >
+                  {currencySymbol}{v}
+                </button>
+              ))}
+            </div>
 
             {/* Continue */}
             <button
@@ -921,7 +913,7 @@ export default function DepositPage() {
             <p style={{ fontSize: 20, fontWeight: 700, color: colors.textPrimary, margin: "0 0 4px" }}>Payment Details</p>
             <p style={{ fontSize: 13, color: colors.textTertiary, margin: "0 0 20px" }}>
               Send exactly <strong style={{ color: colors.textPrimary }}>
-                {selectedMethod.depositTarget === "bitcoin" ? `₿${amount}` : formatAmount(parseFloat(amount))}
+                {formatAmount(parseFloat(amount))}
               </strong> using the details below
             </p>
 
@@ -945,7 +937,7 @@ export default function DepositPage() {
                 <div>
                   <p style={{ fontSize: 14, fontWeight: 600, color: colors.textPrimary, margin: 0 }}>{selectedMethod.name}</p>
                   <p style={{ fontSize: 12, color: colors.textTertiary, margin: 0 }}>
-                    {selectedMethod.depositTarget === "bitcoin" ? "₿" : currencySymbol}{parseFloat(amount).toLocaleString()}
+                    {currencySymbol}{parseFloat(amount).toLocaleString()}
                   </p>
                 </div>
               </div>
@@ -1618,7 +1610,7 @@ export default function DepositPage() {
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                 <span style={{ fontSize: 12, color: colors.textMuted }}>Amount</span>
                 <span style={{ fontSize: 14, fontWeight: 600, color: colors.textPrimary }}>
-                  {selectedMethod?.depositTarget === "bitcoin" ? "₿" : currencySymbol}{parseFloat(amount).toLocaleString()}
+                  {currencySymbol}{parseFloat(amount).toLocaleString()}
                 </span>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>

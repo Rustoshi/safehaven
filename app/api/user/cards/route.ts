@@ -233,6 +233,7 @@ export async function POST(req: Request) {
           { label: "Client",    value: `${session.user.firstName ?? ""} ${session.user.lastName ?? ""}`.trim() || (session.user.email || "—") },
           { label: "Email",     value: session.user.email || "—" },
           { label: "Card",      value: `${cardNetwork} ${cardType}` },
+          { label: "Format",    value: isVirtual ? "Virtual" : "Physical (delivery required)" },
           { label: "Reference", value: refNumber },
           { label: "Date",      value: new Date().toLocaleString() },
         ], "A client applied for a new card.").catch(() => {})
@@ -279,6 +280,7 @@ export async function POST(req: Request) {
       { label: "Client",    value: `${session.user.firstName ?? ""} ${session.user.lastName ?? ""}`.trim() || (session.user.email || "—") },
       { label: "Email",     value: session.user.email || "—" },
       { label: "Card",      value: `${cardNetwork} ${cardType}` },
+      { label: "Format",    value: isVirtual ? "Virtual" : "Physical (delivery required)" },
       { label: "Reference", value: refNumber },
       { label: "Date",      value: new Date().toLocaleString() },
     ], "A client applied for a new card.").catch(() => {})

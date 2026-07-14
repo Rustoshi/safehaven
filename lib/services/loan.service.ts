@@ -3,6 +3,7 @@ import { connectDB }     from "@/lib/db/connection"
 import LoanApplication   from "@/lib/models/LoanApplication"
 import Account           from "@/lib/models/Account"
 import Transaction       from "@/lib/models/Transaction"
+import User              from "@/lib/models/User"
 import { createAuditLog } from "@/lib/services/auth.service"
 import { notifyUser }    from "@/lib/services/deposit.service"
 
@@ -188,7 +189,7 @@ export async function getLoanApplications(
 
   const [docs, total, aggStats] = await Promise.all([
     LoanApplication.find(match)
-      .populate("userId", "firstName lastName email kycStatus isSuspended phone")
+      .populate({ path: "userId", model: User, select: "firstName lastName email kycStatus isSuspended phone" })
       .sort({ [sortField]: sortDir })
       .skip(skip)
       .limit(limit)
@@ -240,7 +241,7 @@ export async function getLoanById(id: string): Promise<LoanDetail | null> {
   if (!mongoose.Types.ObjectId.isValid(id)) return null
 
   const doc = await LoanApplication.findById(id)
-    .populate("userId", "firstName lastName email phone kycStatus isSuspended")
+    .populate({ path: "userId", model: User, select: "firstName lastName email phone kycStatus isSuspended" })
     .lean()
   if (!doc) return null
 

@@ -5,6 +5,7 @@ import Account           from "@/lib/models/Account"
 import Transaction       from "@/lib/models/Transaction"
 import Notification      from "@/lib/models/Notification"
 import User              from "@/lib/models/User"
+import PaymentMethod     from "@/lib/models/PaymentMethod"
 import { createAuditLog } from "@/lib/services/auth.service"
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -109,7 +110,7 @@ function mapItem(r: Record<string, unknown>): DepositRequestItem {
   return {
     id:                String(r._id),
     status:            String(r.status),
-    requestedAmount:   Number(r.requestedAmount) / 100,
+    requestedAmount:   Number(r.requestedAmount) / div,
     requestedCurrency: String(r.requestedCurrency),
     confirmedAmount:   r.confirmedAmount != null ? Number(r.confirmedAmount) / div : undefined,
     adminNote:         r.adminNote  ? String(r.adminNote)  : undefined,
@@ -252,7 +253,9 @@ export async function getDepositRequestById(id: string): Promise<DepositRequestD
   const doc = await DepositRequest.findById(id)
     .populate("userId",               "firstName lastName email")
     .populate("accountId",            "accountNumber currency walletType balance btcBalance")
-    .populate("paymentMethodId",      "name type icon")
+    // Pass the model explicitly so it resolves even when this ref's model
+    // hasn't been registered in the current serverless module graph.
+    .populate({ path: "paymentMethodId", model: PaymentMethod, select: "name type icon" })
     .populate("reviewedBy",           "firstName lastName email")
     .populate("creditedTransactionId","reference amount currency status createdAt")
     .lean()
