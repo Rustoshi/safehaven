@@ -4,6 +4,8 @@ import { renderPasswordResetEmail } from "./templates/PasswordResetEmail"
 import { renderEmailVerificationSuccessEmail } from "./templates/EmailVerificationSuccessEmail"
 import { renderOtpEmail } from "./templates/OtpEmail"
 import { renderKycApprovedEmail } from "./templates/KycApprovedEmail"
+import { renderKycRejectedEmail } from "./templates/KycRejectedEmail"
+import { renderCardStatusEmail } from "./templates/CardStatusEmail"
 import { renderAdminAlertEmail, type AdminAlertRow } from "./templates/AdminAlertEmail"
 import { BANK_NAME } from "@/lib/brand"
 
@@ -152,6 +154,41 @@ export async function sendKycApprovedEmail(
   return sendEmail({
     to,
     subject: `Your ${BANK_NAME} identity has been verified`,
+    html,
+  })
+}
+
+// ── sendKycRejectedEmail ──────────────────────────────────────────────────────
+
+export async function sendKycRejectedEmail(
+  to:        string,
+  firstName: string,
+  reason:    string,
+  docLabel?: string
+): Promise<boolean> {
+  const html = renderKycRejectedEmail({ firstName, reason, docLabel })
+
+  return sendEmail({
+    to,
+    subject: `Action required: your ${BANK_NAME} verification needs attention`,
+    html,
+  })
+}
+
+// ── sendCardStatusEmail ───────────────────────────────────────────────────────
+
+export async function sendCardStatusEmail(
+  to:        string,
+  firstName: string,
+  title:     string,
+  message:   string,
+  tone?:     "positive" | "warning" | "neutral"
+): Promise<boolean> {
+  const html = renderCardStatusEmail({ firstName, title, message, tone })
+
+  return sendEmail({
+    to,
+    subject: `${title} — ${BANK_NAME}`,
     html,
   })
 }

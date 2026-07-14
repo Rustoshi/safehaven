@@ -425,7 +425,8 @@ export function AuditLogClient({ initialLogs, initialTotal, initialStats }: Prop
         ) : logs.length === 0 ? (
           <div className="text-center py-12 text-gray-400 text-sm">No audit log entries found.</div>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto scrollbar-hide">
+          <table className="w-full min-w-[820px] text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-4 py-3 text-left font-medium text-gray-600 w-36">Timestamp</th>
@@ -506,6 +507,7 @@ export function AuditLogClient({ initialLogs, initialTotal, initialStats }: Prop
               })}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 

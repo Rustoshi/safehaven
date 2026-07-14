@@ -167,7 +167,8 @@ export function LoanDetailDrawer({ loanId, onClose, onAction }: Props) {
                 <div>
                   <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Payment history</h3>
                   <div className="border border-gray-200 rounded-xl overflow-hidden">
-                    <table className="w-full text-xs">
+                    <div className="overflow-x-auto scrollbar-hide">
+                    <table className="w-full min-w-[520px] text-xs">
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="px-3 py-2 text-left font-medium text-gray-500">Date</th>
@@ -189,6 +190,7 @@ export function LoanDetailDrawer({ loanId, onClose, onAction }: Props) {
                         ))}
                       </tbody>
                     </table>
+                    </div>
                   </div>
                 </div>
               )}

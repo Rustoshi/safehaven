@@ -113,11 +113,11 @@ export function AmortizationTable({ principal, annualRate, termMonths, startDate
 
       <div
         ref={containerRef}
-        className={useVirtual ? "overflow-y-auto border border-gray-200 rounded-lg" : "border border-gray-200 rounded-lg overflow-hidden"}
+        className={useVirtual ? "overflow-auto scrollbar-hide border border-gray-200 rounded-lg" : "border border-gray-200 rounded-lg overflow-x-auto scrollbar-hide"}
         style={useVirtual ? { height: Math.min(360, visibleRows.length * ROW_H + 40) } : undefined}
         onScroll={useVirtual ? (e) => setScrollTop(e.currentTarget.scrollTop) : undefined}
       >
-        <table className="w-full text-xs" style={useVirtual ? { tableLayout: "fixed" } : undefined}>
+        <table className="w-full min-w-[560px] text-xs" style={useVirtual ? { tableLayout: "fixed" } : undefined}>
           <thead className="sticky top-0 z-10 bg-gray-50 border-b border-gray-200">
             <tr>
               {["Month", "Payment Date", "Payment", "Principal", "Interest", "Balance"].map((h) => (

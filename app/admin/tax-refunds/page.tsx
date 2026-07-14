@@ -208,7 +208,7 @@ export default function AdminTaxRefundsPage() {
         ) : filteredRefunds.length === 0 ? (
           <div className="text-center py-12 text-gray-500">No tax refunds found</div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto scrollbar-hide">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">

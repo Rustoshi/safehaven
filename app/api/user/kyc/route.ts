@@ -5,7 +5,7 @@ import { connectDB } from "@/lib/db/connection"
 import KycDocument from "@/lib/models/KycDocument"
 import User from "@/lib/models/User"
 
-const VALID_DOC_TYPES = ["passport", "drivers_license", "national_id", "selfie", "address_proof", "utility_bill"]
+const VALID_DOC_TYPES = ["passport", "drivers_license", "national_id", "selfie", "address_proof", "utility_bill", "ssn_proof"]
 
 // ── GET — list user's KYC documents ──────────────────────────────────────────
 

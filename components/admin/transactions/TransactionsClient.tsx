@@ -534,7 +534,7 @@ export function TransactionsClient({ initialData }: Props) {
           ) : (
             <>
             {/* Desktop Table */}
-            <div className="overflow-x-auto hidden md:block">
+            <div className="overflow-x-auto scrollbar-hide hidden md:block">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50">

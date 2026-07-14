@@ -3,15 +3,16 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import {
-  MoreHorizontal, CheckCircle2, Search, ChevronLeft, ChevronRight,
+  CheckCircle2, Search, ChevronLeft, ChevronRight,
   CreditCard, Wifi,
 } from "lucide-react"
 import { Button }   from "@/components/ui/button"
 import { Input }    from "@/components/ui/input"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useToast } from "@/components/ui/use-toast"
 import { CardReviewDrawer }  from "./CardReviewDrawer"
 import { UpdateLimitsModal } from "./UpdateLimitsModal"
+import { ReasonModal, type ReasonModalConfig } from "./ReasonModal"
+import { CardActionsModal, type CardAction } from "./CardActionsModal"
 import type { CardListItem, CardStats, CardDetail } from "@/lib/services/card.service"
 
 interface InitialData {
@@ -21,7 +22,7 @@ interface InitialData {
   stats: CardStats
 }
 
-const TABS = ["pending", "active", "frozen", "blocked", "rejected", "cancelled", "all"] as const
+const TABS = ["all", "pending", "approved", "active", "frozen", "blocked", "rejected", "cancelled"] as const
 type Tab   = typeof TABS[number]
 
 const CARD_TYPE_TABS = [
@@ -39,7 +40,7 @@ const STATUS_PILL: Record<string, string> = {
   blocked:   "bg-rose-100   text-rose-700",
   rejected:  "bg-red-100    text-red-700",
   cancelled: "bg-gray-100   text-gray-500",
-  approved:  "bg-emerald-100 text-emerald-700",
+  approved:  "bg-sky-100    text-sky-700",
 }
 
 const CARD_TYPE_PILL: Record<string, string> = {
@@ -56,7 +57,8 @@ const KYC_PILL: Record<string, string> = {
   unverified: "bg-gray-100    text-gray-500",
 }
 
-const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" })
+// Compact currency for stat tiles so large totals never overflow (e.g. $1.2M)
+const fmtCompact = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD", notation: "compact", maximumFractionDigits: 1 })
 
 function relativeDate(iso: string) {
   const diff = Date.now() - new Date(iso).getTime()
@@ -76,11 +78,13 @@ export function CardsClient({ initialData }: { initialData: InitialData }) {
   const [loading,     setLoading]     = useState(false)
   const [reviewId,    setReviewId]    = useState<string | null>(null)
   const [limitsCard,  setLimitsCard]  = useState<CardDetail | null>(null)
+  const [reasonModal, setReasonModal] = useState<ReasonModalConfig | null>(null)
+  const [actionsCard, setActionsCard] = useState<CardListItem | null>(null)
   const [newBanner,   setNewBanner]   = useState(false)
   const prevCountRef                   = useRef(initialData.stats.pendingCount)
   const debounceRef                    = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const activeTab = (searchParams.get("tab")      as Tab) ?? "pending"
+  const activeTab = (searchParams.get("tab")      as Tab) ?? "all"
   const cardType  = searchParams.get("cardType")  ?? ""
   const search    = searchParams.get("search")    ?? ""
   const page      = Number(searchParams.get("page") ?? 1)
@@ -156,6 +160,94 @@ export function CardsClient({ initialData }: { initialData: InitialData }) {
     return res.json()
   }
 
+  async function updateDelivery(id: string, deliveryStatus: "processing" | "shipped" | "delivered") {
+    try {
+      await doAction(id, "delivery", "POST", { deliveryStatus })
+      toast({ title: deliveryStatus === "delivered" ? "Delivered — card activated" : `Marked as ${deliveryStatus}` })
+      fetchData()
+    } catch (err) {
+      toast({ title: "Error", description: err instanceof Error ? err.message : "Failed", variant: "destructive" })
+    }
+  }
+
+  // Open a styled reason modal for an admin action (replaces native prompt()).
+  function openReason(opts: {
+    cardId:      string
+    endpoint:    string
+    title:       string
+    description?: string
+    confirmLabel: string
+    successMsg:  string
+    minLength?:  number
+    tone?:       "danger" | "default"
+  }) {
+    setReasonModal({
+      title:        opts.title,
+      description:  opts.description,
+      confirmLabel: opts.confirmLabel,
+      minLength:    opts.minLength,
+      tone:         opts.tone,
+      onConfirm: async (reason) => {
+        try {
+          await doAction(opts.cardId, opts.endpoint, "POST", { reason })
+          toast({ title: opts.successMsg })
+          fetchData()
+        } catch (err) {
+          toast({ title: "Error", description: err instanceof Error ? err.message : "Failed", variant: "destructive" })
+          throw err // keep the modal open on failure
+        }
+      },
+    })
+  }
+
+  // Dispatch an action chosen from the row actions modal.
+  async function handleCardAction(action: CardAction, card: CardListItem) {
+    setActionsCard(null) // close the actions modal first
+    switch (action) {
+      case "review":
+        setReviewId(card.id)
+        break
+      case "reject":
+        openReason({ cardId: card.id, endpoint: "reject", title: "Reject application",
+          description: "The applicant will be notified with the reason you provide.",
+          confirmLabel: "Reject card", successMsg: "Application rejected", minLength: 10, tone: "danger" })
+        break
+      case "freeze":
+        openReason({ cardId: card.id, endpoint: "freeze", title: "Freeze card",
+          description: "Temporarily freezes the card. It can be unfrozen at any time.",
+          confirmLabel: "Freeze card", successMsg: "Card frozen" })
+        break
+      case "block":
+        openReason({ cardId: card.id, endpoint: "block", title: "Block card",
+          description: "Blocks the card. The user cannot lift this themselves — only an admin can unblock it.",
+          confirmLabel: "Block card", successMsg: "Card blocked", tone: "danger" })
+        break
+      case "cancel":
+        openReason({ cardId: card.id, endpoint: "cancel", title: "Cancel card",
+          description: "This permanently cancels the card and cannot be undone.",
+          confirmLabel: "Cancel card", successMsg: "Card cancelled", tone: "danger" })
+        break
+      case "unfreeze":
+        try { await doAction(card.id, "unfreeze", "POST"); toast({ title: "Card unfrozen" }); fetchData() }
+        catch (err) { toast({ title: "Error", description: err instanceof Error ? err.message : "Failed", variant: "destructive" }) }
+        break
+      case "unblock":
+        try { await doAction(card.id, "unblock", "POST"); toast({ title: "Card unblocked" }); fetchData() }
+        catch (err) { toast({ title: "Error", description: err instanceof Error ? err.message : "Failed", variant: "destructive" }) }
+        break
+      case "limits":
+        try { setLimitsCard(await fetchCardDetail(card.id)) }
+        catch (err) { toast({ title: "Error", description: err instanceof Error ? err.message : "Failed", variant: "destructive" }) }
+        break
+      case "ship":
+        updateDelivery(card.id, "shipped")
+        break
+      case "deliver":
+        updateDelivery(card.id, "delivered")
+        break
+    }
+  }
+
   const statsBar = [
     { label: "Pending",      value: data.stats.pendingCount,   highlight: data.stats.pendingCount > 0 ? "amber" : "" },
     { label: "Active",       value: data.stats.activeCount,    highlight: "" },
@@ -163,7 +255,7 @@ export function CardsClient({ initialData }: { initialData: InitialData }) {
     { label: "Blocked",      value: data.stats.blockedCount,   highlight: data.stats.blockedCount > 0 ? "rose" : "" },
     { label: "Rejected",     value: data.stats.rejectedCount,  highlight: "" },
     { label: "Cancelled",    value: data.stats.cancelledCount, highlight: "" },
-    { label: "Credit issued",value: fmt(data.stats.totalCreditIssued), highlight: "" },
+    { label: "Credit issued",value: fmtCompact(data.stats.totalCreditIssued), highlight: "" },
   ]
 
   return (
@@ -182,32 +274,32 @@ export function CardsClient({ initialData }: { initialData: InitialData }) {
       )}
 
       {/* Stats bar */}
-      <div className="grid grid-cols-3 lg:grid-cols-7 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2.5">
         {statsBar.map((s) => (
           <div key={s.label} className={[
-            "rounded-xl border p-3 text-center",
+            "rounded-xl border p-3 min-w-0",
             s.highlight === "amber" ? "border-amber-200 bg-amber-50"
               : s.highlight === "rose" ? "border-rose-200 bg-rose-50"
               : "border-gray-200 bg-white",
           ].join(" ")}>
-            <p className={`text-lg font-semibold ${
+            <p className="text-[11px] font-medium uppercase tracking-wide text-gray-500 truncate">{s.label}</p>
+            <p className={`mt-1 text-xl font-semibold leading-none tabular-nums truncate ${
               s.highlight === "amber" ? "text-amber-700"
                 : s.highlight === "rose" ? "text-rose-700"
                 : "text-gray-900"
-            }`}>
+            }`} title={String(s.value)}>
               {s.value}
             </p>
-            <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
           </div>
         ))}
       </div>
 
-      {/* Status tabs */}
-      <div className="flex flex-wrap gap-1 border-b border-gray-200">
+      {/* Status tabs — horizontally scrollable on small screens */}
+      <div className="flex gap-1 border-b border-gray-200 overflow-x-auto scrollbar-hide">
         {TABS.map((tab) => (
           <button key={tab} onClick={() => setParam("tab", tab)}
             className={[
-              "px-3 py-2 text-sm rounded-t capitalize transition-colors",
+              "px-3 py-2 text-sm rounded-t capitalize whitespace-nowrap flex-shrink-0 transition-colors",
               activeTab === tab
                 ? "border-b-2 border-[#1A2CCE] text-[#1A2CCE] font-medium"
                 : "text-gray-500 hover:text-gray-700",
@@ -218,20 +310,20 @@ export function CardsClient({ initialData }: { initialData: InitialData }) {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-2 items-center">
-        <div className="relative">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:items-center">
+        <div className="relative flex-shrink-0">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-          <Input className="pl-8 h-8 text-sm w-48" placeholder="Search cards…" defaultValue={search}
+          <Input className="pl-8 h-9 text-sm w-full sm:w-56" placeholder="Search cards…" defaultValue={search}
             onChange={(e) => {
               if (debounceRef.current) clearTimeout(debounceRef.current)
               debounceRef.current = setTimeout(() => setParam("search", e.target.value), 400)
             }} />
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-1 overflow-x-auto scrollbar-hide">
           {CARD_TYPE_TABS.map((ct) => (
             <button key={ct.value} onClick={() => setParam("cardType", ct.value)}
               className={[
-                "text-xs px-2.5 py-1 rounded-full border transition-colors",
+                "text-xs px-2.5 py-1.5 rounded-full border whitespace-nowrap flex-shrink-0 transition-colors",
                 cardType === ct.value
                   ? "bg-[#1A2CCE] text-white border-[#1A2CCE]"
                   : "bg-white text-gray-600 border-gray-200 hover:border-gray-400",
@@ -241,19 +333,19 @@ export function CardsClient({ initialData }: { initialData: InitialData }) {
           ))}
         </div>
         <button onClick={() => setParam("sortOrder", sortOrder === "asc" ? "desc" : "asc")}
-          className="h-8 px-2 text-xs border border-gray-200 rounded-md bg-white ml-auto">
-          {sortOrder === "asc" ? "↑ Oldest" : "↓ Newest"}
+          className="h-9 px-3 text-xs border border-gray-200 rounded-md bg-white sm:ml-auto flex-shrink-0 self-start sm:self-auto hover:border-gray-400 transition-colors">
+          {sortOrder === "asc" ? "↑ Oldest first" : "↓ Newest first"}
         </button>
       </div>
 
       {/* Table */}
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
         {loading && <div className="h-1 bg-[#1A2CCE] animate-pulse" />}
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto scrollbar-hide">
+          <table className="w-full min-w-[640px] text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                {["Applicant", "Card type", "Card number", "Credit limit", "Spending limit", "Status", "Applied", "Actions"].map((h) => (
+                {["Applicant", "Card type", "Status", "Applied", "Actions"].map((h) => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -261,7 +353,7 @@ export function CardsClient({ initialData }: { initialData: InitialData }) {
             <tbody className="divide-y divide-gray-50">
               {data.cards.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center">
+                  <td colSpan={5} className="px-4 py-12 text-center">
                     <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-gray-300" />
                     <p className="text-gray-400 text-sm">
                       {activeTab === "pending" ? "No pending applications. All caught up." : `No ${activeTab} cards.`}
@@ -299,171 +391,27 @@ export function CardsClient({ initialData }: { initialData: InitialData }) {
                       </span>
                     </div>
                   </td>
-                  {/* Card number */}
-                  <td className="px-4 py-3 font-mono text-xs text-gray-600">
-                    {card.cardNumber ?? <span className="text-gray-300">Pending</span>}
-                  </td>
-                  {/* Credit limit */}
-                  <td className="px-4 py-3 text-gray-600">
-                    {card.creditLimit != null ? fmt(card.creditLimit) : "—"}
-                  </td>
-                  {/* Spending limit */}
-                  <td className="px-4 py-3 text-gray-600">
-                    {card.spendingLimit != null ? fmt(card.spendingLimit) : "—"}
-                  </td>
                   {/* Status */}
                   <td className="px-4 py-3">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_PILL[card.status] ?? "bg-gray-100 text-gray-500"}`}>
-                      {card.status}
-                    </span>
+                    <div className="flex flex-col items-start gap-1">
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_PILL[card.status] ?? "bg-gray-100 text-gray-500"}`}>
+                        {card.status === "approved" && !card.isVirtual ? "in delivery" : card.status}
+                      </span>
+                      {!card.isVirtual && card.deliveryStatus && card.status !== "cancelled" && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-sky-50 text-sky-700 capitalize">
+                          {card.deliveryStatus}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   {/* Applied */}
                   <td className="px-4 py-3 text-xs text-gray-400">{relativeDate(card.appliedAt)}</td>
                   {/* Actions */}
-                  <td className="px-4 py-3">
-                    {card.status === "pending" ? (
-                      <div className="flex gap-1.5">
-                        <Button size="sm" className="h-7 text-xs bg-[#1A2CCE] hover:bg-[#1A2CCE]/90"
-                          onClick={() => setReviewId(card.id)}>
-                          Review
-                        </Button>
-                        <Button size="sm" variant="outline"
-                          className="h-7 text-xs text-red-600 border-red-200 hover:bg-red-50"
-                          onClick={async () => {
-                            const reason = prompt("Rejection reason (min 10 chars):")
-                            if (!reason || reason.length < 10) return
-                            try {
-                              await doAction(card.id, "reject", "POST", { reason })
-                              toast({ title: "Rejected" })
-                              fetchData()
-                            } catch (err) {
-                              toast({ title: "Error", description: err instanceof Error ? err.message : "Failed", variant: "destructive" })
-                            }
-                          }}>
-                          Reject
-                        </Button>
-                      </div>
-                    ) : card.status === "active" ? (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={async () => {
-                            const reason = prompt("Freeze reason:")
-                            if (!reason) return
-                            try {
-                              await doAction(card.id, "freeze", "POST", { reason })
-                              toast({ title: "Card frozen" })
-                              fetchData()
-                            } catch (err) {
-                              toast({ title: "Error", description: err instanceof Error ? err.message : "Failed", variant: "destructive" })
-                            }
-                          }}>Freeze card</DropdownMenuItem>
-                          <DropdownMenuItem onClick={async () => {
-                            const detail = await fetchCardDetail(card.id)
-                            setLimitsCard(detail)
-                          }}>Update limits</DropdownMenuItem>
-                          <DropdownMenuItem className="text-rose-600" onClick={async () => {
-                            const reason = prompt("Block reason (the user cannot lift this themselves):")
-                            if (!reason) return
-                            try {
-                              await doAction(card.id, "block", "POST", { reason })
-                              toast({ title: "Card blocked" })
-                              fetchData()
-                            } catch (err) {
-                              toast({ title: "Error", description: err instanceof Error ? err.message : "Failed", variant: "destructive" })
-                            }
-                          }}>Block card</DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600" onClick={async () => {
-                            const reason = prompt("Cancel reason:")
-                            if (!reason) return
-                            try {
-                              await doAction(card.id, "cancel", "POST", { reason })
-                              toast({ title: "Card cancelled" })
-                              fetchData()
-                            } catch (err) {
-                              toast({ title: "Error", description: err instanceof Error ? err.message : "Failed", variant: "destructive" })
-                            }
-                          }}>Cancel card</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    ) : card.status === "frozen" ? (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={async () => {
-                            try {
-                              await doAction(card.id, "unfreeze", "POST")
-                              toast({ title: "Card unfrozen" })
-                              fetchData()
-                            } catch (err) {
-                              toast({ title: "Error", description: err instanceof Error ? err.message : "Failed", variant: "destructive" })
-                            }
-                          }}>Unfreeze card</DropdownMenuItem>
-                          <DropdownMenuItem className="text-rose-600" onClick={async () => {
-                            const reason = prompt("Block reason (the user cannot lift this themselves):")
-                            if (!reason) return
-                            try {
-                              await doAction(card.id, "block", "POST", { reason })
-                              toast({ title: "Card blocked" })
-                              fetchData()
-                            } catch (err) {
-                              toast({ title: "Error", description: err instanceof Error ? err.message : "Failed", variant: "destructive" })
-                            }
-                          }}>Block card</DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600" onClick={async () => {
-                            const reason = prompt("Cancel reason:")
-                            if (!reason) return
-                            try {
-                              await doAction(card.id, "cancel", "POST", { reason })
-                              toast({ title: "Card cancelled" })
-                              fetchData()
-                            } catch (err) {
-                              toast({ title: "Error", description: err instanceof Error ? err.message : "Failed", variant: "destructive" })
-                            }
-                          }}>Cancel card</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    ) : card.status === "blocked" ? (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={async () => {
-                            try {
-                              await doAction(card.id, "unblock", "POST")
-                              toast({ title: "Card unblocked" })
-                              fetchData()
-                            } catch (err) {
-                              toast({ title: "Error", description: err instanceof Error ? err.message : "Failed", variant: "destructive" })
-                            }
-                          }}>Unblock card</DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600" onClick={async () => {
-                            const reason = prompt("Cancel reason:")
-                            if (!reason) return
-                            try {
-                              await doAction(card.id, "cancel", "POST", { reason })
-                              toast({ title: "Card cancelled" })
-                              fetchData()
-                            } catch (err) {
-                              toast({ title: "Error", description: err instanceof Error ? err.message : "Failed", variant: "destructive" })
-                            }
-                          }}>Cancel card</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    ) : (
-                      <span className="text-xs text-gray-400">—</span>
-                    )}
+                  <td className="px-4 py-3 text-right">
+                    <Button size="sm" variant="outline" className="h-8 px-3 text-xs"
+                      onClick={() => setActionsCard(card)}>
+                      Actions
+                    </Button>
                   </td>
                 </tr>
               ))}
@@ -503,6 +451,17 @@ export function CardsClient({ initialData }: { initialData: InitialData }) {
           onSuccess={() => { setLimitsCard(null); fetchData() }}
         />
       )}
+      <ReasonModal
+        config={reasonModal}
+        open={!!reasonModal}
+        onOpenChange={(v) => { if (!v) setReasonModal(null) }}
+      />
+      <CardActionsModal
+        card={actionsCard}
+        open={!!actionsCard}
+        onClose={() => setActionsCard(null)}
+        onAction={handleCardAction}
+      />
     </div>
   )
 }

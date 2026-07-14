@@ -60,7 +60,7 @@ export function UpdateLimitsModal({ card, open, onOpenChange, onSuccess }: Props
           <DialogTitle>Update card limits</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 pt-2">
+        <div className="px-6 pb-6 pt-4 space-y-4">
           {/* Current */}
           <div className="bg-gray-50 rounded-lg p-3 text-sm space-y-1">
             <p className="text-xs font-medium text-gray-500 mb-2">Current limits</p>
@@ -103,9 +103,9 @@ export function UpdateLimitsModal({ card, open, onOpenChange, onSuccess }: Props
             )}
           </div>
 
-          <div className="flex justify-end gap-2 pt-1">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button onClick={submit} disabled={submitting} className="bg-[#1A2CCE] hover:bg-[#1A2CCE]/90">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-1">
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">Cancel</Button>
+            <Button onClick={submit} disabled={submitting} className="w-full sm:w-auto bg-[#1A2CCE] hover:bg-[#1A2CCE]/90">
               {submitting ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Updating…</> : "Update limits"}
             </Button>
           </div>

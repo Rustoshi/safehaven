@@ -11,7 +11,7 @@ export default async function KycPage() {
   const session = await auth()
   if (!session?.user || session.user.role !== "admin") redirect("/admin/login")
 
-  const result = await getKycQueue({ page: 1, limit: 20, status: "pending" }).catch(() => ({
+  const result = await getKycQueue({ page: 1, limit: 20 }).catch(() => ({
     documents: [],
     total:     0,
     pages:     1,

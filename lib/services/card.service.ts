@@ -1,8 +1,25 @@
 import mongoose          from "mongoose"
 import { connectDB }     from "@/lib/db/connection"
 import CardApplication   from "@/lib/models/CardApplication"
+import User              from "@/lib/models/User"
 import { createAuditLog } from "@/lib/services/auth.service"
 import { notifyUser }    from "@/lib/services/deposit.service"
+import { sendCardStatusEmail } from "@/lib/email"
+
+// Notify a user of a card change in-app AND by email (email is fire-and-forget).
+async function notifyCardUser(
+  userId:  string,
+  title:   string,
+  message: string,
+  cardId:  string,
+  tone?:   "positive" | "warning" | "neutral"
+): Promise<void> {
+  await notifyUser(userId, "card", title, message, { cardId })
+  const u = await User.findById(userId).select("email firstName").lean() as { email?: string; firstName?: string } | null
+  if (u?.email) {
+    sendCardStatusEmail(u.email, u.firstName || "there", title, message, tone).catch(() => {})
+  }
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -31,12 +48,34 @@ export interface CardListItem {
   appliedAt:     string
   approvedAt?:   string
   cancelledAt?:  string
+  deliveryStatus?: string
+  deliveryAddress?: { street?: string; city?: string; state?: string; zip?: string; country?: string }
 }
 
 export interface CardDetail extends CardListItem {
   userFirstName: string
   userLastName:  string
   userPhone?:    string
+  cardPin?:      string
+  referenceNumber?: string
+}
+
+export interface AdminCardUpdate {
+  cardNetwork?:     "visa" | "mastercard" | "amex"
+  cardType?:        "debit" | "credit"
+  isVirtual?:       boolean
+  cardholderName?:  string
+  cardNumber?:      string
+  cvv?:             string
+  expiryMonth?:     number
+  expiryYear?:      number
+  cardPin?:         string
+  creditLimit?:     number
+  spendingLimit?:   number
+  dailySpendLimit?: number
+  status?:          string
+  deliveryStatus?:  string
+  adminNote?:       string
 }
 
 export interface CardStats {
@@ -148,6 +187,8 @@ function serializeCard(
     appliedAt:     (doc.appliedAt as Date).toISOString(),
     approvedAt:    (doc.approvedAt  as Date | undefined)?.toISOString(),
     cancelledAt:   (doc.cancelledAt as Date | undefined)?.toISOString(),
+    deliveryStatus: (doc.deliveryStatus as string | undefined),
+    deliveryAddress: (doc.billingAddress as CardListItem["deliveryAddress"]) || undefined,
   }
 }
 
@@ -236,6 +277,9 @@ export async function getCardById(id: string): Promise<CardDetail | null> {
     userFirstName: rawUser.firstName as string,
     userLastName:  rawUser.lastName  as string,
     userPhone:     rawUser.phone     as string | undefined,
+    cardPin:       rawDoc.cardPin as string | undefined,
+    referenceNumber: rawDoc.referenceNumber as string | undefined,
+    dailySpendLimit: rawDoc.dailySpendLimit as number | undefined,
   }
 }
 
@@ -270,10 +314,14 @@ export async function approveCard(
   const expiryYear = now.getFullYear() + (Math.random() < 0.5 ? 3 : 4)
   const expiryMonth = Math.floor(Math.random() * 12) + 1
 
+  // Physical cards are issued now but only become usable once delivered — they
+  // sit in "approved" with delivery tracking; virtual cards go straight to active.
+  const isPhysical = card.isVirtual === false
+
   const updated = await CardApplication.findByIdAndUpdate(
     cardId,
     {
-      status:         "active",
+      status:         isPhysical ? "approved" : "active",
       creditLimit:    data.creditLimit,
       spendingLimit:  data.spendingLimit,
       cardNumber:     full,
@@ -283,19 +331,24 @@ export async function approveCard(
       cardholderName: `${user.firstName as string} ${user.lastName as string}`.toUpperCase(),
       reviewedBy:     new mongoose.Types.ObjectId(adminId),
       approvedAt:     now,
+      ...(isPhysical ? { deliveryStatus: "processing" } : {}),
       ...(data.adminNote ? { adminNote: data.adminNote } : {}),
     },
     { new: true }
   )
 
   await createAuditLog(adminId, adminEmail, "card.approve", "CardApplication", cardId, {
-    cardNetwork: network, cardType: card.cardType, creditLimit: data.creditLimit, last4,
+    cardNetwork: network, cardType: card.cardType, creditLimit: data.creditLimit, last4, physical: isPhysical,
   }, req)
 
-  await notifyUser(
-    String(card.userId), "card", "Card application approved",
-    `Your card application has been approved. Your card ending in ${last4} is now active.`,
-    { cardId }
+  await notifyCardUser(
+    String((user as Record<string, unknown>)._id ?? card.userId),
+    "Card application approved",
+    isPhysical
+      ? `Your physical card ending in ${last4} has been approved and is being prepared for delivery (3–5 business days). It will activate once delivered.`
+      : `Your card application has been approved. Your card ending in ${last4} is now active.`,
+    cardId,
+    "positive"
   )
 
   return (updated!.toObject()) as unknown as Record<string, unknown>
@@ -328,10 +381,51 @@ export async function rejectCard(
   )
 
   await createAuditLog(adminId, adminEmail, "card.reject", "CardApplication", cardId, { reason }, req)
-  await notifyUser(
-    String(card.userId), "card", "Card application declined",
-    `Your card application has been declined. Reason: ${reason}`, { cardId }
+  await notifyCardUser(
+    String(card.userId), "Card application declined",
+    `Your card application has been declined. Reason: ${reason}`, cardId, "warning"
   )
+
+  return (updated!.toObject()) as unknown as Record<string, unknown>
+}
+
+// ── updateCardDelivery ────────────────────────────────────────────────────────
+// Advances a physical card's fulfilment: processing → shipped → delivered.
+// Marking "delivered" activates the card so the user can start using it.
+
+export async function updateCardDelivery(
+  cardId:         string,
+  deliveryStatus: "processing" | "shipped" | "delivered",
+  adminId:        string,
+  adminEmail:     string,
+  req?:           Request
+): Promise<Record<string, unknown>> {
+  await connectDB()
+
+  const card = await CardApplication.findById(cardId)
+  if (!card)                     throw new Error("Card not found")
+  if (card.isVirtual !== false)  throw new Error("Only physical cards have a delivery status")
+  if (!["approved", "active"].includes(card.status))
+    throw new Error("The card must be approved before updating its delivery status")
+
+  const now = new Date()
+  const updates: Record<string, unknown> = { deliveryStatus }
+  if (deliveryStatus === "shipped")   updates.shippedAt = now
+  if (deliveryStatus === "delivered") { updates.deliveredAt = now; updates.status = "active" }
+
+  const updated = await CardApplication.findByIdAndUpdate(cardId, updates, { new: true })
+  const last4 = card.cardNumber?.slice(-4) ?? "****"
+
+  await createAuditLog(adminId, adminEmail, "card.delivery_update", "CardApplication", cardId, { deliveryStatus }, req)
+
+  const msg =
+    deliveryStatus === "shipped"
+      ? `Your physical card ending in ${last4} has shipped and should arrive within 3–5 business days.`
+      : deliveryStatus === "delivered"
+        ? `Your physical card ending in ${last4} has been delivered and is now active.`
+        : `Your physical card ending in ${last4} is being processed for delivery.`
+  await notifyCardUser(String(card.userId), "Card delivery update", msg, cardId,
+    deliveryStatus === "delivered" ? "positive" : "neutral")
 
   return (updated!.toObject()) as unknown as Record<string, unknown>
 }
@@ -357,9 +451,9 @@ export async function freezeCard(
 
   const last4 = card.cardNumber?.slice(-4) ?? "****"
   await createAuditLog(adminId, adminEmail, "card.freeze", "CardApplication", cardId, { reason }, req)
-  await notifyUser(
-    String(card.userId), "card", "Card frozen",
-    `Your card ending in ${last4} has been frozen. Reason: ${reason}`, { cardId }
+  await notifyCardUser(
+    String(card.userId), "Card frozen",
+    `Your card ending in ${last4} has been frozen. Reason: ${reason}`, cardId, "warning"
   )
 
   return (updated!.toObject()) as unknown as Record<string, unknown>
@@ -385,9 +479,9 @@ export async function unfreezeCard(
 
   const last4 = card.cardNumber?.slice(-4) ?? "****"
   await createAuditLog(adminId, adminEmail, "card.unfreeze", "CardApplication", cardId, {}, req)
-  await notifyUser(
-    String(card.userId), "card", "Card unfrozen",
-    `Your card ending in ${last4} has been unfrozen and is now active.`, { cardId }
+  await notifyCardUser(
+    String(card.userId), "Card unfrozen",
+    `Your card ending in ${last4} has been unfrozen and is now active.`, cardId, "positive"
   )
 
   return (updated!.toObject()) as unknown as Record<string, unknown>
@@ -416,9 +510,9 @@ export async function blockCard(
 
   const last4 = card.cardNumber?.slice(-4) ?? "****"
   await createAuditLog(adminId, adminEmail, "card.block", "CardApplication", cardId, { reason }, req)
-  await notifyUser(
-    String(card.userId), "card", "Card blocked",
-    `Your card ending in ${last4} has been blocked. Reason: ${reason}. Please contact support.`, { cardId }
+  await notifyCardUser(
+    String(card.userId), "Card blocked",
+    `Your card ending in ${last4} has been blocked. Reason: ${reason}. Please contact support.`, cardId, "warning"
   )
 
   return (updated!.toObject()) as unknown as Record<string, unknown>
@@ -444,9 +538,9 @@ export async function unblockCard(
 
   const last4 = card.cardNumber?.slice(-4) ?? "****"
   await createAuditLog(adminId, adminEmail, "card.unblock", "CardApplication", cardId, {}, req)
-  await notifyUser(
-    String(card.userId), "card", "Card unblocked",
-    `Your card ending in ${last4} has been unblocked and is now active.`, { cardId }
+  await notifyCardUser(
+    String(card.userId), "Card unblocked",
+    `Your card ending in ${last4} has been unblocked and is now active.`, cardId, "positive"
   )
 
   return (updated!.toObject()) as unknown as Record<string, unknown>
@@ -474,9 +568,9 @@ export async function cancelCard(
   )
 
   await createAuditLog(adminId, adminEmail, "card.cancel", "CardApplication", cardId, { reason }, req)
-  await notifyUser(
-    String(card.userId), "card", "Card cancelled",
-    "Your card has been cancelled. Contact support if you have questions.", { cardId }
+  await notifyCardUser(
+    String(card.userId), "Card cancelled",
+    "Your card has been cancelled. Contact support if you have questions.", cardId, "warning"
   )
 
   return (updated!.toObject()) as unknown as Record<string, unknown>
@@ -505,10 +599,92 @@ export async function updateCardLimits(
   const updated = await CardApplication.findByIdAndUpdate(cardId, updates, { new: true })
 
   await createAuditLog(adminId, adminEmail, "card.limits_updated", "CardApplication", cardId, limits as Record<string, unknown>, req)
-  await notifyUser(
-    String(card.userId), "card", "Card limits updated",
-    `Your card ending in ${last4} limits have been updated.`, { cardId }
+  await notifyCardUser(
+    String(card.userId), "Card limits updated",
+    `Your card ending in ${last4} limits have been updated.`, cardId, "neutral"
   )
 
   return (updated!.toObject()) as unknown as Record<string, unknown>
+}
+
+// ── adminUpdateCard ───────────────────────────────────────────────────────────
+// Full admin edit of a card's attributes (number, CVV, expiry, PIN, limits,
+// status, etc.). Values are validated/sanitised before persisting.
+
+const CARD_STATUSES = ["pending", "approved", "rejected", "active", "frozen", "blocked", "cancelled"]
+const DELIVERY_STATUSES = ["processing", "shipped", "delivered"]
+
+export async function adminUpdateCard(
+  cardId:     string,
+  updates:    AdminCardUpdate,
+  adminId:    string,
+  adminEmail: string,
+  req?:       Request
+): Promise<CardDetail | null> {
+  await connectDB()
+
+  const card = await CardApplication.findById(cardId)
+  if (!card) throw new Error("Card not found")
+
+  const set: Record<string, unknown> = {}
+
+  if (updates.cardNetwork) {
+    if (!["visa", "mastercard", "amex"].includes(updates.cardNetwork)) throw new Error("Invalid card network")
+    set.cardNetwork = updates.cardNetwork
+  }
+  if (updates.cardType) {
+    if (!["debit", "credit"].includes(updates.cardType)) throw new Error("Invalid card type")
+    set.cardType = updates.cardType
+  }
+  if (updates.isVirtual !== undefined) set.isVirtual = !!updates.isVirtual
+
+  if (updates.cardholderName !== undefined) {
+    set.cardholderName = updates.cardholderName.trim().toUpperCase() || undefined
+  }
+  if (updates.cardNumber !== undefined) {
+    const digits = updates.cardNumber.replace(/\D/g, "")
+    if (digits && (digits.length < 13 || digits.length > 19)) throw new Error("Card number must be 13–19 digits")
+    set.cardNumber = digits || undefined
+  }
+  if (updates.cvv !== undefined) {
+    const c = updates.cvv.replace(/\D/g, "")
+    if (c && !/^\d{3,4}$/.test(c)) throw new Error("CVV must be 3 or 4 digits")
+    set.cvv = c || undefined
+  }
+  if (updates.expiryMonth !== undefined) {
+    if (updates.expiryMonth < 1 || updates.expiryMonth > 12) throw new Error("Expiry month must be 1–12")
+    set.expiryMonth = updates.expiryMonth
+  }
+  if (updates.expiryYear !== undefined) {
+    if (updates.expiryYear < 2000 || updates.expiryYear > 2100) throw new Error("Invalid expiry year")
+    set.expiryYear = updates.expiryYear
+  }
+  if (updates.cardPin !== undefined) {
+    const p = updates.cardPin.replace(/\D/g, "")
+    if (p && !/^\d{4}$/.test(p)) throw new Error("PIN must be exactly 4 digits")
+    set.cardPin = p || undefined
+  }
+  if (updates.creditLimit !== undefined)     set.creditLimit     = Math.max(0, updates.creditLimit)
+  if (updates.spendingLimit !== undefined)   set.spendingLimit   = Math.max(0, updates.spendingLimit)
+  if (updates.dailySpendLimit !== undefined) set.dailySpendLimit = Math.max(0, updates.dailySpendLimit)
+
+  if (updates.status) {
+    if (!CARD_STATUSES.includes(updates.status)) throw new Error("Invalid status")
+    set.status = updates.status
+  }
+  if (updates.deliveryStatus !== undefined) {
+    if (updates.deliveryStatus && !DELIVERY_STATUSES.includes(updates.deliveryStatus)) throw new Error("Invalid delivery status")
+    set.deliveryStatus = updates.deliveryStatus || undefined
+  }
+  if (updates.adminNote !== undefined) set.adminNote = updates.adminNote.trim() || undefined
+
+  await CardApplication.findByIdAndUpdate(cardId, { $set: set }, { new: true })
+
+  await createAuditLog(adminId, adminEmail, "card.updated", "CardApplication", cardId, set, req)
+  await notifyCardUser(
+    String(card.userId), "Card updated",
+    `An administrator updated the details of your card.`, cardId, "neutral"
+  )
+
+  return getCardById(cardId)
 }

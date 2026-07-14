@@ -110,11 +110,11 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         rel="stylesheet"
       />
 
-      <div className="flex min-h-screen" style={{ backgroundColor: "var(--sh-linen)", fontFamily: UI, color: INK }}>
+      <div className="flex min-h-screen overflow-x-hidden" style={{ backgroundColor: "var(--sh-linen)", fontFamily: UI, color: INK }}>
         <BrandPanel />
 
         {/* Right — form area */}
-        <div className="flex flex-1 flex-col min-h-screen">
+        <div className="flex flex-1 min-w-0 flex-col min-h-screen">
           {/* Mobile header */}
           <div className="lg:hidden flex items-center justify-between px-6 h-16" style={{ borderBottom: "0.5px solid var(--sh-ink-10)" }}>
             <Link href="/" aria-label={BANK_NAME} className="inline-flex">

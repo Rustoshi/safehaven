@@ -352,7 +352,8 @@ export function DepositRequestsClient({ initialStats, initialData, methods }: Pr
               <p className="text-sm">No deposit requests found</p>
             </div>
           ) : (
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto scrollbar-hide">
+            <table className="w-full min-w-[820px] text-sm">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50">
                   <th className="w-10 px-4 py-3">
@@ -429,6 +430,7 @@ export function DepositRequestsClient({ initialStats, initialData, methods }: Pr
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
 

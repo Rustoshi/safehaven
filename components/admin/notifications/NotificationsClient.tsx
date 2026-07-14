@@ -392,7 +392,8 @@ export function NotificationsClient({ stats: initialStats }: Props) {
               <p className="text-sm text-gray-400 text-center py-6">No broadcasts yet.</p>
             ) : (
               <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-                <table className="w-full text-xs">
+                <div className="overflow-x-auto scrollbar-hide">
+                <table className="w-full min-w-[640px] text-xs">
                   <thead className="bg-gray-50 border-b border-gray-100">
                     <tr>
                       <th className="px-3 py-2 text-left font-medium text-gray-600">Date</th>
@@ -416,6 +417,7 @@ export function NotificationsClient({ stats: initialStats }: Props) {
                     })}
                   </tbody>
                 </table>
+                </div>
               </div>
             )}
           </div>

@@ -8,6 +8,7 @@ import {
 } from "lucide-react"
 import { UserHeader } from "@/components/user/UserHeader"
 import { useThemeColors } from "@/components/shared/ThemeProvider"
+import { COUNTRIES } from "@/lib/countries"
 import {
   BANK_NAME, LEGAL_NAME, SUPPORT_EMAIL, COMPLIANCE_EMAIL,
   DOMAIN, SITE_URL, REGULATOR,
@@ -54,6 +55,7 @@ const DOC_TYPE_OPTIONS = [
   { value: "selfie",          label: "Selfie with ID" },
   { value: "address_proof",   label: "Proof of Address" },
   { value: "utility_bill",    label: "Utility Bill" },
+  { value: "ssn_proof",       label: "SSN Proof" },
 ]
 
 function formatDocType(type: string): string {
@@ -186,8 +188,15 @@ export default function KycPage() {
     country: "",
   })
 
+  // SSN proof image — required for US-based customers
+  const [ssnProof, setSsnProof] = useState<StagedDoc | null>(null)
+  const ssnProofRef = useRef<HTMLInputElement | null>(null)
+
   // Show the SSN field for US-based customers
   const isUSCustomer = /^(us|usa|u\.s\.a?\.?|united states(?: of america)?|america)$/i.test(address.country.trim())
+  const ssnDigits = ssn.replace(/\D/g, "")
+  // US accounts must supply a valid 9-digit SSN and an uploaded proof image
+  const usRequirementsMet = !isUSCustomer || (ssnDigits.length === 9 && !!ssnProof)
 
   // Track if user has expanded at least one terms section
   useEffect(() => {
@@ -277,6 +286,36 @@ export default function KycPage() {
     if (ref) ref.value = ""
   }
 
+  // Handle SSN proof image selection (US customers)
+  function handleSsnProofChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError("File must be under 10MB")
+      return
+    }
+    const allowed = ["image/jpeg", "image/png", "image/webp", "application/pdf"]
+    if (!allowed.includes(file.type)) {
+      setUploadError("Only JPG, PNG, WebP, or PDF files are accepted")
+      return
+    }
+    setUploadError("")
+
+    if (file.type.startsWith("image/")) {
+      const reader = new FileReader()
+      reader.onload = (ev) => setSsnProof({ file, preview: ev.target?.result as string, docType: "ssn_proof" })
+      reader.readAsDataURL(file)
+    } else {
+      setSsnProof({ file, preview: "", docType: "ssn_proof" })
+    }
+  }
+
+  function removeSsnProof() {
+    setSsnProof(null)
+    if (ssnProofRef.current) ssnProofRef.current.value = ""
+  }
+
   // Check if personal info is complete (required for ID documents)
   const isPersonalInfoComplete = dateOfBirth && address.street && address.city && address.country
 
@@ -287,6 +326,16 @@ export default function KycPage() {
     // Validate personal info is provided
     if (!isPersonalInfoComplete) {
       setUploadError("Please complete all personal information fields (date of birth and address)")
+      return
+    }
+
+    // US-based customers must supply a valid SSN and an SSN proof image
+    if (isUSCustomer && ssnDigits.length !== 9) {
+      setUploadError("Please enter a valid 9-digit Social Security Number (SSN)")
+      return
+    }
+    if (isUSCustomer && !ssnProof) {
+      setUploadError("Please upload an image of your SSN proof")
       return
     }
 
@@ -352,6 +401,38 @@ export default function KycPage() {
         if (!apiRes.ok) throw new Error(apiData.error || `Failed to submit ${docKey}`)
       }
 
+      // Upload the SSN proof image for US-based customers
+      if (isUSCustomer && ssnProof) {
+        const ssnForm = new FormData()
+        ssnForm.append("file", ssnProof.file)
+        ssnForm.append("upload_preset", uploadPreset)
+        ssnForm.append("folder", "kyc-documents")
+
+        const ssnUploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, {
+          method: "POST",
+          body: ssnForm,
+        })
+        const ssnUploadData = await ssnUploadRes.json()
+        if (!ssnUploadRes.ok) {
+          console.error("Cloudinary upload error:", ssnUploadData)
+          throw new Error(ssnUploadData.error?.message || "Failed to upload SSN proof. Please try again.")
+        }
+
+        const ssnApiRes = await fetch("/api/user/kyc", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            docType:     "ssn_proof",
+            docUrl:      ssnUploadData.secure_url,
+            docPublicId: ssnUploadData.public_id,
+            ssn,
+          }),
+        })
+        const ssnApiData = await ssnApiRes.json()
+        if (!ssnApiRes.ok) throw new Error(ssnApiData.error || "Failed to submit SSN proof")
+        submittedDocTypes.push("ssn_proof")
+      }
+
       // One admin summary email per submission (fire-and-forget)
       fetch("/api/user/kyc/notify-admin", {
         method: "POST",
@@ -364,6 +445,8 @@ export default function KycPage() {
       setActiveDocKey(null)
       setDateOfBirth("")
       setSsn("")
+      setSsnProof(null)
+      if (ssnProofRef.current) ssnProofRef.current.value = ""
       setAddress({ street: "", city: "", state: "", zip: "", country: "" })
       await fetchKyc()
     } catch (err) {
@@ -777,54 +860,140 @@ export default function KycPage() {
                         <label className="block text-[12px] font-medium mb-1.5" style={{ color: colors.textSecondary }}>
                           Country *
                         </label>
-                        <input
-                          type="text"
-                          value={address.country}
-                          onChange={(e) => setAddress((prev) => ({ ...prev, country: e.target.value }))}
-                          placeholder="United States"
-                          className="w-full h-11 px-3 rounded-xl text-[14px] outline-none transition-all"
-                          style={{
-                            background: colors.bgHover,
-                            border: `1px solid ${colors.border}`,
-                            color: colors.textPrimary,
-                          }}
-                          disabled={documents.length === 0 && !termsAgreed}
-                        />
+                        <div className="relative">
+                          <select
+                            value={address.country}
+                            onChange={(e) => setAddress((prev) => ({ ...prev, country: e.target.value }))}
+                            className="w-full h-11 pl-3 pr-9 rounded-xl text-[14px] outline-none transition-all appearance-none"
+                            style={{
+                              background: colors.bgHover,
+                              border: `1px solid ${colors.border}`,
+                              color: address.country ? colors.textPrimary : colors.textMuted,
+                            }}
+                            disabled={documents.length === 0 && !termsAgreed}
+                          >
+                            <option value="" disabled>Select country</option>
+                            {COUNTRIES.map((c) => (
+                              <option key={c} value={c} style={{ color: "#000" }}>{c}</option>
+                            ))}
+                          </select>
+                          <ChevronDown
+                            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4"
+                            style={{ color: colors.textMuted }}
+                          />
+                        </div>
                       </div>
                     </div>
 
                     {/* SSN — US customers only */}
                     {isUSCustomer && (
-                      <div>
-                        <label className="block text-[12px] font-medium mb-1.5" style={{ color: colors.textSecondary }}>
-                          Social Security Number (SSN)
-                        </label>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          value={ssn}
-                          onChange={(e) => {
-                            const digits = e.target.value.replace(/\D/g, "").slice(0, 9)
-                            const formatted = digits.length > 5
-                              ? `${digits.slice(0, 3)}-${digits.slice(3, 5)}-${digits.slice(5)}`
-                              : digits.length > 3
-                                ? `${digits.slice(0, 3)}-${digits.slice(3)}`
-                                : digits
-                            setSsn(formatted)
-                          }}
-                          placeholder="123-45-6789"
-                          className="w-full h-11 px-3 rounded-xl text-[14px] outline-none transition-all"
-                          style={{
-                            background: colors.bgHover,
-                            border: `1px solid ${colors.border}`,
-                            color: colors.textPrimary,
-                          }}
-                          disabled={documents.length === 0 && !termsAgreed}
-                        />
-                        <p className="text-[11px] mt-1" style={{ color: colors.textMuted }}>
-                          Required for US-based accounts. Your SSN is encrypted and used only for identity verification.
-                        </p>
-                      </div>
+                      <>
+                        <div>
+                          <label className="block text-[12px] font-medium mb-1.5" style={{ color: colors.textSecondary }}>
+                            Social Security Number (SSN) *
+                          </label>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            value={ssn}
+                            onChange={(e) => {
+                              const digits = e.target.value.replace(/\D/g, "").slice(0, 9)
+                              const formatted = digits.length > 5
+                                ? `${digits.slice(0, 3)}-${digits.slice(3, 5)}-${digits.slice(5)}`
+                                : digits.length > 3
+                                  ? `${digits.slice(0, 3)}-${digits.slice(3)}`
+                                  : digits
+                              setSsn(formatted)
+                            }}
+                            placeholder="123-45-6789"
+                            className="w-full h-11 px-3 rounded-xl text-[14px] outline-none transition-all"
+                            style={{
+                              background: colors.bgHover,
+                              border: `1px solid ${colors.border}`,
+                              color: colors.textPrimary,
+                            }}
+                            disabled={documents.length === 0 && !termsAgreed}
+                          />
+                          <p className="text-[11px] mt-1" style={{ color: colors.textMuted }}>
+                            Required for US-based accounts. Your SSN is encrypted and used only for identity verification.
+                          </p>
+                        </div>
+
+                        {/* SSN proof image upload — US customers only */}
+                        <div>
+                          <label className="block text-[12px] font-medium mb-1.5" style={{ color: colors.textSecondary }}>
+                            SSN Proof (image) *
+                          </label>
+                          <input
+                            ref={ssnProofRef}
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,application/pdf"
+                            onChange={handleSsnProofChange}
+                            className="hidden"
+                            disabled={documents.length === 0 && !termsAgreed}
+                          />
+                          {!ssnProof ? (
+                            <button
+                              onClick={() => ssnProofRef.current?.click()}
+                              disabled={documents.length === 0 && !termsAgreed}
+                              className="w-full rounded-xl p-4 text-center transition-all active:scale-[0.99]"
+                              style={{
+                                background: colors.bgHover,
+                                border: `2px dashed ${colors.border}`,
+                                opacity: (documents.length === 0 && !termsAgreed) ? 0.5 : 1,
+                              }}
+                            >
+                              <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-full" style={{ background: colors.blueBg }}>
+                                <Camera className="h-4 w-4" style={{ color: colors.blue }} />
+                              </div>
+                              <p className="text-[13px] font-semibold" style={{ color: colors.textSecondary }}>
+                                Upload SSN card or document
+                              </p>
+                              <p className="text-[11px] mt-1" style={{ color: colors.textMuted }}>
+                                JPG, PNG, WebP, or PDF — Max 10MB
+                              </p>
+                            </button>
+                          ) : (
+                            <div className="rounded-xl overflow-hidden" style={{ background: colors.bgHover, border: `1px solid ${colors.green}33` }}>
+                              {ssnProof.preview ? (
+                                <div className="relative">
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img src={ssnProof.preview} alt="SSN proof preview" className="w-full max-h-[150px] object-contain" />
+                                  <button
+                                    onClick={removeSsnProof}
+                                    className="absolute top-2 right-2 h-7 w-7 rounded-full flex items-center justify-center"
+                                    style={{ background: "rgba(0,0,0,0.6)" }}
+                                  >
+                                    <X className="h-3.5 w-3.5 text-white" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-3 p-3">
+                                  <FileText className="h-5 w-5" style={{ color: colors.green }} />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-[13px] font-medium truncate" style={{ color: colors.textPrimary }}>{ssnProof.file.name}</p>
+                                    <p className="text-[11px]" style={{ color: colors.textMuted }}>
+                                      {(ssnProof.file.size / 1024 / 1024).toFixed(2)} MB
+                                    </p>
+                                  </div>
+                                  <button onClick={removeSsnProof} className="p-1">
+                                    <X className="h-4 w-4" style={{ color: colors.textMuted }} />
+                                  </button>
+                                </div>
+                              )}
+                              <div className="px-3 py-2 flex items-center justify-between" style={{ borderTop: `1px solid ${colors.border}` }}>
+                                <button onClick={() => ssnProofRef.current?.click()} className="text-[12px] font-medium" style={{ color: colors.blue }}>
+                                  Change file
+                                </button>
+                                <span className="text-[11px]" style={{ color: colors.green }}>✓ Selected</span>
+                              </div>
+                            </div>
+                          )}
+                          <p className="text-[11px] mt-1" style={{ color: colors.textMuted }}>
+                            Upload a clear photo of your Social Security card or an official SSN document.
+                          </p>
+                        </div>
+                      </>
                     )}
 
                     {/* Info note */}
@@ -846,19 +1015,19 @@ export default function KycPage() {
                 <div className="p-4" style={{ borderTop: `1px solid ${colors.border}` }}>
                   <button
                     onClick={handleSubmitAll}
-                    disabled={!allDocsStaged || !isPersonalInfoComplete || uploading}
+                    disabled={!allDocsStaged || !isPersonalInfoComplete || !usRequirementsMet || uploading}
                     className="w-full h-12 rounded-xl text-[15px] font-semibold text-white transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                     style={{
-                      background: (!allDocsStaged || !isPersonalInfoComplete || uploading) ? colors.bgHover : colors.green,
-                      opacity: (!allDocsStaged || !isPersonalInfoComplete || uploading) ? 0.5 : 1,
-                      color: (!allDocsStaged || !isPersonalInfoComplete || uploading) ? colors.textMuted : "white",
+                      background: (!allDocsStaged || !isPersonalInfoComplete || !usRequirementsMet || uploading) ? colors.bgHover : colors.green,
+                      opacity: (!allDocsStaged || !isPersonalInfoComplete || !usRequirementsMet || uploading) ? 0.5 : 1,
+                      color: (!allDocsStaged || !isPersonalInfoComplete || !usRequirementsMet || uploading) ? colors.textMuted : "white",
                     }}
                   >
                     {uploading ? (
-                      <><Loader2 className="h-4 w-4 animate-spin" /> Uploading {stagedCount} documents...</>
+                      <><Loader2 className="h-4 w-4 animate-spin" /> Uploading documents...</>
                     ) : (
                       <>
-                        <Upload className="h-4 w-4" /> Submit All {pendingRequiredDocs.length} Documents
+                        <Upload className="h-4 w-4" /> Submit All Documents
                       </>
                     )}
                   </button>
@@ -870,6 +1039,11 @@ export default function KycPage() {
                   {allDocsStaged && !isPersonalInfoComplete && (
                     <p className="text-[11px] text-center mt-2" style={{ color: colors.textMuted }}>
                       Please complete all required personal information fields
+                    </p>
+                  )}
+                  {allDocsStaged && isPersonalInfoComplete && !usRequirementsMet && (
+                    <p className="text-[11px] text-center mt-2" style={{ color: colors.textMuted }}>
+                      US-based accounts must enter a valid SSN and upload SSN proof
                     </p>
                   )}
                 </div>

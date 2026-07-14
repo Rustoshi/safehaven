@@ -118,12 +118,10 @@ export default function SupportPage() {
   }
 
   const openLiveChat = () => {
-    // Smartsupp API
     if (typeof window !== "undefined" && (window as unknown as Record<string, unknown>).smartsupp) {
       const smartsupp = (window as unknown as Record<string, (cmd: string) => void>).smartsupp
       smartsupp("chat:open")
     } else {
-      // Fallback: open Smartsupp widget manually
       const el = document.getElementById("smartsupp-widget-container")
         || document.querySelector("[data-smartsupp-widget]")
         || document.querySelector('iframe[title*="Smartsupp"]')

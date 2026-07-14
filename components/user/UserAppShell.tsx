@@ -62,12 +62,6 @@ export function UserAppShell({ session, children }: Props) {
     [pathname]
   )
 
-  // Flag the body so the Smartsupp chat launcher is lifted above the mobile bottom nav.
-  useEffect(() => {
-    document.body.classList.add("has-mobile-nav")
-    return () => document.body.classList.remove("has-mobile-nav")
-  }, [])
-
   const navigate = (href: string) => {
     setSidebarOpen(false)
     router.push(href)
@@ -196,38 +190,41 @@ export function UserAppShell({ session, children }: Props) {
           />
 
           {/* ── Main content ── */}
-          <main className="flex-1 flex flex-col overflow-hidden" style={{ backgroundColor: "var(--dash-bg)" }}>
-            <div className="flex-1 overflow-y-auto pb-28 lg:pb-0 scrollbar-hide">
+          <main className="flex-1 flex flex-col overflow-hidden min-w-0" style={{ backgroundColor: "var(--dash-bg)" }}>
+            <div className="flex-1 overflow-y-auto pb-4 scrollbar-hide">
               {children}
             </div>
-          </main>
 
-          {/* ── Mobile bottom tab bar (white) ── */}
-          <nav className="fixed inset-x-0 bottom-0 z-40 lg:hidden" style={{ backgroundColor: "var(--dash-surface)", borderTop: "1px solid var(--dash-border)" }}>
-            <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-around", padding: "8px 8px 0", paddingBottom: "calc(10px + env(safe-area-inset-bottom, 0px))" }}>
-              {BOTTOM_TABS.map((tab) => {
-                const Icon = tab.icon
-                const active = isActive(tab.href)
-                const isCenter = "center" in tab && tab.center
-                if (isCenter) {
-                  return (
-                    <div key={tab.label} onClick={() => navigate(tab.href)} style={{ display: "flex", flexDirection: "column", alignItems: "center", cursor: "pointer", marginTop: -18 }}>
-                      <div style={{ width: 50, height: 50, borderRadius: "50%", backgroundColor: "var(--dash-primary)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 6px 16px rgba(26,44,206,0.35)" }} className="active:scale-90">
-                        <Icon style={{ width: 22, height: 22, color: "#fff" }} strokeWidth={2} />
+            {/* ── Mobile bottom tab bar (white) ──
+               In-flow (not fixed) so it always sits at the bottom of the visible
+               100dvh column — a fixed bottom-0 bar anchors to the layout viewport
+               and can slip under the mobile browser chrome, clipping the labels. */}
+            <nav className="lg:hidden flex-shrink-0" style={{ backgroundColor: "var(--dash-surface)", borderTop: "1px solid var(--dash-border)" }}>
+              <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-around", padding: "10px 8px 0", paddingBottom: "calc(12px + env(safe-area-inset-bottom, 0px))" }}>
+                {BOTTOM_TABS.map((tab) => {
+                  const Icon = tab.icon
+                  const active = isActive(tab.href)
+                  const isCenter = "center" in tab && tab.center
+                  if (isCenter) {
+                    return (
+                      <div key={tab.label} onClick={() => navigate(tab.href)} style={{ display: "flex", flexDirection: "column", alignItems: "center", cursor: "pointer", marginTop: -18 }}>
+                        <div style={{ width: 50, height: 50, borderRadius: "50%", backgroundColor: "var(--dash-primary)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 6px 16px rgba(26,44,206,0.35)" }} className="active:scale-90">
+                          <Icon style={{ width: 22, height: 22, color: "#fff" }} strokeWidth={2} />
+                        </div>
+                        <span style={{ fontSize: 10, fontWeight: 600, marginTop: 4, lineHeight: 1.3, color: active ? "var(--dash-primary)" : "var(--dash-text-3)" }}>{tab.label}</span>
                       </div>
-                      <span style={{ fontSize: 10, fontWeight: 600, marginTop: 4, color: active ? "var(--dash-primary)" : "var(--dash-text-3)" }}>{tab.label}</span>
+                    )
+                  }
+                  return (
+                    <div key={tab.label} onClick={() => navigate(tab.href)} style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", minWidth: 56, minHeight: 52 }} className="active:scale-95">
+                      <Icon style={{ width: 21, height: 21, color: active ? "var(--dash-primary)" : "var(--dash-text-3)" }} strokeWidth={active ? 2.2 : 1.8} />
+                      <span style={{ fontSize: 10, fontWeight: active ? 600 : 500, marginTop: 3, lineHeight: 1.3, color: active ? "var(--dash-primary)" : "var(--dash-text-3)" }}>{tab.label}</span>
                     </div>
                   )
-                }
-                return (
-                  <div key={tab.label} onClick={() => navigate(tab.href)} style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", minWidth: 56, minHeight: 50 }} className="active:scale-95">
-                    <Icon style={{ width: 21, height: 21, color: active ? "var(--dash-primary)" : "var(--dash-text-3)" }} strokeWidth={active ? 2.2 : 1.8} />
-                    <span style={{ fontSize: 10, fontWeight: active ? 600 : 500, marginTop: 3, color: active ? "var(--dash-primary)" : "var(--dash-text-3)" }}>{tab.label}</span>
-                  </div>
-                )
-              })}
-            </div>
-          </nav>
+                })}
+              </div>
+            </nav>
+          </main>
         </div>
       </SidebarContext.Provider>
     </PlatformSettingsProvider>

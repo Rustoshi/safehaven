@@ -55,7 +55,7 @@ export async function GET() {
     const [cards, settings, user, fiatAccount] = await Promise.all([
       CardApplication.find({ userId: session.user.id }).sort({ appliedAt: -1 }).lean(),
       AppSettings.findById(new mongoose.Types.ObjectId(APP_SETTINGS_ID)).lean(),
-      User.findById(session.user.id).select("firstName lastName kycStatus kycTier").lean(),
+      User.findById(session.user.id).select("firstName lastName kycStatus kycTier address").lean(),
       Account.findOne({ userId: session.user.id, walletType: "fiat" }).select("balance currency").lean(),
     ])
 
@@ -79,27 +79,40 @@ export async function GET() {
       adminNote:       c.adminNote || null,
       appliedAt:       (c.appliedAt as Date)?.toISOString() || (c.createdAt as Date)?.toISOString(),
       approvedAt:      (c.approvedAt as Date)?.toISOString() || null,
+      deliveryStatus:  (c.deliveryStatus as string) || null,
+      deliveryAddress: c.billingAddress || null,
     }))
 
     const settingsObj = settings as Record<string, unknown> | null
     const fee = (settingsObj?.cardApplicationFee as number) ?? 0
+    const physicalFee = (settingsObj?.cardPhysicalFee as number) ?? 0
     const maxPerUser = (settingsObj?.cardMaxPerUser as number) ?? 5
     const requiredKycTier = (settingsObj?.cardRequiredKycTier as number) ?? 1
+    const userObj = user as Record<string, unknown> | null
+    const addr = (userObj?.address as Record<string, unknown>) || null
 
     return NextResponse.json({
       cards: serialized,
       cardSettings: {
         applicationFee: fee,
+        physicalFee,
         maxPerUser,
         requiredKycTier,
       },
       eligibility: {
-        fullName: user ? `${(user as Record<string, unknown>).firstName} ${(user as Record<string, unknown>).lastName}` : "",
-        kycStatus: (user as Record<string, unknown>)?.kycStatus || "unverified",
-        kycTier: (user as Record<string, unknown>)?.kycTier || 1,
+        fullName: user ? `${userObj?.firstName} ${userObj?.lastName}` : "",
+        kycStatus: userObj?.kycStatus || "unverified",
+        kycTier: userObj?.kycTier || 1,
         fiatBalance: fiatAccount ? ((fiatAccount as Record<string, unknown>).balance as number) / 100 : 0,
         currency: fiatAccount ? ((fiatAccount as Record<string, unknown>).currency as string) || "USD" : "USD",
-        meetsKyc: (((user as Record<string, unknown>)?.kycTier as number) || 1) >= requiredKycTier,
+        meetsKyc: userObj?.kycStatus === "verified" && ((userObj?.kycTier as number) || 1) >= requiredKycTier,
+        address: addr ? {
+          street:  (addr.street as string) || "",
+          city:    (addr.city as string) || "",
+          state:   (addr.state as string) || "",
+          zip:     (addr.zip as string) || "",
+          country: (addr.country as string) || "",
+        } : null,
       },
     })
   } catch (err) {
@@ -117,6 +130,7 @@ export async function POST(req: Request) {
 
     const body = await req.json()
     const { cardNetwork, cardType, cardholderName, preferredLimit, dailySpendLimit, cardPin, billingAddress } = body
+    const isVirtual = body.isVirtual !== false // default to virtual
 
     if (!["visa", "mastercard", "amex"].includes(cardNetwork))
       return NextResponse.json({ error: "Invalid card network. Choose Visa, Mastercard, or American Express." }, { status: 400 })
@@ -126,9 +140,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Cardholder name is required." }, { status: 400 })
     if (cardPin && (typeof cardPin !== "string" || !/^\d{4}$/.test(cardPin)))
       return NextResponse.json({ error: "Card PIN must be exactly 4 digits." }, { status: 400 })
-    if (billingAddress && typeof billingAddress === "object") {
-      const { street, city, state, zip, country } = billingAddress
-      if (!street || !city || !zip || !country)
+    // Physical cards must have a complete delivery address (stored in billingAddress)
+    if (!isVirtual) {
+      const a = billingAddress
+      if (!a || typeof a !== "object" || !a.street || !a.city || !a.zip || !a.country)
+        return NextResponse.json({ error: "A complete delivery address (street, city, zip, country) is required for physical cards." }, { status: 400 })
+    } else if (billingAddress && typeof billingAddress === "object") {
+      const { street, city, zip, country } = billingAddress
+      if (street && (!city || !zip || !country))
         return NextResponse.json({ error: "Billing address is incomplete. Street, city, zip, and country are required." }, { status: 400 })
     }
 
@@ -137,7 +156,16 @@ export async function POST(req: Request) {
     // Fetch settings
     const settings = await AppSettings.findById(new mongoose.Types.ObjectId(APP_SETTINGS_ID)).lean()
     const maxCards = ((settings as Record<string, unknown>)?.cardMaxPerUser as number) ?? 5
-    const fee = ((settings as Record<string, unknown>)?.cardApplicationFee as number) ?? 0
+    const requiredTier = ((settings as Record<string, unknown>)?.cardRequiredKycTier as number) ?? 1
+
+    // Enforce KYC — a card can only be issued to a verified client
+    const applicant = await User.findById(session.user.id).select("kycStatus kycTier").lean()
+    const applicantObj = applicant as Record<string, unknown> | null
+    if (applicantObj?.kycStatus !== "verified" || (((applicantObj?.kycTier as number) || 1) < requiredTier))
+      return NextResponse.json({ error: "Your identity must be verified before you can apply for a card. Please complete KYC verification first." }, { status: 403 })
+    const fee = isVirtual
+      ? (((settings as Record<string, unknown>)?.cardApplicationFee as number) ?? 0)
+      : (((settings as Record<string, unknown>)?.cardPhysicalFee as number) ?? 0)
 
     // Enforce max cards (active + pending)
     const activeCount = await CardApplication.countDocuments({
@@ -192,7 +220,8 @@ export async function POST(req: Request) {
           cardPin: cardPin || undefined,
           billingAddress: billingAddress && billingAddress.street ? billingAddress : undefined,
           status: "pending",
-          isVirtual: true,
+          isVirtual,
+          ...(isVirtual ? {} : { deliveryStatus: "processing" }),
           applicationFee: fee,
           referenceNumber: refNumber,
           appliedAt: new Date(),
@@ -239,7 +268,8 @@ export async function POST(req: Request) {
       cardPin: cardPin || undefined,
       billingAddress: billingAddress && billingAddress.street ? billingAddress : undefined,
       status: "pending",
-      isVirtual: true,
+      isVirtual,
+      ...(isVirtual ? {} : { deliveryStatus: "processing" }),
       applicationFee: 0,
       referenceNumber: refNumber,
       appliedAt: new Date(),

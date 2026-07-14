@@ -4,8 +4,9 @@ import { useState, useEffect } from "react"
 import Link                    from "next/link"
 import { Sheet, SheetHeader, SheetTitle, SheetBody, SheetClose } from "@/components/ui/sheet"
 import { Button }              from "@/components/ui/button"
+import { Textarea }            from "@/components/ui/textarea"
 import { useToast }            from "@/components/ui/use-toast"
-import { CheckCircle2, XCircle, Clock, ExternalLink, ChevronDown, ChevronRight, AlertTriangle, ShieldCheck } from "lucide-react"
+import { CheckCircle2, XCircle, Clock, ExternalLink, ChevronDown, ChevronRight, AlertTriangle, ShieldCheck, FileText } from "lucide-react"
 import { DocumentReviewPanel } from "./DocumentReviewPanel"
 import { RequestDocumentsModal } from "./modals/RequestDocumentsModal"
 import { AdminVerifyModal } from "./modals/AdminVerifyModal"
@@ -66,6 +67,7 @@ const DOC_TYPE_LABELS: Record<string, string> = {
   selfie:          "Selfie",
   address_proof:   "Address Proof",
   utility_bill:    "Utility Bill",
+  ssn_proof:       "SSN Proof",
 }
 
 const KYC_STATUS_STYLES: Record<string, string> = {
@@ -87,6 +89,10 @@ export function KycReviewDrawer({ userId, open, onClose, onAction }: Props) {
   const [reqDocsOpen,  setReqDocsOpen] = useState(false)
   const [adminVerifyOpen, setAdminVerifyOpen] = useState(false)
   const [bulkLoading,  setBulkLoading] = useState(false)
+
+  // Bulk reject state
+  const [bulkRejectOpen,   setBulkRejectOpen]   = useState(false)
+  const [bulkRejectReason, setBulkRejectReason] = useState("")
 
   // Override state
   const [ovStatus, setOvStatus] = useState("verified")
@@ -133,6 +139,33 @@ export function KycReviewDrawer({ userId, open, onClose, onAction }: Props) {
       refresh()
     } catch {
       toast({ title: "Bulk approve failed", variant: "destructive" })
+    } finally {
+      setBulkLoading(false)
+    }
+  }
+
+  async function handleBulkReject() {
+    if (!detail || !bulkRejectReason.trim()) return
+    const pendingIds = detail.documents
+      .filter((d) => d.status === "pending")
+      .map((d) => String(d._id ?? d.id))
+    if (pendingIds.length === 0) return
+
+    setBulkLoading(true)
+    try {
+      const res  = await fetch("/api/admin/kyc/documents/bulk-reject", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ documentIds: pendingIds, reason: bulkRejectReason.trim() }),
+      })
+      const data = await res.json() as { rejected: number; errors: number }
+      if (!res.ok) throw new Error("Failed")
+      toast({ title: `Rejected ${data.rejected} document${data.rejected !== 1 ? "s" : ""}${data.errors > 0 ? `, ${data.errors} failed` : ""}` })
+      setBulkRejectOpen(false)
+      setBulkRejectReason("")
+      refresh()
+    } catch {
+      toast({ title: "Bulk reject failed", variant: "destructive" })
     } finally {
       setBulkLoading(false)
     }
@@ -188,7 +221,6 @@ export function KycReviewDrawer({ userId, open, onClose, onAction }: Props) {
   const kycTier     = Number(user?.kycTier   ?? 1)
   const userCreated = user?.createdAt ? new Date(user.createdAt as string).toLocaleDateString() : ""
 
-  const required    = detail?.requiredDocTypes ?? []
   const completion  = detail?.completionStatus
   const approvedTypes = docs.filter((d) => d.status === "approved").map((d) => d.docType)
   const pendingCount  = docs.filter((d) => d.status === "pending").length
@@ -202,10 +234,25 @@ export function KycReviewDrawer({ userId, open, onClose, onAction }: Props) {
   // ID doc URL for selfie comparison
   const idDoc = docs.find((d) => TIER2_ID_TYPES.includes(d.docType) && d.docUrl)
 
-  const approvedCount = required.filter((t) => {
-    if (TIER2_ID_TYPES.includes(t)) return TIER2_ID_TYPES.some((id) => approvedTypes.includes(id))
-    return approvedTypes.includes(t)
-  }).length
+  // US-based client? (SSN proof is required for them, like ID / Selfie / Address)
+  const isUSClient =
+    docs.some((d) => d.docType === "ssn_proof") ||
+    docs.some((d) => /^(us|usa|u\.s\.a?\.?|united states(?: of america)?|america)$/i.test((d.address?.country || "").trim()))
+
+  // The required-document checklist rendered below, and its approved tally
+  const checklistKeys = [
+    "passport|drivers_license|national_id",
+    "selfie",
+    "address_proof",
+    ...(isUSClient ? ["ssn_proof"] : []),
+  ].filter((key) => {
+    if (key === "ssn_proof")     return true         // US client → always required
+    if (key === "address_proof") return kycTier >= 3
+    return kycTier >= 2                                // ID group + selfie
+  })
+  const checklistApproved = checklistKeys.filter((key) =>
+    key.split("|").some((t) => approvedTypes.includes(t))
+  ).length
 
   return (
     <>
@@ -267,18 +314,14 @@ export function KycReviewDrawer({ userId, open, onClose, onAction }: Props) {
               )}
 
               {/* Completion status */}
-              {required.length > 0 && (
+              {checklistKeys.length > 0 && (
                 <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium text-gray-900">Required documents</p>
-                    <span className="text-xs text-gray-500">{approvedCount} of {required.length > 0 ? (required.length > 3 ? required.length - 2 : required.length) : 0} approved</span>
+                    <span className="text-xs text-gray-500">{checklistApproved} of {checklistKeys.length} approved</span>
                   </div>
                   <div className="space-y-1.5">
-                    {["passport|drivers_license|national_id", "selfie", "address_proof"].filter((key) => {
-                      if (key.includes("|")) return kycTier >= 2
-                      if (key === "address_proof") return kycTier >= 3
-                      return kycTier >= 2
-                    }).map((key) => {
+                    {checklistKeys.map((key) => {
                       const types   = key.split("|")
                       const primary = types[0]
                       const label   = primary === "passport" ? "Photo ID (Passport / License / National ID)" : DOC_TYPE_LABELS[primary] ?? primary
@@ -309,7 +352,7 @@ export function KycReviewDrawer({ userId, open, onClose, onAction }: Props) {
                     <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-[#12B76A] rounded-full transition-all"
-                        style={{ width: `${required.length > 0 ? (approvedCount / Math.max(1, required.length > 3 ? required.length - 2 : required.length)) * 100 : 0}%` }}
+                        style={{ width: `${(checklistApproved / Math.max(1, checklistKeys.length)) * 100}%` }}
                       />
                     </div>
                   </div>
@@ -318,18 +361,52 @@ export function KycReviewDrawer({ userId, open, onClose, onAction }: Props) {
 
               {/* Bulk action bar */}
               {pendingCount > 0 && (
-                <div className="flex flex-wrap items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-                  <Clock className="w-4 h-4 text-amber-500 flex-shrink-0" />
-                  <span className="text-sm text-amber-700 flex-1 min-w-[8rem]">{pendingCount} document{pendingCount !== 1 ? "s" : ""} awaiting review</span>
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-amber-700">
+                    <Clock className="w-4 h-4 flex-shrink-0" />
+                    <span className="text-sm font-medium">{pendingCount} document{pendingCount !== 1 ? "s" : ""} awaiting review</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <Button size="sm" onClick={handleBulkApprove} disabled={bulkLoading}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs flex-1 sm:flex-none">
-                      {bulkLoading ? "Approving…" : "Approve all pending"}
+                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
+                      <CheckCircle2 className="w-4 h-4" /> {bulkLoading && !bulkRejectOpen ? "Approving…" : "Approve all"}
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => setReqDocsOpen(true)} className="text-xs flex-1 sm:flex-none">
-                      Request documents
+                    <Button size="sm" variant="destructive" onClick={() => setBulkRejectOpen((v) => !v)} disabled={bulkLoading}
+                      className="w-full">
+                      <XCircle className="w-4 h-4" /> Reject all
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setReqDocsOpen(true)} disabled={bulkLoading}
+                      className="w-full bg-white">
+                      <FileText className="w-4 h-4" /> Request docs
                     </Button>
                   </div>
+
+                  {/* Reject-all reason */}
+                  {bulkRejectOpen && (
+                    <div className="space-y-2 rounded-lg border border-red-200 bg-white p-3">
+                      <label className="text-xs font-medium text-gray-700">
+                        Rejection reason <span className="text-gray-400">(applied to all {pendingCount} pending document{pendingCount !== 1 ? "s" : ""})</span>
+                      </label>
+                      <Textarea
+                        value={bulkRejectReason}
+                        onChange={(e) => setBulkRejectReason(e.target.value)}
+                        rows={2}
+                        placeholder="Explain why these documents are being rejected. The client will see this reason."
+                        className="text-sm"
+                      />
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Button size="sm" variant="destructive" onClick={handleBulkReject}
+                          disabled={!bulkRejectReason.trim() || bulkLoading} className="w-full sm:w-auto">
+                          {bulkLoading ? "Rejecting…" : `Reject ${pendingCount} document${pendingCount !== 1 ? "s" : ""}`}
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => { setBulkRejectOpen(false); setBulkRejectReason("") }}
+                          disabled={bulkLoading} className="w-full sm:w-auto bg-white">
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

@@ -45,6 +45,7 @@ const DOC_TYPE_STYLES: Record<string, { label: string; bg: string; text: string 
   selfie:          { label: "Selfie",           bg: "bg-pink-100",   text: "text-pink-800"   },
   address_proof:   { label: "Address Proof",    bg: "bg-amber-100",  text: "text-amber-800"  },
   utility_bill:    { label: "Utility Bill",     bg: "bg-slate-100",  text: "text-slate-800"  },
+  ssn_proof:       { label: "SSN Proof",        bg: "bg-rose-100",   text: "text-rose-800"   },
 }
 
 const STATUS_STYLES: Record<string, { label: string; bg: string; text: string }> = {

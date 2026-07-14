@@ -5,7 +5,7 @@ import User              from "@/lib/models/User"
 import Account           from "@/lib/models/Account"
 import { createAuditLog } from "@/lib/services/auth.service"
 import { notifyUser }    from "@/lib/services/deposit.service"
-import { sendKycApprovedEmail } from "@/lib/email"
+import { sendKycApprovedEmail, sendKycRejectedEmail } from "@/lib/email"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -221,7 +221,15 @@ export async function getKycQueue(params: {
       userKycStatus: String(row.userKycStatus),
       userKycTier:   tier,
       userCreatedAt: row.userCreatedAt ? new Date(row.userCreatedAt as string).toISOString() : "",
-      documents:     docs,
+      // Serialize to plain fields only — omit ObjectIds, __v, and sensitive data
+      // (e.g. ssn) so the payload is safe to cross the RSC → client boundary.
+      documents:     docs.map((d) => ({
+        _id:         String(d._id),
+        id:          String(d._id),
+        docType:     String(d.docType),
+        status:      String(d.status),
+        submittedAt: d.submittedAt ? new Date(d.submittedAt as string).toISOString() : "",
+      })),
       pendingCount:  Number(row.pendingCount),
       lastSubmitted: row.lastSubmitted ? new Date(row.lastSubmitted as string).toISOString() : "",
       isComplete,
@@ -417,12 +425,27 @@ export async function approveKycDocument(
 
 // ── rejectKycDocument ─────────────────────────────────────────────────────────
 
+const DOC_TYPE_LABELS: Record<string, string> = {
+  passport:        "Passport",
+  drivers_license: "Driver's License",
+  national_id:     "National ID",
+  selfie:          "Selfie",
+  address_proof:   "Proof of Address",
+  utility_bill:    "Utility Bill",
+  ssn_proof:       "SSN Proof",
+}
+
+function docTypeLabel(t: string): string {
+  return DOC_TYPE_LABELS[t] ?? t.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
 export async function rejectKycDocument(
   documentId: string,
   reason:     string,
   adminId:    string,
   adminEmail: string,
-  req?:       Request
+  req?:       Request,
+  options?:   { sendEmail?: boolean }
 ): Promise<Record<string, unknown>> {
   await connectDB()
 
@@ -438,7 +461,9 @@ export async function rejectKycDocument(
   doc.reviewedAt = new Date()
   await doc.save()
 
-  await User.findByIdAndUpdate(doc.userId, { kycStatus: "rejected" })
+  const rejectedUser = await User.findByIdAndUpdate(doc.userId, { kycStatus: "rejected" })
+    .select("email firstName")
+    .lean() as { email?: string; firstName?: string } | null
 
   await createAuditLog(adminId, adminEmail, "kyc.document_reject", "KycDocument", documentId, { docType: doc.docType, reason, userId: String(doc.userId) }, req)
 
@@ -447,8 +472,13 @@ export async function rejectKycDocument(
     String(doc.userId),
     "kyc",
     "Document rejected",
-    `Your ${docType.replace("_", " ")} was not accepted. Reason: ${reason}. Please resubmit.`
+    `Your ${docTypeLabel(docType)} was not accepted. Reason: ${reason.trim()}. Please resubmit.`
   )
+
+  // Email the client (suppressed for bulk rejects — the caller sends one summary)
+  if (options?.sendEmail !== false && rejectedUser?.email) {
+    sendKycRejectedEmail(rejectedUser.email, rejectedUser.firstName || "there", reason.trim(), docTypeLabel(docType)).catch(() => {})
+  }
 
   return doc.toObject() as unknown as Record<string, unknown>
 }
@@ -472,6 +502,40 @@ export async function bulkApproveKycDocuments(
     }
   }
   return { approved, errors }
+}
+
+// ── bulkRejectKycDocuments ────────────────────────────────────────────────────
+
+export async function bulkRejectKycDocuments(
+  documentIds: string[],
+  reason:      string,
+  adminId:     string,
+  adminEmail:  string,
+  req?:        Request
+): Promise<{ rejected: number; errors: number }> {
+  if (!reason?.trim()) throw new Error("Rejection reason is required")
+  let rejected = 0
+  let errors   = 0
+  const affectedUserIds = new Set<string>()
+  for (const id of documentIds) {
+    try {
+      const doc = await rejectKycDocument(id, reason, adminId, adminEmail, req, { sendEmail: false })
+      rejected++
+      if (doc?.userId) affectedUserIds.add(String(doc.userId))
+    } catch {
+      errors++
+    }
+  }
+
+  // Send one summary rejection email per affected user (instead of one per doc)
+  for (const uid of affectedUserIds) {
+    const u = await User.findById(uid).select("email firstName").lean() as { email?: string; firstName?: string } | null
+    if (u?.email) {
+      sendKycRejectedEmail(u.email, u.firstName || "there", reason.trim()).catch(() => {})
+    }
+  }
+
+  return { rejected, errors }
 }
 
 // ── requestAdditionalDocuments ────────────────────────────────────────────────
@@ -533,6 +597,10 @@ export async function overrideKycStatus(
   // Email the client when they're manually verified
   if (kycStatus === "verified" && before.kycStatus !== "verified" && user.email) {
     sendKycApprovedEmail(user.email, user.firstName || "there", user.kycTier).catch(() => {})
+  }
+  // Email the client when their verification is manually declined
+  if (kycStatus === "rejected" && before.kycStatus !== "rejected" && user.email) {
+    sendKycRejectedEmail(user.email, user.firstName || "there", reason?.trim() || "Your verification could not be approved.").catch(() => {})
   }
 
   return user.toObject() as unknown as Record<string, unknown>

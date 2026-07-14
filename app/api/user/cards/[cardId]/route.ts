@@ -53,6 +53,7 @@ export async function GET(
         dailySpendLimit: cardData.dailySpendLimit || 0,
         balance: (cardData.balance as number || 0) / 100,
         billingAddress: cardData.billingAddress || null,
+        deliveryStatus: cardData.deliveryStatus || null,
         appliedAt: cardData.appliedAt,
         approvedAt: cardData.approvedAt || null,
         adminNote: cardData.adminNote || null,

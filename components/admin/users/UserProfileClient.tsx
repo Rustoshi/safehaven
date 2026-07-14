@@ -514,10 +514,17 @@ export function UserProfileClient({ user: initialUser }: Props) {
           <TabsContent value="cards" className="mt-5 overflow-x-auto">
             <DataTable
               columns={[
-                { key: "cardType",    label: "Card type",
-                  render: (r) => <span className="capitalize">{String(r.cardType).replace(/_/g, " ")}</span> },
+                { key: "cardType",    label: "Card",
+                  render: (r) => (
+                    <div className="min-w-0">
+                      <span className="capitalize font-medium">{String(r.cardNetwork ?? "visa")} {String(r.cardType)}</span>
+                      <span className="block text-[11px] text-slate-400">{r.isVirtual ? "Virtual" : "Physical"}</span>
+                    </div>
+                  ) },
                 { key: "creditLimit", label: "Credit limit",
                   render: (r) => <span>{r.creditLimit != null ? fmtFiat(Number(r.creditLimit)) : "—"}</span> },
+                { key: "spendingLimit", label: "Spending limit",
+                  render: (r) => <span>{r.spendingLimit != null ? fmtFiat(Number(r.spendingLimit)) : "—"}</span> },
                 { key: "status",      label: "Status",
                   render: (r) => <StatusBadge status={String(r.status)} /> },
                 { key: "cardNumber",  label: "Card number",
@@ -527,6 +534,12 @@ export function UserProfileClient({ user: initialUser }: Props) {
                   } },
                 { key: "appliedAt",   label: "Applied",
                   render: (r) => <span className="text-xs text-slate-400">{format(new Date(String(r.appliedAt)), "MMM d, yyyy")}</span> },
+                { key: "actions",     label: "",
+                  render: (r) => (
+                    <Button asChild size="sm" variant="outline" className="h-8 px-3 text-xs whitespace-nowrap">
+                      <Link href={`/admin/cards/${String(r.id)}`}>Manage card</Link>
+                    </Button>
+                  ) },
               ]}
               data={user.cardApplications as unknown as Record<string, unknown>[]}
               emptyMessage="No card applications."

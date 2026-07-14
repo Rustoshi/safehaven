@@ -3,6 +3,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { BANK_NAME } from "@/lib/brand"
 import { getContactInfo } from "@/lib/contact"
+import { ChatLink } from "@/components/shared/ChatLink"
 import {
   Search,
   Wallet,
@@ -319,8 +320,7 @@ export default async function HelpCenterPage() {
               </div>
 
               <div className="space-y-3">
-                <a
-                  href="#chat"
+                <ChatLink
                   style={{ backgroundColor: "var(--sh-surface)", border: "0.5px solid var(--sh-ink-10)", borderRadius: "8px" }}
                   className="flex items-center gap-4 p-5 hover:border-[#A67C3D] transition-colors"
                 >
@@ -330,7 +330,7 @@ export default async function HelpCenterPage() {
                     <p className="text-[13px]" style={{ color: "var(--sh-ink-50)" }}>Get instant help from our team</p>
                   </div>
                   <span className={LABEL} style={{ color: "var(--sh-bronze-dark)" }}>Online</span>
-                </a>
+                </ChatLink>
                 <a
                   href={contact.phoneHref}
                   style={{ backgroundColor: "var(--sh-surface)", border: "0.5px solid var(--sh-ink-10)", borderRadius: "8px" }}

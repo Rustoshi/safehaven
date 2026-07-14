@@ -1355,11 +1355,4 @@
   animation: pulse-glow 3s ease-in-out infinite;
 }
 
-/* Lift the Smartsupp live-chat launcher above the mobile bottom navigation so
-   it doesn't overlap it. Only applies on screens that show the bottom nav
-   (below the lg breakpoint) and only when a shell with a bottom nav is mounted. */
-@media (max-width: 1023px) {
-  body.has-mobile-nav #smartsupp-widget-container {
-    transform: translateY(-64px) !important;
-  }
-}
+

@@ -12,7 +12,7 @@ export default async function CardsPage() {
   if (!session?.user || session.user.role !== "admin") redirect("/admin/login")
 
   const initialData = await getCardApplications({
-    page: 1, limit: 20, status: "pending", sortOrder: "desc",
+    page: 1, limit: 20, sortOrder: "desc",
   }).catch(() => ({
     cards: [], total: 0, pages: 0,
     stats: {

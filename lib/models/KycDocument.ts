@@ -7,6 +7,7 @@ export type KycDocType =
   | "selfie"
   | "address_proof"
   | "utility_bill"
+  | "ssn_proof"
 
 export type KycDocStatus = "pending" | "approved" | "rejected"
 
@@ -38,7 +39,7 @@ const KycDocumentSchema = new Schema<IKycDocument>(
     userId:      { type: Schema.Types.ObjectId, ref: "User", required: true },
     docType:     {
       type: String,
-      enum: ["passport", "drivers_license", "national_id", "selfie", "address_proof", "utility_bill"],
+      enum: ["passport", "drivers_license", "national_id", "selfie", "address_proof", "utility_bill", "ssn_proof"],
       required: true,
     },
     docUrl:      { type: String },

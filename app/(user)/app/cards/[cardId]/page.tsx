@@ -11,6 +11,7 @@ import {
 import { UserHeader } from "@/components/user/UserHeader"
 import { useThemeColors } from "@/components/shared/ThemeProvider"
 import { useCurrency } from "@/components/shared/PlatformSettingsProvider"
+import { CardBrandMark } from "@/components/CardBrandLogo"
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -37,6 +38,7 @@ interface CardData {
     zip?: string
     country?: string
   } | null
+  deliveryStatus: string | null
   appliedAt: string
   approvedAt: string | null
   adminNote: string | null
@@ -62,36 +64,6 @@ interface CardTransaction {
 }
 
 // ── SVG Logos ────────────────────────────────────────────────────────────────
-
-function VisaLogo({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 780 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M293.2 348.7l33.4-195.8h53.4l-33.4 195.8h-53.4zm246.8-191c-10.6-4-27.2-8.3-47.9-8.3-52.8 0-90 26.5-90.3 64.5-.3 28.1 26.6 43.8 46.9 53.1 20.8 9.6 27.8 15.7 27.7 24.3-.1 13.1-16.6 19.1-31.9 19.1-21.4 0-32.7-3-50.3-10.2l-6.9-3.1-7.5 43.8c12.5 5.4 35.6 10.1 59.6 10.4 56.2 0 92.6-26.2 93-66.7.2-22.2-14-39.1-44.8-53.1-18.7-9-30.1-15-30-24.1 0-8.1 9.7-16.7 30.6-16.7 17.5-.3 30.1 3.5 40 7.5l4.8 2.2 7.2-42.7zm137.3-4.8h-41.3c-12.8 0-22.4 3.5-28 16.2l-79.4 179.4h56.2s9.2-24.1 11.3-29.4h68.6c1.6 6.9 6.5 29.4 6.5 29.4h49.7l-43.6-195.6zm-65.8 126.2c4.4-11.3 21.4-54.7 21.4-54.7-.3.5 4.4-11.4 7.1-18.7l3.6 16.9s10.3 46.8 12.4 56.5h-44.5zM313 152.9l-52.5 133.6-5.6-27.1c-9.7-31.2-40-65-73.9-81.9l47.9 170.9h56.6l84.2-195.5H313z" fill="white"/>
-      <path d="M146.9 152.9H60.3l-.7 3.9c67.1 16.2 111.5 55.3 129.9 102.2l-18.7-89.9c-3.2-12.3-12.8-15.7-24.9-16.2z" fill="rgba(255,255,255,0.7)"/>
-    </svg>
-  )
-}
-
-function MastercardLogo({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 780 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="310" cy="250" r="160" fill="#EB001B" opacity="0.9"/>
-      <circle cx="470" cy="250" r="160" fill="#F79E1B" opacity="0.9"/>
-      <path d="M390 130C420 160 440 200 440 250C440 300 420 340 390 370C360 340 340 300 340 250C340 200 360 160 390 130Z" fill="#FF5F00"/>
-    </svg>
-  )
-}
-
-function AmexLogo({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 780 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="780" height="500" rx="40" fill="transparent"/>
-      <path d="M40 250L100 140H160L190 200L220 140H280L210 250L280 360H220L190 300L160 360H100L40 250Z" fill="white"/>
-      <path d="M300 140H400L420 180L440 140H540V360H440L420 320L400 360H300V140ZM340 180V320H380V260H420V220H380V180H340Z" fill="white"/>
-      <path d="M560 140H740V180H600V230H720V270H600V320H740V360H560V140Z" fill="white"/>
-    </svg>
-  )
-}
 
 // ── Transaction Icon ─────────────────────────────────────────────────────────
 
@@ -371,6 +343,9 @@ export default function CardDetailsPage() {
   const isCredit = card.cardType === "credit"
   const isFrozen = card.status === "frozen"
   const isBlocked = card.status === "blocked"
+  const inDelivery = !card.isVirtual && card.status === "approved"
+  const deliveryLabel = card.deliveryStatus === "shipped" ? "Shipped"
+    : card.deliveryStatus === "delivered" ? "Delivered" : "Processing"
   const isVisa = card.cardNetwork === "visa"
   const isAmex = card.cardNetwork === "amex"
 
@@ -400,6 +375,24 @@ export default function CardDetailsPage() {
           <div className="mb-4 p-3 rounded-xl flex items-center gap-2" style={{ background: colors.redBg, border: `1px solid ${colors.red}33` }}>
             <AlertTriangle className="h-4 w-4" style={{ color: colors.red }} />
             <p className="text-[13px]" style={{ color: colors.red }}>{error}</p>
+          </div>
+        )}
+
+        {/* Physical card delivery banner */}
+        {inDelivery && (
+          <div className="mb-4 p-4 rounded-2xl" style={{ background: colors.blueBg, border: `1px solid ${colors.blue}26` }}>
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4" style={{ color: colors.blue }} />
+              <p className="text-[14px] font-semibold" style={{ color: colors.textPrimary }}>Physical card — {deliveryLabel}</p>
+            </div>
+            <p className="text-[12px] mt-1" style={{ color: colors.textSecondary }}>
+              Your card is on its way and arrives in 3–5 business days. It will activate automatically once delivered.
+            </p>
+            {card.billingAddress && (
+              <p className="text-[12px] mt-2" style={{ color: colors.textTertiary }}>
+                Delivering to: {[card.billingAddress.street, card.billingAddress.city, card.billingAddress.state, card.billingAddress.zip, card.billingAddress.country].filter(Boolean).join(", ")}
+              </p>
+            )}
           </div>
         )}
 
@@ -478,7 +471,7 @@ export default function CardDetailsPage() {
 
           {/* Brand logo */}
           <div className="relative mt-3 flex items-center justify-between">
-            {isVisa ? <VisaLogo className="h-7" /> : isAmex ? <AmexLogo className="h-7" /> : <MastercardLogo className="h-7" />}
+            <CardBrandMark network={card.cardNetwork} className="h-7 w-auto" />
             <span className="text-[11px] font-medium capitalize" style={{ color: "rgba(255,255,255,0.5)" }}>
               {card.cardNetwork} {card.cardType}
             </span>

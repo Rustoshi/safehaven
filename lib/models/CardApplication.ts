@@ -13,6 +13,9 @@ export type CardStatus =
   | "blocked"
   | "cancelled"
 
+// Physical-card fulfilment tracking (virtual cards leave this unset)
+export type CardDeliveryStatus = "processing" | "shipped" | "delivered"
+
 export interface ICardBillingAddress {
   street: string
   city: string
@@ -47,6 +50,10 @@ export interface ICardApplication extends Document {
   appliedAt: Date
   approvedAt?: Date
   cancelledAt?: Date
+  // Physical-card fulfilment (delivery address reuses billingAddress)
+  deliveryStatus?: CardDeliveryStatus
+  shippedAt?: Date
+  deliveredAt?: Date
 }
 
 const BillingAddressSchema = new Schema(
@@ -98,6 +105,9 @@ const CardApplicationSchema = new Schema<ICardApplication>(
     appliedAt:       { type: Date, default: () => new Date() },
     approvedAt:      { type: Date },
     cancelledAt:     { type: Date },
+    deliveryStatus:  { type: String, enum: ["processing", "shipped", "delivered"] },
+    shippedAt:       { type: Date },
+    deliveredAt:     { type: Date },
   },
   { timestamps: false }
 )

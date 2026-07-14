@@ -43,6 +43,10 @@ interface Settings {
   maintenanceMessage:       string
   allowRegistration:        boolean
   kycRequiredForTransfer:   boolean
+  cardApplicationFee:       number
+  cardPhysicalFee:          number
+  cardMaxPerUser:           number
+  cardRequiredKycTier:      number
   supportPhone:             string
   supportTextPhone:         string
   supportEmail:             string
@@ -120,6 +124,10 @@ function toSettings(raw: Record<string, unknown>): Settings {
     maintenanceMessage:       String(raw.maintenanceMessage        ?? ""),
     allowRegistration:        raw.allowRegistration !== false,
     kycRequiredForTransfer:   raw.kycRequiredForTransfer !== false,
+    cardApplicationFee:       Number(raw.cardApplicationFee  ?? 0),
+    cardPhysicalFee:          Number(raw.cardPhysicalFee     ?? 0),
+    cardMaxPerUser:           Number(raw.cardMaxPerUser       ?? 5),
+    cardRequiredKycTier:      Number(raw.cardRequiredKycTier  ?? 1),
     supportPhone:             String(raw.supportPhone     ?? ""),
     supportTextPhone:         String(raw.supportTextPhone ?? ""),
     supportEmail:             String(raw.supportEmail      ?? ""),
@@ -551,6 +559,67 @@ function RegistrationSection({ initial, onSaved }: { initial: Settings; onSaved:
       />
       <SaveButton isDirty={dirty} loading={loading} onClick={save} />
     </div>
+  )
+}
+
+// ── Cards section ─────────────────────────────────────────────────────────────
+
+function CardsSection({ initial, onSaved }: { initial: Settings; onSaved: (s: Settings) => void }) {
+  const { toast } = useToast()
+  const [loading, setLoading] = useState(false)
+  const { register, handleSubmit, formState: { isDirty }, reset } = useForm({
+    defaultValues: {
+      cardApplicationFee: initial.cardApplicationFee,
+      cardPhysicalFee:    initial.cardPhysicalFee,
+      cardMaxPerUser:     initial.cardMaxPerUser,
+      cardRequiredKycTier: initial.cardRequiredKycTier,
+    },
+  })
+
+  async function save(data: Partial<Settings>) {
+    setLoading(true)
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+      const json = await res.json() as Record<string, unknown>
+      if (!res.ok) throw new Error((json.error as string) ?? "Failed")
+      const next = toSettings(json)
+      reset({
+        cardApplicationFee: next.cardApplicationFee,
+        cardPhysicalFee:    next.cardPhysicalFee,
+        cardMaxPerUser:     next.cardMaxPerUser,
+        cardRequiredKycTier: next.cardRequiredKycTier,
+      })
+      onSaved(next)
+      toast({ title: "Card settings saved" })
+    } catch (err) {
+      toast({ title: "Error", description: err instanceof Error ? err.message : "Failed", variant: "destructive" })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit((d) => save(d as Partial<Settings>))} className="mt-2">
+      <FieldGrid>
+        <Field label="Virtual card fee ($)" hint="Charged when applying for a virtual card">
+          <Input type="number" step="0.01" min={0} {...register("cardApplicationFee", { valueAsNumber: true })} />
+        </Field>
+        <Field label="Physical card fee ($)" hint="Charged when applying for a physical (mailed) card">
+          <Input type="number" step="0.01" min={0} {...register("cardPhysicalFee", { valueAsNumber: true })} />
+        </Field>
+        <Field label="Max cards per user" hint="Across pending, active, frozen and blocked">
+          <Input type="number" min={1} max={20} {...register("cardMaxPerUser", { valueAsNumber: true })} />
+        </Field>
+        <Field label="Required KYC tier" hint="Minimum KYC tier to apply (1–3)">
+          <Input type="number" min={1} max={3} {...register("cardRequiredKycTier", { valueAsNumber: true })} />
+        </Field>
+      </FieldGrid>
+      <SaveButton isDirty={isDirty} loading={loading} onClick={handleSubmit((d) => save(d as Partial<Settings>))} />
+    </form>
   )
 }
 
@@ -1165,6 +1234,13 @@ export function SettingsClient({ settings: rawSettings, history: rawHistory }: P
         description="Control who can sign up and what verification is required"
       >
         <RegistrationSection initial={current} onSaved={handleSaved} />
+      </Section>
+
+      <Section
+        title="Cards"
+        description="Application fees, per-user limit and required KYC tier for cards"
+      >
+        <CardsSection initial={current} onSaved={handleSaved} />
       </Section>
 
       <Section

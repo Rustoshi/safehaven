@@ -92,8 +92,11 @@ export interface LoanData {
 
 export interface CardData {
   id:            string
+  cardNetwork:   string
   cardType:      string
+  isVirtual:     boolean
   creditLimit?:  number
+  spendingLimit?: number
   status:        string
   cardNumber?:   string
   appliedAt:     string
@@ -397,12 +400,17 @@ export async function getUserById(id: string): Promise<UserDetail | null> {
     })),
 
     cardApplications: cardApplications.map((c) => ({
-      id:           String(c._id),
-      cardType:     c.cardType,
-      creditLimit:  c.creditLimit ? c.creditLimit / 100 : undefined,
-      status:       c.status,
-      cardNumber:   c.cardNumber,
-      appliedAt:    new Date((c as unknown as Record<string, unknown>).appliedAt as Date ?? Date.now()).toISOString(),
+      id:            String(c._id),
+      cardNetwork:   (c.cardNetwork as string) || "visa",
+      cardType:      c.cardType,
+      isVirtual:     (c.isVirtual as boolean) ?? true,
+      // Card limits are stored in whole currency units (not minor units) —
+      // do NOT divide by 100.
+      creditLimit:   c.creditLimit ?? undefined,
+      spendingLimit: c.spendingLimit ?? undefined,
+      status:        c.status,
+      cardNumber:    c.cardNumber,
+      appliedAt:     new Date((c as unknown as Record<string, unknown>).appliedAt as Date ?? Date.now()).toISOString(),
     })),
 
     depositRequests: depositRequestsRaw.map((d) => {

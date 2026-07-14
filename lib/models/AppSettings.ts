@@ -87,6 +87,7 @@ export interface IAppSettings extends Document {
   taxRefundHoldDays: number
   // Card settings
   cardApplicationFee: number
+  cardPhysicalFee: number
   cardMaxPerUser: number
   cardRequiredKycTier: number
   // Contact / support details (shown on public + user pages)
@@ -282,6 +283,7 @@ const AppSettingsSchema = new Schema<IAppSettings>(
     taxRefundHoldDays:         { type: Number, default: 3, min: 0 },
     // Card settings
     cardApplicationFee:    { type: Number, default: 0, min: 0 },
+    cardPhysicalFee:       { type: Number, default: 0, min: 0 },
     cardMaxPerUser:        { type: Number, default: 5, min: 1, max: 20 },
     cardRequiredKycTier:   { type: Number, default: 1, min: 1, max: 3 },
     // Contact / support details (shown on public + user pages)

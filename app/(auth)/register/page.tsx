@@ -19,7 +19,7 @@ const DISPLAY = "var(--sh-font-display)"
 const MONO = "var(--sh-font-mono)"
 const LABEL = "text-[11px] uppercase tracking-[0.09em] font-medium"
 
-const inputCls = "w-full h-12 text-[15px] focus:outline-none transition-colors placeholder:text-[#17140F80]"
+const inputCls = "w-full h-12 text-[16px] focus:outline-none transition-colors placeholder:text-[#17140F80]"
 const inputSt = (border: string) => ({ backgroundColor: "var(--sh-surface)", border, borderRadius: "2px", color: INK })
 
 const registerSchema = z.object({
@@ -64,7 +64,7 @@ function getPasswordStrength(pw: string): { score: number; label: string; color:
 
 function StepIndicator({ current }: { current: number }) {
   return (
-    <div className="flex items-center mb-8">
+    <div className="flex items-center mb-8 overflow-x-auto scrollbar-hide">
       {STEPS.map((step, i) => {
         const Icon = step.icon
         const isActive = i === current
@@ -72,7 +72,7 @@ function StepIndicator({ current }: { current: number }) {
         const on = isActive || isCompleted
         return (
           <div key={i} className="flex items-center flex-1 last:flex-none">
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 flex-shrink-0">
               <div
                 className="w-9 h-9 flex items-center justify-center"
                 style={{ border: `0.5px solid ${on ? BRONZE : "var(--sh-ink-20)"}`, backgroundColor: on ? "var(--sh-bronze-10)" : "transparent", borderRadius: "2px" }}
@@ -80,10 +80,10 @@ function StepIndicator({ current }: { current: number }) {
                 {isCompleted ? <CheckCircle2 className="w-4 h-4" strokeWidth={1.5} style={{ color: BRONZE }} />
                              : <Icon className="w-4 h-4" strokeWidth={1.5} style={{ color: on ? BRONZE : "var(--sh-ink-50)" }} />}
               </div>
-              <span className={LABEL} style={{ color: on ? "var(--sh-bronze-dark)" : "var(--sh-ink-50)" }}>{step.label}</span>
+              <span className={`${LABEL} whitespace-nowrap`} style={{ color: on ? "var(--sh-bronze-dark)" : "var(--sh-ink-50)" }}>{step.label}</span>
             </div>
             {i < STEPS.length - 1 && (
-              <div className="flex-1 mx-4" style={{ height: "0.5px", backgroundColor: isCompleted ? BRONZE : "var(--sh-ink-20)" }} />
+              <div className="flex-1 min-w-[2rem] mx-4" style={{ height: "0.5px", backgroundColor: isCompleted ? BRONZE : "var(--sh-ink-20)" }} />
             )}
           </div>
         )
@@ -322,13 +322,13 @@ export default function RegisterPage() {
 
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
+                <div className="space-y-2 min-w-0">
                   <label htmlFor="firstName" className={LABEL} style={{ color: focusedField === "firstName" ? "var(--sh-bronze-dark)" : "var(--sh-ink-50)" }}>First name</label>
                   <input id="firstName" autoFocus placeholder="John" {...register("firstName")} onFocus={() => setFocusedField("firstName")} onBlur={() => setFocusedField(null)}
                     className={`${inputCls} px-4`} style={inputSt(bd("firstName", !!errors.firstName))} />
                   {errors.firstName && <p className="text-[12px] flex items-center gap-1" style={{ color: "var(--sh-error)" }}><AlertCircle className="w-3 h-3" strokeWidth={1.5} />{errors.firstName.message}</p>}
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 min-w-0">
                   <label htmlFor="lastName" className={LABEL} style={{ color: focusedField === "lastName" ? "var(--sh-bronze-dark)" : "var(--sh-ink-50)" }}>Last name</label>
                   <input id="lastName" placeholder="Doe" {...register("lastName")} onFocus={() => setFocusedField("lastName")} onBlur={() => setFocusedField(null)}
                     className={`${inputCls} px-4`} style={inputSt(bd("lastName", !!errors.lastName))} />
@@ -380,7 +380,7 @@ export default function RegisterPage() {
                             <input
                               type="text" placeholder="Search…" value={currencySearch}
                               onChange={(e) => setCurrencySearch(e.target.value.toUpperCase())} onClick={(e) => e.stopPropagation()}
-                              className="w-full h-9 px-3 text-[14px] focus:outline-none placeholder:text-[#17140F80]"
+                              className="w-full h-9 px-3 text-[16px] focus:outline-none placeholder:text-[#17140F80]"
                               style={{ backgroundColor: "var(--sh-linen)", border: "0.5px solid var(--sh-ink-10)", borderRadius: "2px", color: INK, fontFamily: MONO }}
                             />
                           </div>
@@ -489,14 +489,14 @@ export default function RegisterPage() {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
+                  <div className="space-y-2 min-w-0">
                     <label htmlFor="pin" className={LABEL} style={{ color: focusedField === "pin" ? "var(--sh-bronze-dark)" : "var(--sh-ink-50)" }}>PIN</label>
                     <input id="pin" type="password" inputMode="numeric" maxLength={4} placeholder="••••" {...register("pin")} onFocus={() => setFocusedField("pin")} onBlur={() => setFocusedField(null)}
                       className="w-full h-12 px-4 text-center text-xl tracking-[0.5em] focus:outline-none transition-colors placeholder:text-[#17140F80]"
                       style={{ ...inputSt(bd("pin", !!errors.pin)), fontFamily: MONO }} />
                     {errors.pin && <p className="text-[12px] flex items-center gap-1" style={{ color: "var(--sh-error)" }}><AlertCircle className="w-3 h-3" strokeWidth={1.5} />{errors.pin.message}</p>}
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 min-w-0">
                     <label htmlFor="confirmPin" className={LABEL} style={{ color: focusedField === "confirmPin" ? "var(--sh-bronze-dark)" : "var(--sh-ink-50)" }}>Confirm PIN</label>
                     <div className="relative">
                       <input id="confirmPin" type="password" inputMode="numeric" maxLength={4} placeholder="••••" {...register("confirmPin")} onFocus={() => setFocusedField("confirmPin")} onBlur={() => setFocusedField(null)}

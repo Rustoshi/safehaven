@@ -33,7 +33,7 @@ const AUTH_ERROR_MAP: Record<string, string> = {
 function fieldBorder(focused: boolean, error: boolean) {
   return `0.5px solid ${error ? "var(--sh-error)" : focused ? BRONZE : "var(--sh-ink-10)"}`
 }
-const inputBase = "w-full h-12 text-[15px] focus:outline-none transition-colors placeholder:text-[#17140F80]"
+const inputBase = "w-full h-12 text-[16px] focus:outline-none transition-colors placeholder:text-[#17140F80]"
 
 export default function LoginPage() {
   return (

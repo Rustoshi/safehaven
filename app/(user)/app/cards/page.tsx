@@ -12,6 +12,7 @@ import {
 import { UserHeader } from "@/components/user/UserHeader"
 import { useThemeColors } from "@/components/shared/ThemeProvider"
 import { useCurrency } from "@/components/shared/PlatformSettingsProvider"
+import { CardBrandBadge, CardBrandMark } from "@/components/CardBrandLogo"
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -35,13 +36,18 @@ interface CardData {
   adminNote:      string | null
   appliedAt:      string
   approvedAt:     string | null
+  deliveryStatus: string | null
+  deliveryAddress: { street?: string; city?: string; state?: string; zip?: string; country?: string } | null
 }
 
 interface CardSettings {
   applicationFee:   number
+  physicalFee:      number
   maxPerUser:       number
   requiredKycTier:  number
 }
+
+interface Address { street: string; city: string; state: string; zip: string; country: string }
 
 interface Eligibility {
   fullName:     string
@@ -50,12 +56,14 @@ interface Eligibility {
   fiatBalance:  number
   currency:     string
   meetsKyc:     boolean
+  address:      Address | null
 }
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<string, { icon: React.ElementType; color: string; bg: string; label: string }> = {
   pending:   { icon: Clock,         color: "#F79009", bg: "#FFFAEB", label: "Pending Review" },
+  approved:  { icon: Clock,         color: "#2775CA", bg: "#EFF8FF", label: "In Delivery" },
   active:    { icon: CheckCircle2,  color: "#12B76A", bg: "#ECFDF3",  label: "Active" },
   frozen:    { icon: Snowflake,     color: "#1A2CCE", bg: "#EEF0FE", label: "Frozen" },
   blocked:   { icon: Lock,          color: "#B42318", bg: "#FEF3F2", label: "Blocked" },
@@ -69,41 +77,9 @@ function formatCardLabel(network: string, type: string): string {
   return `${n} ${t}`
 }
 
-// ── SVG Logos ────────────────────────────────────────────────────────────────
-
-function VisaLogo({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 780 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M293.2 348.7l33.4-195.8h53.4l-33.4 195.8h-53.4zm246.8-191c-10.6-4-27.2-8.3-47.9-8.3-52.8 0-90 26.5-90.3 64.5-.3 28.1 26.6 43.8 46.9 53.1 20.8 9.6 27.8 15.7 27.7 24.3-.1 13.1-16.6 19.1-31.9 19.1-21.4 0-32.7-3-50.3-10.2l-6.9-3.1-7.5 43.8c12.5 5.4 35.6 10.1 59.6 10.4 56.2 0 92.6-26.2 93-66.7.2-22.2-14-39.1-44.8-53.1-18.7-9-30.1-15-30-24.1 0-8.1 9.7-16.7 30.6-16.7 17.5-.3 30.1 3.5 40 7.5l4.8 2.2 7.2-42.7zm137.3-4.8h-41.3c-12.8 0-22.4 3.5-28 16.2l-79.4 179.4h56.2s9.2-24.1 11.3-29.4h68.6c1.6 6.9 6.5 29.4 6.5 29.4h49.7l-43.6-195.6zm-65.8 126.2c4.4-11.3 21.4-54.7 21.4-54.7-.3.5 4.4-11.4 7.1-18.7l3.6 16.9s10.3 46.8 12.4 56.5h-44.5zM313 152.9l-52.5 133.6-5.6-27.1c-9.7-31.2-40-65-73.9-81.9l47.9 170.9h56.6l84.2-195.5H313z" fill="white"/>
-      <path d="M146.9 152.9H60.3l-.7 3.9c67.1 16.2 111.5 55.3 129.9 102.2l-18.7-89.9c-3.2-12.3-12.8-15.7-24.9-16.2z" fill="rgba(255,255,255,0.7)"/>
-    </svg>
-  )
-}
-
-function MastercardLogo({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 780 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="310" cy="250" r="160" fill="#EB001B" opacity="0.9"/>
-      <circle cx="470" cy="250" r="160" fill="#F79E1B" opacity="0.9"/>
-      <path d="M390 130.7c32.5 25.7 53.5 65.2 53.5 109.3s-21 83.6-53.5 109.3c-32.5-25.7-53.5-65.2-53.5-109.3s21-83.6 53.5-109.3z" fill="#FF5F00" opacity="0.85"/>
-    </svg>
-  )
-}
-
-function AmexLogo({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 780 500" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="780" height="500" rx="40" fill="transparent"/>
-      <text x="390" y="280" textAnchor="middle" fill="white" fontSize="120" fontWeight="bold" fontFamily="Arial, sans-serif">AMEX</text>
-      <path d="M100 350h580" stroke="rgba(255,255,255,0.5)" strokeWidth="4"/>
-      <path d="M100 150h580" stroke="rgba(255,255,255,0.5)" strokeWidth="4"/>
-    </svg>
-  )
-}
-
 // ── Step type ────────────────────────────────────────────────────────────────
 
-type ApplyStep = "closed" | "eligibility" | "network" | "type" | "details" | "security" | "confirm" | "success"
+type ApplyStep = "closed" | "eligibility" | "network" | "type" | "format" | "details" | "delivery" | "security" | "confirm" | "success"
 
 const LIMIT_OPTIONS = [500, 1000, 2500, 5000, 10000, 25000]
 const DAILY_LIMIT_OPTIONS = [200, 500, 1000, 2500, 5000, 10000]
@@ -115,7 +91,7 @@ export default function CardsPage() {
   const colors = useThemeColors()
   const { symbol: currencySymbol, formatAmount } = useCurrency()
   const [cards, setCards] = useState<CardData[]>()
-  const [cardSettings, setCardSettings] = useState<CardSettings>({ applicationFee: 0, maxPerUser: 5, requiredKycTier: 1 })
+  const [cardSettings, setCardSettings] = useState<CardSettings>({ applicationFee: 0, physicalFee: 0, maxPerUser: 5, requiredKycTier: 1 })
   const [eligibility, setEligibility] = useState<Eligibility | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -124,6 +100,7 @@ export default function CardsPage() {
   const [applying, setApplying] = useState(false)
   const [selectedNetwork, setSelectedNetwork] = useState<"visa" | "mastercard" | "amex" | "">("")
   const [selectedType, setSelectedType] = useState<"debit" | "credit" | "">("")
+  const [selectedFormat, setSelectedFormat] = useState<"virtual" | "physical" | "">("")
   const [cardholderName, setCardholderName] = useState("")
   const [preferredLimit, setPreferredLimit] = useState<number>(1000)
   const [agreedTerms, setAgreedTerms] = useState(false)
@@ -164,25 +141,51 @@ export default function CardsPage() {
 
   useEffect(() => { fetchCards() }, [fetchCards])
 
-  const activeOrPending = cards?.filter((c) => ["pending", "active", "frozen", "blocked"].includes(c.status)) || []
+  const activeOrPending = cards?.filter((c) => ["pending", "approved", "active", "frozen", "blocked"].includes(c.status)) || []
   const canApply = activeOrPending.length < cardSettings.maxPerUser
+
+  // Apply-flow derived state
+  const isPhysical = selectedFormat === "physical"
+  const applyFee = isPhysical ? cardSettings.physicalFee : cardSettings.applicationFee
+  const stepList: ApplyStep[] = [
+    "eligibility", "network", "type", "format", "details",
+    ...(isPhysical ? (["delivery"] as ApplyStep[]) : []),
+    "security", "confirm",
+  ]
+  const stepIndex = stepList.indexOf(step)
+  const goNext = () => {
+    const i = stepList.indexOf(step)
+    if (i >= 0 && i < stepList.length - 1) { setStep(stepList[i + 1]); setError("") }
+  }
+  const goPrev = () => {
+    const i = stepList.indexOf(step)
+    if (i > 0) {
+      const prev = stepList[i - 1]
+      if (step === "security") { setPinStep("enter"); setCardPin(""); setConfirmPin("") }
+      setStep(prev); setError("")
+    }
+  }
 
   const openApply = () => {
     setStep("eligibility")
     setSelectedNetwork("")
     setSelectedType("")
+    setSelectedFormat("")
     setPreferredLimit(1000)
     setDailySpendLimit(500)
     setAgreedTerms(false)
     setError("")
     setSuccessRef("")
-    setBillingStreet(""); setBillingCity(""); setBillingState(""); setBillingZip(""); setBillingCountry("")
+    // Prefill the delivery address from the user's saved profile (editable)
+    const a = eligibility?.address
+    setBillingStreet(a?.street || ""); setBillingCity(a?.city || ""); setBillingState(a?.state || "")
+    setBillingZip(a?.zip || ""); setBillingCountry(a?.country || "")
     setCardPin(""); setConfirmPin(""); setPinStep("enter")
     if (eligibility) setCardholderName(eligibility.fullName)
   }
 
   const handleApply = async () => {
-    if (!selectedNetwork || !selectedType || !agreedTerms) return
+    if (!selectedNetwork || !selectedType || !selectedFormat || !agreedTerms) return
     setApplying(true)
     setError("")
     try {
@@ -192,6 +195,7 @@ export default function CardsPage() {
         body: JSON.stringify({
           cardNetwork: selectedNetwork,
           cardType: selectedType,
+          isVirtual: selectedFormat === "virtual",
           cardholderName: cardholderName.trim(),
           preferredLimit,
           dailySpendLimit,
@@ -260,7 +264,7 @@ export default function CardsPage() {
             </div>
             <p className="text-[17px] font-semibold" style={{ color: colors.textPrimary }}>No cards yet</p>
             <p className="mt-1 text-[14px]" style={{ color: colors.textTertiary }}>
-              Apply for your first virtual card
+              Apply for your first virtual or physical card
             </p>
             <button
               onClick={openApply}
@@ -311,9 +315,12 @@ export default function CardsPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-[14px] font-medium truncate" style={{ color: colors.textPrimary }}>
-                            {formatCardLabel(card.cardNetwork, card.cardType)}
+                            {card.isVirtual ? "Virtual" : "Physical"} · {formatCardLabel(card.cardNetwork, card.cardType)}
                           </p>
                           <p className="text-[12px] mt-0.5" style={{ color: colors.textTertiary }}>
+                            {!card.isVirtual && card.deliveryStatus && (
+                              <span className="capitalize">{card.deliveryStatus} · </span>
+                            )}
                             {card.referenceNumber && <span className="font-mono">{card.referenceNumber} · </span>}
                             Applied {new Date(card.appliedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                           </p>
@@ -357,12 +364,7 @@ export default function CardsPage() {
             <div className="px-5 py-3 flex items-center gap-3">
               {step !== "eligibility" && step !== "success" && (
                 <button
-                  onClick={() => {
-                    const prev: Record<ApplyStep, ApplyStep> = { closed: "closed", eligibility: "closed", network: "eligibility", type: "network", details: "type", security: "details", confirm: "security", success: "success" }
-                    setStep(prev[step])
-                    setError("")
-                    if (step === "security") { setPinStep("enter"); setCardPin(""); setConfirmPin("") }
-                  }}
+                  onClick={goPrev}
                   className="flex h-8 w-8 items-center justify-center rounded-full"
                   style={{ background: colors.bgHover }}
                 >
@@ -374,14 +376,16 @@ export default function CardsPage() {
                   {step === "eligibility" && "Card Application"}
                   {step === "network" && "Select Network"}
                   {step === "type" && "Select Card Type"}
+                  {step === "format" && "Virtual or Physical"}
                   {step === "details" && "Card Details"}
+                  {step === "delivery" && "Delivery Address"}
                   {step === "security" && "Security & Limits"}
                   {step === "confirm" && "Review & Confirm"}
                   {step === "success" && "Application Submitted"}
                 </h2>
                 {step !== "success" && (
                   <p className="text-[12px] mt-0.5" style={{ color: colors.textMuted }}>
-                    Step {["eligibility", "network", "type", "details", "security", "confirm"].indexOf(step) + 1} of 6
+                    Step {stepIndex + 1} of {stepList.length}
                   </p>
                 )}
               </div>
@@ -397,7 +401,7 @@ export default function CardsPage() {
                   <div
                     className="h-full rounded-full transition-all duration-300"
                     style={{
-                      width: `${Math.round((["eligibility", "network", "type", "details", "security", "confirm"].indexOf(step) + 1) * (100 / 6))}%`,
+                      width: `${Math.round((stepIndex + 1) * (100 / stepList.length))}%`,
                       background: colors.blue,
                     }}
                   />
@@ -417,8 +421,14 @@ export default function CardsPage() {
                     <div className="space-y-2.5">
                       <div className="flex items-center justify-between">
                         <span className="text-[13px]" style={{ color: colors.textSecondary }}>KYC Verification</span>
-                        <span className="text-[13px] font-semibold" style={{ color: eligibility.meetsKyc ? colors.green : colors.red }}>
-                          {eligibility.meetsKyc ? "Verified" : `Tier ${cardSettings.requiredKycTier} Required`}
+                        <span className="text-[13px] font-semibold" style={{ color: eligibility.meetsKyc ? colors.green : eligibility.kycStatus === "pending" ? (colors.yellow || "#F79009") : colors.red }}>
+                          {eligibility.meetsKyc
+                            ? "Verified"
+                            : eligibility.kycStatus === "pending"
+                              ? "Under Review"
+                              : eligibility.kycStatus === "rejected"
+                                ? "Declined"
+                                : "Not Verified"}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
@@ -441,7 +451,7 @@ export default function CardsPage() {
                   <div className="rounded-xl p-3 flex items-start gap-2.5" style={{ background: colors.blueBg, border: `1px solid ${colors.blue}1A` }}>
                     <Shield className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: colors.blue }} />
                     <p className="text-[12px]" style={{ color: colors.textSecondary }}>
-                      Virtual cards are issued for online transactions only. Processing takes 1-3 business days after submission.
+                      Choose a virtual card (instant, online use) or a physical card (mailed in 3–5 business days) in the next steps.
                     </p>
                   </div>
 
@@ -449,7 +459,11 @@ export default function CardsPage() {
                     <div className="rounded-xl p-3 flex items-start gap-2" style={{ background: colors.redBg, border: `1px solid ${colors.red}1A` }}>
                       <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: colors.red }} />
                       <p className="text-[12px]" style={{ color: colors.textSecondary }}>
-                        Your KYC verification does not meet the minimum requirement. Please complete identity verification to apply for a card.
+                        {eligibility.kycStatus === "pending"
+                          ? "Your identity verification is under review. You'll be able to apply for a card once it's approved."
+                          : eligibility.kycStatus === "rejected"
+                            ? "Your identity verification was declined. Please re-submit your documents to apply for a card."
+                            : "You need to verify your identity before applying for a card. It only takes a few minutes."}
                       </p>
                     </div>
                   )}
@@ -457,12 +471,19 @@ export default function CardsPage() {
                   <button
                     onClick={() => eligibility.meetsKyc ? setStep("network") : router.push("/app/kyc")}
                     className="w-full h-12 rounded-xl text-[15px] font-semibold text-white transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-                    style={{ background: eligibility.meetsKyc ? colors.blue : colors.bgHover }}
+                    style={{ background: colors.blue }}
                   >
                     {eligibility.meetsKyc ? (
                       <>Continue<ArrowRight className="h-4 w-4" /></>
                     ) : (
-                      "Complete KYC Verification"
+                      <>
+                        <Shield className="h-4 w-4" />
+                        {eligibility.kycStatus === "pending"
+                          ? "View Verification Status"
+                          : eligibility.kycStatus === "rejected"
+                            ? "Re-submit Verification"
+                            : "Verify Identity"}
+                      </>
                     )}
                   </button>
                 </>
@@ -485,9 +506,7 @@ export default function CardsPage() {
                             border: sel ? `1.5px solid ${color}4D` : `1px solid ${colors.border}`,
                           }}
                         >
-                          {net === "visa" && <VisaLogo className="h-8 mx-auto mb-2" />}
-                          {net === "mastercard" && <MastercardLogo className="h-8 mx-auto mb-2" />}
-                          {net === "amex" && <AmexLogo className="h-8 mx-auto mb-2" />}
+                          <CardBrandBadge network={net} className="h-9 w-auto mx-auto mb-2.5 rounded-md" />
                           <p className="text-[13px] font-semibold" style={{ color: sel ? colors.textPrimary : colors.textSecondary }}>
                             {net === "visa" ? "Visa" : net === "mastercard" ? "Mastercard" : "Amex"}
                           </p>
@@ -500,7 +519,7 @@ export default function CardsPage() {
                     })}
                   </div>
                   <button
-                    onClick={() => selectedNetwork && setStep("type")}
+                    onClick={() => selectedNetwork && goNext()}
                     disabled={!selectedNetwork}
                     className="w-full h-12 rounded-xl text-[15px] font-semibold text-white transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                     style={{ background: selectedNetwork ? colors.blue : colors.bgHover, opacity: selectedNetwork ? 1 : 0.5 }}
@@ -542,10 +561,63 @@ export default function CardsPage() {
                     })}
                   </div>
                   <button
-                    onClick={() => selectedType && setStep("details")}
+                    onClick={() => selectedType && goNext()}
                     disabled={!selectedType}
                     className="w-full h-12 rounded-xl text-[15px] font-semibold text-white transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                     style={{ background: selectedType ? colors.blue : colors.bgHover, opacity: selectedType ? 1 : 0.5 }}
+                  >
+                    Continue<ArrowRight className="h-4 w-4" />
+                  </button>
+                </>
+              )}
+
+              {/* ─── STEP: Format (virtual vs physical) ─── */}
+              {step === "format" && (
+                <>
+                  <div className="space-y-3">
+                    {([
+                      { key: "virtual" as const, title: "Virtual card", icon: Wifi,
+                        desc: "Issued instantly for online & in-app payments. Ready to use as soon as it's approved.",
+                        meta: "Instant · online only", fee: cardSettings.applicationFee },
+                      { key: "physical" as const, title: "Physical card", icon: CreditCard,
+                        desc: "A physical card mailed to your address for in-store use. Activates once delivered.",
+                        meta: "Delivered in 3–5 business days", fee: cardSettings.physicalFee },
+                    ]).map((opt) => {
+                      const sel = selectedFormat === opt.key
+                      const Icon = opt.icon
+                      return (
+                        <button
+                          key={opt.key}
+                          onClick={() => setSelectedFormat(opt.key)}
+                          className="w-full rounded-xl p-4 transition-all text-left flex items-start gap-3"
+                          style={{
+                            background: sel ? colors.blueBg : colors.bgHover,
+                            border: sel ? `1.5px solid ${colors.blue}4D` : `1px solid ${colors.border}`,
+                          }}
+                        >
+                          <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full" style={{ background: sel ? colors.blue : colors.bgElevated }}>
+                            <Icon className="h-5 w-5" style={{ color: sel ? "#fff" : colors.textSecondary }} />
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="text-[15px] font-semibold" style={{ color: sel ? colors.blue : colors.textPrimary }}>{opt.title}</p>
+                              {opt.fee > 0 && (
+                                <span className="text-[11px] font-semibold" style={{ color: colors.yellow || "#F79009" }}>{formatAmount(opt.fee)}</span>
+                              )}
+                            </div>
+                            <p className="text-[12px] mt-1" style={{ color: colors.textTertiary }}>{opt.desc}</p>
+                            <p className="text-[11px] mt-1.5 font-medium" style={{ color: colors.textMuted }}>{opt.meta}</p>
+                          </div>
+                          {sel && <CheckCircle2 className="h-5 w-5 flex-shrink-0" style={{ color: colors.blue }} />}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <button
+                    onClick={() => selectedFormat && goNext()}
+                    disabled={!selectedFormat}
+                    className="w-full h-12 rounded-xl text-[15px] font-semibold text-white transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                    style={{ background: selectedFormat ? colors.blue : colors.bgHover, opacity: selectedFormat ? 1 : 0.5 }}
                   >
                     Continue<ArrowRight className="h-4 w-4" />
                   </button>
@@ -568,66 +640,7 @@ export default function CardsPage() {
                       style={{ background: colors.bgHover, border: `1px solid ${colors.border}`, color: colors.textPrimary }}
                     />
                     <p className="text-[11px] mt-1.5" style={{ color: colors.textMuted }}>
-                      This name will be printed on your virtual card
-                    </p>
-                  </div>
-
-                  {/* Billing Address */}
-                  <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <MapPin className="h-4 w-4" style={{ color: colors.blue }} />
-                      <label className="text-[12px] font-medium uppercase tracking-wide" style={{ color: colors.textTertiary }}>
-                        Billing Address
-                      </label>
-                    </div>
-                    <div className="space-y-2.5">
-                      <input
-                        type="text"
-                        value={billingStreet}
-                        onChange={(e) => setBillingStreet(e.target.value)}
-                        placeholder="Street address"
-                        className="w-full h-11 rounded-xl px-4 text-[14px] outline-none"
-                        style={{ background: colors.bgHover, border: `1px solid ${colors.border}`, color: colors.textPrimary }}
-                      />
-                      <div className="grid grid-cols-2 gap-2">
-                        <input
-                          type="text"
-                          value={billingCity}
-                          onChange={(e) => setBillingCity(e.target.value)}
-                          placeholder="City"
-                          className="w-full h-11 rounded-xl px-4 text-[14px] outline-none"
-                          style={{ background: colors.bgHover, border: `1px solid ${colors.border}`, color: colors.textPrimary }}
-                        />
-                        <input
-                          type="text"
-                          value={billingState}
-                          onChange={(e) => setBillingState(e.target.value)}
-                          placeholder="State / Province"
-                          className="w-full h-11 rounded-xl px-4 text-[14px] outline-none"
-                          style={{ background: colors.bgHover, border: `1px solid ${colors.border}`, color: colors.textPrimary }}
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <input
-                          type="text"
-                          value={billingZip}
-                          onChange={(e) => setBillingZip(e.target.value)}
-                          placeholder="ZIP / Postal code"
-                          className="w-full h-11 rounded-xl px-4 text-[14px] outline-none"
-                          style={{ background: colors.bgHover, border: `1px solid ${colors.border}`, color: colors.textPrimary }}
-                        />
-                        <input
-                          type="text"
-                          value={billingCountry}
-                          onChange={(e) => setBillingCountry(e.target.value)}
-                          placeholder="Country"
-                          className="w-full h-11 rounded-xl px-4 text-[14px] outline-none"
-                          style={{ background: colors.bgHover, border: `1px solid ${colors.border}`, color: colors.textPrimary }}
-                        />
-                      </div>
-                    </div>
-                    <p className="text-[11px] mt-1.5" style={{ color: colors.textMuted }}>
-                      Used for card verification and transaction authorization
+                      This name will be printed on your card
                     </p>
                   </div>
 
@@ -636,8 +649,54 @@ export default function CardsPage() {
                   <button
                     onClick={() => {
                       if (cardholderName.trim().length < 2) { setError("Please enter a valid cardholder name"); return }
-                      if (!billingStreet.trim() || !billingCity.trim() || !billingZip.trim() || !billingCountry.trim()) { setError("Please fill in all required billing address fields"); return }
-                      setError(""); setStep("security")
+                      setError(""); goNext()
+                    }}
+                    className="w-full h-12 rounded-xl text-[15px] font-semibold text-white transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                    style={{ background: colors.blue }}
+                  >
+                    Continue<ArrowRight className="h-4 w-4" />
+                  </button>
+                </>
+              )}
+
+              {/* ─── STEP: Delivery address (physical only) ─── */}
+              {step === "delivery" && (
+                <>
+                  <div className="rounded-xl p-3 flex items-start gap-2.5" style={{ background: colors.blueBg, border: `1px solid ${colors.blue}1A` }}>
+                    <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: colors.blue }} />
+                    <p className="text-[12px]" style={{ color: colors.textSecondary }}>
+                      Where should we mail your physical card? Delivery takes 3–5 business days.
+                    </p>
+                  </div>
+                  <div className="space-y-2.5">
+                    <input
+                      type="text" value={billingStreet} onChange={(e) => setBillingStreet(e.target.value)}
+                      placeholder="Street address"
+                      className="w-full h-11 rounded-xl px-4 text-[14px] outline-none"
+                      style={{ background: colors.bgHover, border: `1px solid ${colors.border}`, color: colors.textPrimary }}
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <input type="text" value={billingCity} onChange={(e) => setBillingCity(e.target.value)} placeholder="City"
+                        className="w-full h-11 rounded-xl px-4 text-[14px] outline-none" style={{ background: colors.bgHover, border: `1px solid ${colors.border}`, color: colors.textPrimary }} />
+                      <input type="text" value={billingState} onChange={(e) => setBillingState(e.target.value)} placeholder="State / Province"
+                        className="w-full h-11 rounded-xl px-4 text-[14px] outline-none" style={{ background: colors.bgHover, border: `1px solid ${colors.border}`, color: colors.textPrimary }} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input type="text" value={billingZip} onChange={(e) => setBillingZip(e.target.value)} placeholder="ZIP / Postal code"
+                        className="w-full h-11 rounded-xl px-4 text-[14px] outline-none" style={{ background: colors.bgHover, border: `1px solid ${colors.border}`, color: colors.textPrimary }} />
+                      <input type="text" value={billingCountry} onChange={(e) => setBillingCountry(e.target.value)} placeholder="Country"
+                        className="w-full h-11 rounded-xl px-4 text-[14px] outline-none" style={{ background: colors.bgHover, border: `1px solid ${colors.border}`, color: colors.textPrimary }} />
+                    </div>
+                  </div>
+
+                  {error && <p className="text-[13px] text-center" style={{ color: colors.red }}>{error}</p>}
+
+                  <button
+                    onClick={() => {
+                      if (!billingStreet.trim() || !billingCity.trim() || !billingZip.trim() || !billingCountry.trim()) {
+                        setError("Please fill in street, city, ZIP and country"); return
+                      }
+                      setError(""); goNext()
                     }}
                     className="w-full h-12 rounded-xl text-[15px] font-semibold text-white transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                     style={{ background: colors.blue }}
@@ -837,20 +896,26 @@ export default function CardsPage() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-[13px]" style={{ color: colors.textSecondary }}>Card Format</span>
-                        <span className="text-[13px] font-semibold" style={{ color: colors.textPrimary }}>Virtual</span>
+                        <span className="text-[13px] font-semibold" style={{ color: colors.textPrimary }}>{isPhysical ? "Physical" : "Virtual"}</span>
                       </div>
-                      {billingStreet && (
+                      {isPhysical && (
                         <div className="flex justify-between">
-                          <span className="text-[13px]" style={{ color: colors.textSecondary }}>Billing Address</span>
+                          <span className="text-[13px]" style={{ color: colors.textSecondary }}>Est. delivery</span>
+                          <span className="text-[13px] font-semibold" style={{ color: colors.textPrimary }}>3–5 business days</span>
+                        </div>
+                      )}
+                      {isPhysical && billingStreet && (
+                        <div className="flex justify-between">
+                          <span className="text-[13px]" style={{ color: colors.textSecondary }}>Delivery Address</span>
                           <span className="text-[13px] font-semibold text-right max-w-[55%]" style={{ color: colors.textPrimary }}>
                             {billingStreet}, {billingCity}{billingState ? `, ${billingState}` : ""} {billingZip}
                           </span>
                         </div>
                       )}
-                      {cardSettings.applicationFee > 0 && (
+                      {applyFee > 0 && (
                         <div className="flex justify-between pt-2 border-t" style={{ borderColor: colors.border }}>
-                          <span className="text-[13px] font-medium" style={{ color: colors.yellow || "#F79009" }}>Application Fee</span>
-                          <span className="text-[13px] font-bold" style={{ color: colors.yellow || "#F79009" }}>{formatAmount(cardSettings.applicationFee)}</span>
+                          <span className="text-[13px] font-medium" style={{ color: colors.yellow || "#F79009" }}>{isPhysical ? "Physical card fee" : "Application fee"}</span>
+                          <span className="text-[13px] font-bold" style={{ color: colors.yellow || "#F79009" }}>{formatAmount(applyFee)}</span>
                         </div>
                       )}
                     </div>
@@ -892,8 +957,8 @@ export default function CardsPage() {
                   >
                     {applying
                       ? "Processing..."
-                      : cardSettings.applicationFee > 0
-                        ? `Confirm & Pay ${formatAmount(cardSettings.applicationFee)}`
+                      : applyFee > 0
+                        ? `Confirm & Pay ${formatAmount(applyFee)}`
                         : "Submit Application"}
                   </button>
                 </>
@@ -928,9 +993,11 @@ export default function CardsPage() {
                   <div className="mt-4 rounded-xl p-3 text-left" style={{ background: colors.blueBg, border: `1px solid ${colors.blue}1A` }}>
                     <p className="text-[12px] font-medium" style={{ color: colors.blue }}>What happens next?</p>
                     <ul className="text-[12px] mt-2 space-y-1.5" style={{ color: colors.textSecondary }}>
-                      <li>• Your application will be reviewed within 1-3 business days</li>
+                      <li>• Your application will be reviewed shortly</li>
                       <li>• You will be notified once your card is approved</li>
-                      <li>• Card details will appear on this page when active</li>
+                      {isPhysical
+                        ? <li>• Your physical card will be mailed and arrives in 3–5 business days. It activates once delivered.</li>
+                        : <li>• Card details will appear on this page when active</li>}
                     </ul>
                   </div>
 
@@ -1088,13 +1155,7 @@ function CardVisual({ card, colors, accountBalance, onPayment }: CardVisualProps
 
         {/* Brand logo */}
         <div className="relative mt-3 flex items-center justify-between">
-          {isVisa ? (
-            <VisaLogo className="h-7" />
-          ) : isAmex ? (
-            <AmexLogo className="h-7" />
-          ) : (
-            <MastercardLogo className="h-7" />
-          )}
+          <CardBrandMark network={card.cardNetwork} className="h-7 w-auto" />
           <span className="text-[11px] font-medium" style={{ color: "rgba(255,255,255,0.5)" }}>
             {formatCardLabel(card.cardNetwork, card.cardType)}
           </span>

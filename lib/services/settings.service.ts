@@ -38,6 +38,10 @@ export interface AppSettingsUpdate {
   maintenanceMessage?:       string
   allowRegistration?:        boolean
   kycRequiredForTransfer?:   boolean
+  cardApplicationFee?:       number
+  cardPhysicalFee?:          number
+  cardMaxPerUser?:           number
+  cardRequiredKycTier?:      number
   supportPhone?:             string
   supportTextPhone?:         string
   supportEmail?:             string
@@ -133,6 +137,7 @@ export async function updateAppSettings(
     "localTransferFee", "internationalTransferFee", "internationalTransferFeeType", "internationalTransferFeePercent", "maxDailyTransferAmount",
     "defaultCurrency", "supportedCurrencies", "btcPriceSource", "fallbackBtcRate",
     "maintenanceMode", "maintenanceMessage", "allowRegistration", "kycRequiredForTransfer",
+    "cardApplicationFee", "cardPhysicalFee", "cardMaxPerUser", "cardRequiredKycTier",
     "supportPhone", "supportTextPhone", "supportEmail", "supportAddress",
     "supportOffices", "supportDepartments",
     "careersEmail", "complianceEmail", "privacyEmail", "legalEmail",

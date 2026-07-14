@@ -57,6 +57,7 @@ const DOC_TYPE_ABBR: Record<string, { abbr: string; label: string }> = {
   selfie:          { abbr: "SELF", label: "Selfie"           },
   address_proof:   { abbr: "ADDR", label: "Address Proof"    },
   utility_bill:    { abbr: "UTIL", label: "Utility Bill"     },
+  ssn_proof:       { abbr: "SSN",  label: "SSN Proof"        },
 }
 
 const DOC_TYPE_STATUS_COLOR: Record<string, string> = {
@@ -65,7 +66,7 @@ const DOC_TYPE_STATUS_COLOR: Record<string, string> = {
   rejected: "bg-red-100   text-red-700   border-red-200",
 }
 
-const TABS = ["pending", "verified", "rejected", "all"] as const
+const TABS = ["all", "pending", "verified", "rejected"] as const
 type Tab   = typeof TABS[number]
 
 function relativeDate(d: string): string {
@@ -89,7 +90,7 @@ export function KycQueueClient({ initialData, initialStats }: Props) {
   const [items,       setItems]      = useState<KycQueueItem[]>(initialData.documents)
   const [total,       setTotal]      = useState(initialData.total)
   const [stats,       setStats]      = useState<KycStats>(initialStats)
-  const [activeTab,   setActiveTab]  = useState<Tab>("pending")
+  const [activeTab,   setActiveTab]  = useState<Tab>("all")
   const [docTypeFilter, setDocTypeFilter] = useState("")
   const [sortBy,      setSortBy]     = useState("newest")
   const [page,        setPage]       = useState(1)
@@ -248,25 +249,25 @@ export function KycQueueClient({ initialData, initialStats }: Props) {
         </div>
       )}
 
-      {/* Tabs */}
-      <div className="flex gap-1 border-b border-gray-200">
-        {TABS.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => handleTabChange(tab)}
-            className={`px-4 py-2 text-sm capitalize transition-colors ${activeTab === tab ? "border-b-2 border-[#1A2CCE] text-[#1A2CCE] font-medium" : "text-gray-500 hover:text-gray-700"}`}
-          >
-            {tab}
-          </button>
-        ))}
-        <div className="ml-auto pb-2 flex items-end">
-          <select value={sortBy} onChange={(e) => handleSort(e.target.value)}
-            className="text-xs border border-gray-200 rounded px-2 py-1 text-gray-600 bg-white">
-            <option value="newest">Newest first</option>
-            <option value="oldest">Oldest first</option>
-            <option value="documents">Most documents</option>
-          </select>
+      {/* Tabs + sort (each on its own full row) */}
+      <div className="space-y-3">
+        <div className="flex gap-1 border-b border-gray-200 overflow-x-auto scrollbar-hide">
+          {TABS.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => handleTabChange(tab)}
+              className={`px-4 py-2 text-sm capitalize whitespace-nowrap flex-shrink-0 transition-colors ${activeTab === tab ? "border-b-2 border-[#1A2CCE] text-[#1A2CCE] font-medium" : "text-gray-500 hover:text-gray-700"}`}
+            >
+              {tab}
+            </button>
+          ))}
         </div>
+        <select value={sortBy} onChange={(e) => handleSort(e.target.value)}
+          className="w-full sm:w-56 text-sm border border-gray-200 rounded-lg px-3 py-2 text-gray-600 bg-white">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="documents">Most documents</option>
+        </select>
       </div>
 
       {/* Bulk action */}

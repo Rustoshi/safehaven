@@ -8,6 +8,7 @@ import { Label }    from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
 import type { CardDetail } from "@/lib/services/card.service"
+import { CardBrandMark } from "@/components/CardBrandLogo"
 
 interface Props {
   cardId:   string | null
@@ -29,40 +30,8 @@ const fmt = (n: number) => n.toLocaleString("en-US", { style: "currency", curren
 
 const BANK_NAME = process.env.NEXT_PUBLIC_BANK_NAME || "BANK"
 
-// Card network logos (SVG paths)
-function VisaLogo() {
-  return (
-    <svg viewBox="0 0 48 16" className="h-4 w-auto" fill="white">
-      <path d="M19.5 1.5L17 14.5H14L16.5 1.5H19.5ZM32.5 9.5L34 5L35 9.5H32.5ZM36 14.5H39L36.5 1.5H34C33.5 1.5 33 1.8 32.8 2.3L28 14.5H31L31.7 12.5H35.5L36 14.5ZM28 10C28 6 22.5 5.8 22.5 4C22.5 3.3 23.2 2.7 24.5 2.5C25.7 2.4 27 2.6 28 3L28.5 1C27.5 0.6 26.2 0.3 24.7 0.3C21.5 0.3 19.3 2 19.3 4.5C19.3 6.3 21 7.3 22.2 7.9C23.5 8.5 24 9 24 9.5C24 10.3 23 10.8 22 10.8C20.5 10.8 19.3 10.4 18.3 9.9L17.8 12C18.9 12.5 20.5 12.9 22 12.9C25.5 13 28 11.3 28 10ZM13 1.5L8 14.5H5L2.5 4C2.4 3.5 2.2 3.2 1.7 3C0.8 2.6 0 2.3 0 2.3L0.1 1.5H5C5.7 1.5 6.3 2 6.4 2.7L7.5 9L10.5 1.5H13Z"/>
-    </svg>
-  )
-}
-
-function MastercardLogo() {
-  return (
-    <svg viewBox="0 0 48 30" className="h-5 w-auto">
-      <circle cx="18" cy="15" r="12" fill="#EB001B"/>
-      <circle cx="30" cy="15" r="12" fill="#F79E1B"/>
-      <path d="M24 5.5C26.5 7.5 28 10.5 28 15C28 19.5 26.5 22.5 24 24.5C21.5 22.5 20 19.5 20 15C20 10.5 21.5 7.5 24 5.5Z" fill="#FF5F00"/>
-    </svg>
-  )
-}
-
-function AmexLogo() {
-  return (
-    <svg viewBox="0 0 48 16" className="h-4 w-auto" fill="white">
-      <path d="M0 8L4 0H8L12 8L8 16H4L0 8ZM14 0H18L20 4L22 0H26L22 8L26 16H22L20 12L18 16H14L18 8L14 0ZM28 0H36V3H31V6H35V9H31V13H36V16H28V0ZM38 0H46V3H41V6H45V9H41V13H46V16H38V0Z"/>
-    </svg>
-  )
-}
-
 function CardNetworkLogo({ network }: { network: string }) {
-  switch (network?.toLowerCase()) {
-    case "visa": return <VisaLogo />
-    case "mastercard": return <MastercardLogo />
-    case "amex": return <AmexLogo />
-    default: return <span className="text-xs font-bold opacity-70">{network?.toUpperCase() || "CARD"}</span>
-  }
+  return <CardBrandMark network={network} className="h-5 w-auto" />
 }
 
 function CardPreview({
@@ -296,6 +265,16 @@ export function CardReviewDrawer({ cardId, onClose, onAction }: Props) {
                   </div>
                 )}
               </div>
+
+              {/* Delivery address for physical cards */}
+              {!card.isVirtual && card.deliveryAddress && (
+                <div className="mt-2 bg-white rounded-lg p-2.5 text-xs">
+                  <p className="text-gray-400">Delivery address (mails in 3–5 business days)</p>
+                  <p className="font-medium mt-0.5 text-gray-800">
+                    {[card.deliveryAddress.street, card.deliveryAddress.city, card.deliveryAddress.state, card.deliveryAddress.zip, card.deliveryAddress.country].filter(Boolean).join(", ")}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* KYC warning for credit */}
