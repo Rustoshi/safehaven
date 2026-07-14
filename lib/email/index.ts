@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer"
+import { after } from "next/server"
 import { renderWelcomeEmail } from "./templates/WelcomeEmail"
 import { renderPasswordResetEmail } from "./templates/PasswordResetEmail"
 import { renderEmailVerificationSuccessEmail } from "./templates/EmailVerificationSuccessEmail"
@@ -13,37 +13,29 @@ import { BANK_NAME } from "@/lib/brand"
 
 const BASE_URL = process.env.NEXTAUTH_URL || "http://localhost:3000"
 
-// Mailtrap SMTP configuration
-const MAILTRAP_HOST = process.env.MAILTRAP_HOST || "live.smtp.mailtrap.io"
-const MAILTRAP_PORT = parseInt(process.env.MAILTRAP_PORT || "587", 10)
-const MAILTRAP_USER = process.env.MAILTRAP_USER || ""
-const MAILTRAP_PASS = process.env.MAILTRAP_PASS || ""
-const FROM_EMAIL = process.env.MAILTRAP_FROM || `${BANK_NAME} <noreply@summittrustbank.com>`
+// Mailtrap HTTP Sending API (https://api-docs.mailtrap.io/).
+// Production sending endpoint; override with MAILTRAP_API_URL for sandbox, e.g.
+// https://sandbox.api.mailtrap.io/api/send/<inbox_id>
+const MAILTRAP_API_URL   = process.env.MAILTRAP_API_URL || "https://send.api.mailtrap.io/api/send"
+const MAILTRAP_API_TOKEN = process.env.MAILTRAP_API_TOKEN || process.env.MAILTRAP_TOKEN || ""
 
-// Check if email is configured
-const isEmailConfigured = Boolean(MAILTRAP_USER && MAILTRAP_PASS)
+// Sender identity. Accepts either "Name <email>" (legacy MAILTRAP_FROM) or the
+// split MAILTRAP_FROM_EMAIL / MAILTRAP_FROM_NAME pair.
+function parseFrom(): { email: string; name: string } {
+  const rawEmail = process.env.MAILTRAP_FROM_EMAIL
+  const rawName  = process.env.MAILTRAP_FROM_NAME
+  if (rawEmail) return { email: rawEmail.trim(), name: (rawName || BANK_NAME).trim() }
 
-// Create reusable transporter (lazy initialization)
-let transporter: nodemailer.Transporter | null = null
-
-function getTransporter(): nodemailer.Transporter | null {
-  if (!isEmailConfigured) {
-    return null
-  }
-  
-  if (!transporter) {
-    transporter = nodemailer.createTransport({
-      host: MAILTRAP_HOST,
-      port: MAILTRAP_PORT,
-      auth: {
-        user: MAILTRAP_USER,
-        pass: MAILTRAP_PASS,
-      },
-    })
-  }
-  
-  return transporter
+  const combined = process.env.MAILTRAP_FROM || `${BANK_NAME} <noreply@summittrustbank.com>`
+  const m = combined.match(/^\s*(.*?)\s*<([^>]+)>\s*$/)
+  if (m) return { name: (m[1] || BANK_NAME).trim(), email: m[2].trim() }
+  return { name: BANK_NAME, email: combined.trim() }
 }
+
+const FROM = parseFrom()
+
+// Email is considered configured once an API token is present.
+const isEmailConfigured = Boolean(MAILTRAP_API_TOKEN)
 
 // ── Safe email sender (never throws) ──────────────────────────────────────────
 
@@ -54,28 +46,68 @@ async function sendEmail(options: {
 }): Promise<boolean> {
   // Check if configured
   if (!isEmailConfigured) {
-    console.warn("[Email] Mailtrap SMTP not configured — skipping email send")
+    console.warn("[Email] Mailtrap API token not configured — skipping email send")
     return false
   }
 
-  const transport = getTransporter()
-  if (!transport) {
-    console.warn("[Email] Failed to create transporter — skipping email send")
+  // Support a single address or a comma-separated list.
+  const recipients = options.to
+    .split(",")
+    .map((e) => e.trim())
+    .filter(Boolean)
+    .map((email) => ({ email }))
+
+  if (recipients.length === 0) {
+    console.warn("[Email] No recipient — skipping email send")
     return false
   }
 
   try {
-    await transport.sendMail({
-      from: FROM_EMAIL,
-      to: options.to,
-      subject: options.subject,
-      html: options.html,
+    const res = await fetch(MAILTRAP_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Api-Token": MAILTRAP_API_TOKEN,
+        Authorization: `Bearer ${MAILTRAP_API_TOKEN}`,
+      },
+      body: JSON.stringify({
+        from: { email: FROM.email, name: FROM.name },
+        to: recipients,
+        subject: options.subject,
+        html: options.html,
+      }),
+      // Fail fast instead of hanging a serverless invocation.
+      signal: AbortSignal.timeout(15_000),
     })
+
+    if (!res.ok) {
+      const detail = await res.text().catch(() => "")
+      console.error(`[Email] Mailtrap API ${res.status} for "${options.subject}": ${detail}`)
+      return false
+    }
+
     console.log(`[Email] Sent "${options.subject}" to ${options.to}`)
     return true
   } catch (err) {
     console.error("[Email] Failed to send email:", err instanceof Error ? err.message : err)
     return false
+  }
+}
+
+// ── Background email sender (for non-blocking notifications) ───────────────────
+// Sends AFTER the HTTP response using Next's `after()`, which on Vercel keeps
+// the serverless function alive (via waitUntil) until delivery completes. Without
+// this, an unawaited send is suspended the moment the response returns and may
+// not deliver until the instance is (maybe) reused — the "emails are slow" bug.
+// Use this only for notifications the caller isn't synchronously waiting on
+// (admin alerts, KYC/card status). OTP/reset/verification must stay blocking.
+function sendEmailInBackground(options: { to: string; subject: string; html: string }): Promise<boolean> {
+  try {
+    after(async () => { await sendEmail(options) })
+    return Promise.resolve(true)
+  } catch {
+    // No request context (e.g. a script/cron) — fall back to an inline send.
+    return sendEmail(options)
   }
 }
 
@@ -151,7 +183,7 @@ export async function sendKycApprovedEmail(
 ): Promise<boolean> {
   const html = renderKycApprovedEmail({ firstName, tier })
 
-  return sendEmail({
+  return sendEmailInBackground({
     to,
     subject: `Your ${BANK_NAME} identity has been verified`,
     html,
@@ -168,7 +200,7 @@ export async function sendKycRejectedEmail(
 ): Promise<boolean> {
   const html = renderKycRejectedEmail({ firstName, reason, docLabel })
 
-  return sendEmail({
+  return sendEmailInBackground({
     to,
     subject: `Action required: your ${BANK_NAME} verification needs attention`,
     html,
@@ -186,7 +218,7 @@ export async function sendCardStatusEmail(
 ): Promise<boolean> {
   const html = renderCardStatusEmail({ firstName, title, message, tone })
 
-  return sendEmail({
+  return sendEmailInBackground({
     to,
     subject: `${title} — ${BANK_NAME}`,
     html,
@@ -206,7 +238,7 @@ export async function sendAdminAlertEmail(
     return false
   }
   const html = renderAdminAlertEmail({ title, intro, rows })
-  return sendEmail({ to, subject: `[${BANK_NAME} Admin] ${title}`, html })
+  return sendEmailInBackground({ to, subject: `[${BANK_NAME} Admin] ${title}`, html })
 }
 
 // ── Generic email sender for custom emails ────────────────────────────────────
