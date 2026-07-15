@@ -6,7 +6,7 @@ import Link                   from "next/link"
 import { format, formatDistanceToNow } from "date-fns"
 import {
   Mail, Phone, Calendar, Copy, Check, ArrowLeft,
-  ExternalLink, AlertTriangle, ShieldCheck,
+  ExternalLink, AlertTriangle, ShieldCheck, ShieldAlert,
 } from "lucide-react"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Badge }              from "@/components/ui/badge"
@@ -19,6 +19,7 @@ import { EditUserModal }      from "./modals/EditUserModal"
 import { TransactionModal }   from "./modals/TransactionModal"
 import { ResetPasswordModal } from "./modals/ResetPasswordModal"
 import { SuspendModal }       from "./modals/SuspendModal"
+import { UserAlertModal }     from "./modals/UserAlertModal"
 import { AdminVerifyModal }   from "@/components/admin/kyc/modals/AdminVerifyModal"
 import { cn }                 from "@/lib/utils"
 import { formatCurrency, getCurrencySymbol } from "@/lib/utils/currency"
@@ -207,7 +208,7 @@ export function UserProfileClient({ user: initialUser }: Props) {
 
   // Modal state
   const [modal, setModal] = useState<
-    "edit" | "credit" | "debit" | "reset" | "suspend" | "verify-kyc" | null
+    "edit" | "credit" | "debit" | "reset" | "suspend" | "verify-kyc" | "alert" | null
   >(null)
   const [balanceAccountId, setBalanceAccountId] = useState<string | undefined>()
 
@@ -306,6 +307,14 @@ export function UserProfileClient({ user: initialUser }: Props) {
               <Button variant="outline" onClick={() => openCredit()} size="sm" className="flex-1 sm:flex-none border-emerald-200 text-emerald-700 hover:bg-emerald-50">Credit</Button>
               <Button variant="outline" onClick={() => openDebit()} size="sm" className="flex-1 sm:flex-none border-red-200 text-red-700 hover:bg-red-50">Debit</Button>
               <Button variant="outline" onClick={() => setModal("reset")} size="sm" className="flex-1 sm:flex-none">Reset PW</Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setModal("alert")}
+                className="flex-1 sm:flex-none gap-1.5 border-amber-200 text-amber-700 hover:bg-amber-50"
+              >
+                <ShieldAlert className="h-3.5 w-3.5" /> Alert
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -591,6 +600,16 @@ export function UserProfileClient({ user: initialUser }: Props) {
           userId={user.id}
           isSuspended={user.isSuspended}
           suspendReason={user.suspendReason}
+          userName={`${user.firstName} ${user.lastName}`}
+        />
+      )}
+
+      {modal === "alert" && (
+        <UserAlertModal
+          open
+          onClose={() => setModal(null)}
+          onSuccess={refresh}
+          userId={user.id}
           userName={`${user.firstName} ${user.lastName}`}
         />
       )}

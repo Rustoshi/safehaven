@@ -21,3 +21,10 @@ export const REGISTRATION_NUMBER = process.env.NEXT_PUBLIC_REGISTRATION_NUMBER |
 
 /** Regulatory authority — reads from NEXT_PUBLIC_REGULATOR env var */
 export const REGULATOR = process.env.NEXT_PUBLIC_REGULATOR || "Financial Conduct Authority"
+
+/**
+ * Physical postal address shown in email footers. A real mailing address is
+ * required by CAN-SPAM and its absence is a well-known deliverability penalty —
+ * mail without one is far more likely to be filtered as spam.
+ */
+export const POSTAL_ADDRESS = process.env.NEXT_PUBLIC_POSTAL_ADDRESS || "Friedrichstraße 123, 10117 Berlin, Germany"

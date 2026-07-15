@@ -7,6 +7,7 @@ import { UserAppShell } from "@/components/user/UserAppShell"
 import { OnboardingWrapper } from "@/components/user/OnboardingWrapper"
 import { SplashScreen } from "@/components/user/SplashScreen"
 import { SmartsuppChat } from "@/components/user/SmartsuppChat"
+import { getActiveUserAlert } from "@/lib/services/alert.service"
 
 export default async function UserAppLayout({
   children,
@@ -46,9 +47,12 @@ export default async function UserAppLayout({
     }
   }
 
+  // Admin-authored critical alert (rendered server-side so there is no flash)
+  const alert = await getActiveUserAlert(session.user.id).catch(() => null)
+
   return (
     <SplashScreen>
-      <UserAppShell session={session}>
+      <UserAppShell session={session} alert={alert}>
         <OnboardingWrapper
           session={session}
           fiatAccount={fiatAccount}

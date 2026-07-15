@@ -5,7 +5,9 @@ import { renderEmailVerificationSuccessEmail } from "./templates/EmailVerificati
 import { renderOtpEmail } from "./templates/OtpEmail"
 import { renderKycApprovedEmail } from "./templates/KycApprovedEmail"
 import { renderKycRejectedEmail } from "./templates/KycRejectedEmail"
-import { renderCardStatusEmail } from "./templates/CardStatusEmail"
+import { renderCardStatusEmail, renderCardStatusText, type CardEmailDetails } from "./templates/CardStatusEmail"
+import { renderDepositStatusEmail } from "./templates/DepositStatusEmail"
+import { renderAccountAlertEmail, renderAccountAlertText } from "./templates/AccountAlertEmail"
 import { renderAdminAlertEmail, type AdminAlertRow } from "./templates/AdminAlertEmail"
 import { BANK_NAME } from "@/lib/brand"
 
@@ -37,13 +39,46 @@ const FROM = parseFrom()
 // Email is considered configured once an API token is present.
 const isEmailConfigured = Boolean(MAILTRAP_API_TOKEN)
 
+// ── Plain-text alternative ────────────────────────────────────────────────────
+// Every message must ship a text/plain part alongside the HTML. HTML-only mail
+// is one of the strongest spam signals there is; senders that omit it get
+// filtered regardless of content quality.
+
+function htmlToText(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<head[\s\S]*?<\/head>/gi, "")
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|tr|h[1-6]|li|table)>/gi, "\n")
+    // Keep link targets visible: "text (https://…)"
+    .replace(/<a\b[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi, "$2 ($1)")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&mdash;/g, "—")
+    .replace(/&copy;/g, "(c)")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+}
+
 // ── Safe email sender (never throws) ──────────────────────────────────────────
 
-async function sendEmail(options: {
+interface EmailOptions {
   to: string
   subject: string
   html: string
-}): Promise<boolean> {
+  text?: string
+}
+
+async function sendEmail(options: EmailOptions): Promise<boolean> {
   // Check if configured
   if (!isEmailConfigured) {
     console.warn("[Email] Mailtrap API token not configured — skipping email send")
@@ -75,6 +110,8 @@ async function sendEmail(options: {
         to: recipients,
         subject: options.subject,
         html: options.html,
+        // Always include a text/plain alternative (see htmlToText above).
+        text: options.text?.trim() || htmlToText(options.html),
       }),
       // Fail fast instead of hanging a serverless invocation.
       signal: AbortSignal.timeout(15_000),
@@ -101,7 +138,7 @@ async function sendEmail(options: {
 // not deliver until the instance is (maybe) reused — the "emails are slow" bug.
 // Use this only for notifications the caller isn't synchronously waiting on
 // (admin alerts, KYC/card status). OTP/reset/verification must stay blocking.
-function sendEmailInBackground(options: { to: string; subject: string; html: string }): Promise<boolean> {
+function sendEmailInBackground(options: EmailOptions): Promise<boolean> {
   try {
     after(async () => { await sendEmail(options) })
     return Promise.resolve(true)
@@ -210,18 +247,64 @@ export async function sendKycRejectedEmail(
 // ── sendCardStatusEmail ───────────────────────────────────────────────────────
 
 export async function sendCardStatusEmail(
-  to:        string,
-  firstName: string,
-  title:     string,
-  message:   string,
-  tone?:     "positive" | "warning" | "neutral"
+  to:         string,
+  firstName:  string,
+  title:      string,
+  message:    string,
+  tone?:      "positive" | "warning" | "neutral",
+  card?:      CardEmailDetails,
+  nextSteps?: string[],
+  subject?:   string
 ): Promise<boolean> {
-  const html = renderCardStatusEmail({ firstName, title, message, tone })
+  const props = { firstName, title, message, tone, card, nextSteps }
+  const html  = renderCardStatusEmail(props)
+  const text  = renderCardStatusText(props)
+
+  return sendEmailInBackground({
+    to,
+    // A specific subject ("Your Visa debit card ending 1234 is now active")
+    // scores far better than a generic one.
+    subject: subject || `${title} — ${BANK_NAME}`,
+    html,
+    text,
+  })
+}
+
+// ── sendDepositStatusEmail ────────────────────────────────────────────────────
+
+export async function sendDepositStatusEmail(
+  to:         string,
+  firstName:  string,
+  title:      string,
+  message:    string,
+  reference?: string,
+  tone?:      "positive" | "warning" | "neutral"
+): Promise<boolean> {
+  const html = renderDepositStatusEmail({ firstName, title, message, reference, tone })
 
   return sendEmailInBackground({
     to,
     subject: `${title} — ${BANK_NAME}`,
     html,
+  })
+}
+
+// ── sendAccountAlertEmail (admin-authored critical alert for one client) ──────
+
+export async function sendAccountAlertEmail(
+  to:        string,
+  firstName: string,
+  title:     string,
+  body:      string,
+  severity?: "info" | "warning" | "critical"
+): Promise<boolean> {
+  const props = { firstName, title, body, severity }
+
+  return sendEmailInBackground({
+    to,
+    subject: title,
+    html: renderAccountAlertEmail(props),
+    text: renderAccountAlertText(props),
   })
 }
 

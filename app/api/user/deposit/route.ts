@@ -7,6 +7,7 @@ import DepositRequest from "@/lib/models/DepositRequest"
 import Transaction    from "@/lib/models/Transaction"
 import Account        from "@/lib/models/Account"
 import PaymentMethod  from "@/lib/models/PaymentMethod"
+import { assertTransactionsAllowed } from "@/lib/services/alert.service"
 import { sendAdminAlertEmail } from "@/lib/email"
 
 async function generateRef(): Promise<string> {
@@ -46,6 +47,16 @@ export async function POST(req: NextRequest) {
     const { paymentMethodId, amount, proofUrl, proofPublicId, txReference, notes } = parsed.data
 
     await connectDB()
+
+    // An admin alert may freeze money movement on this account.
+    try {
+      await assertTransactionsAllowed(session.user.id)
+    } catch (err) {
+      return NextResponse.json(
+        { error: err instanceof Error ? err.message : "Transactions are unavailable" },
+        { status: 403 }
+      )
+    }
 
     // Validate payment method
     if (!mongoose.Types.ObjectId.isValid(paymentMethodId)) {

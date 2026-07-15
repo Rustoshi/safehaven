@@ -7,6 +7,7 @@ import Notification      from "@/lib/models/Notification"
 import User              from "@/lib/models/User"
 import PaymentMethod     from "@/lib/models/PaymentMethod"
 import { createAuditLog } from "@/lib/services/auth.service"
+import { sendDepositStatusEmail } from "@/lib/email"
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -411,13 +412,28 @@ export async function confirmDepositRequest(
     userId: String(depositReq.userId),
   }, req)
 
+  const confirmMsg = `Your deposit of ${confirmedAmount} ${currency} has been confirmed and credited to your account.`
+
   await notifyUser(
     String(depositReq.userId),
     "deposit_request",
     "Deposit confirmed",
-    `Your deposit of ${confirmedAmount} ${currency} has been confirmed and credited to your account.`,
+    confirmMsg,
     { depositRequestId: requestId, transactionRef: updatedTx!.reference }
   )
+
+  // Email the client (fire-and-forget; delivered in the background)
+  const confirmUser = depositReq.userId as unknown as { firstName?: string; email?: string } | null
+  if (confirmUser?.email) {
+    sendDepositStatusEmail(
+      confirmUser.email,
+      confirmUser.firstName || "there",
+      "Deposit confirmed",
+      confirmMsg,
+      updatedTx!.reference,
+      "positive"
+    ).catch(() => {})
+  }
 
   const updated = await getDepositRequestById(requestId)
 
@@ -474,13 +490,28 @@ export async function rejectDepositRequest(
     requestId, adminNote, userId: String(depositReq.userId),
   }, req)
 
+  const rejectMsg = `Your deposit request has been rejected. Reason: ${adminNote.trim()}`
+
   await notifyUser(
     String(depositReq.userId),
     "deposit_request",
     "Deposit request rejected",
-    `Your deposit request has been rejected. Reason: ${adminNote.trim()}`,
+    rejectMsg,
     { depositRequestId: requestId }
   )
+
+  // Email the client (fire-and-forget; delivered in the background)
+  const rejectUser = depositReq.userId as unknown as { firstName?: string; email?: string } | null
+  if (rejectUser?.email) {
+    sendDepositStatusEmail(
+      rejectUser.email,
+      rejectUser.firstName || "there",
+      "Deposit request rejected",
+      rejectMsg,
+      undefined,
+      "warning"
+    ).catch(() => {})
+  }
 
   return (await getDepositRequestById(requestId)) as DepositRequestItem
 }

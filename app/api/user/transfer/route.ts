@@ -7,6 +7,7 @@ import User          from "@/lib/models/User"
 import Account       from "@/lib/models/Account"
 import Transaction   from "@/lib/models/Transaction"
 import { getAppSettings } from "@/lib/services/settings.service"
+import { assertTransactionsAllowed } from "@/lib/services/alert.service"
 import { sendAdminAlertEmail } from "@/lib/email"
 
 const transferSchema = z.object({
@@ -57,6 +58,16 @@ export async function POST(req: NextRequest) {
     const isInternational = transferType === "international"
 
     await connectDB()
+
+    // An admin alert may freeze money movement on this account.
+    try {
+      await assertTransactionsAllowed(session.user.id)
+    } catch (err) {
+      return NextResponse.json(
+        { error: err instanceof Error ? err.message : "Transactions are unavailable" },
+        { status: 403 }
+      )
+    }
 
     // Check if KYC is required for transfers
     const appSettings = await getAppSettings()

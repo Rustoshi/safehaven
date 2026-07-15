@@ -8,6 +8,8 @@ import type { Session } from "next-auth"
 import { BANK_NAME } from "@/lib/brand"
 import { PlatformSettingsProvider } from "@/components/shared/PlatformSettingsProvider"
 import { NavigationLoader } from "@/components/user/NavigationLoader"
+import { CriticalAlert } from "@/components/user/CriticalAlert"
+import type { UserAlertView } from "@/lib/services/alert.service"
 import {
   Home, Send, CreditCard, ArrowLeftRight,
   Landmark, DollarSign, FileText, Receipt, ClipboardList,
@@ -50,9 +52,11 @@ const SIDEBAR_ITEMS = [
 interface Props {
   session: Session
   children: React.ReactNode
+  /** Admin-authored critical alert for this client (null when none is active). */
+  alert?: UserAlertView | null
 }
 
-export function UserAppShell({ session, children }: Props) {
+export function UserAppShell({ session, children, alert = null }: Props) {
   const pathname = usePathname()
   const router   = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -191,6 +195,12 @@ export function UserAppShell({ session, children }: Props) {
 
           {/* ── Main content ── */}
           <main className="flex-1 flex flex-col overflow-hidden min-w-0" style={{ backgroundColor: "var(--dash-bg)" }}>
+            {/* Critical alert — persistent banner pinned above the scroll area
+                (so it never scrolls away) + the entry modal it re-opens. */}
+            <div className="flex-shrink-0">
+              <CriticalAlert alert={alert} />
+            </div>
+
             <div className="flex-1 overflow-y-auto pb-4 scrollbar-hide">
               {children}
             </div>

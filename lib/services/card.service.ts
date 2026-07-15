@@ -5,6 +5,28 @@ import User              from "@/lib/models/User"
 import { createAuditLog } from "@/lib/services/auth.service"
 import { notifyUser }    from "@/lib/services/deposit.service"
 import { sendCardStatusEmail } from "@/lib/email"
+import type { CardEmailDetails } from "@/lib/email/templates/CardStatusEmail"
+
+interface CardNotifyExtras {
+  card?:      CardEmailDetails
+  nextSteps?: string[]
+  subject?:   string
+}
+
+/** Build the card-details block shown in the email from a card document. */
+function cardEmailDetails(c: {
+  cardNumber?:  string | null
+  cardNetwork?: string | null
+  cardType?:    string | null
+  isVirtual?:   boolean | null
+}): CardEmailDetails {
+  return {
+    last4:     c.cardNumber ? String(c.cardNumber).slice(-4) : undefined,
+    network:   c.cardNetwork ?? undefined,
+    type:      c.cardType    ?? undefined,
+    isVirtual: c.isVirtual   ?? undefined,
+  }
+}
 
 // Notify a user of a card change in-app AND by email (email is fire-and-forget).
 async function notifyCardUser(
@@ -12,12 +34,22 @@ async function notifyCardUser(
   title:   string,
   message: string,
   cardId:  string,
-  tone?:   "positive" | "warning" | "neutral"
+  tone?:   "positive" | "warning" | "neutral",
+  extras:  CardNotifyExtras = {}
 ): Promise<void> {
   await notifyUser(userId, "card", title, message, { cardId })
   const u = await User.findById(userId).select("email firstName").lean() as { email?: string; firstName?: string } | null
   if (u?.email) {
-    sendCardStatusEmail(u.email, u.firstName || "there", title, message, tone).catch(() => {})
+    sendCardStatusEmail(
+      u.email,
+      u.firstName || "there",
+      title,
+      message,
+      tone,
+      extras.card,
+      extras.nextSteps,
+      extras.subject,
+    ).catch(() => {})
   }
 }
 
@@ -341,14 +373,39 @@ export async function approveCard(
     cardNetwork: network, cardType: card.cardType, creditLimit: data.creditLimit, last4, physical: isPhysical,
   }, req)
 
+  const approvedDetails = cardEmailDetails({
+    cardNumber:  full,
+    cardNetwork: network as string,
+    cardType:    card.cardType,
+    isVirtual:   !isPhysical,
+  })
+
   await notifyCardUser(
     String((user as Record<string, unknown>)._id ?? card.userId),
     "Card application approved",
     isPhysical
-      ? `Your physical card ending in ${last4} has been approved and is being prepared for delivery (3–5 business days). It will activate once delivered.`
-      : `Your card application has been approved. Your card ending in ${last4} is now active.`,
+      ? `Good news — your card application has been approved. We are now preparing your physical card ending in ${last4} for delivery.`
+      : `Good news — your card application has been approved. Your virtual card ending in ${last4} is active and ready to use.`,
     cardId,
-    "positive"
+    "positive",
+    {
+      card: approvedDetails,
+      nextSteps: isPhysical
+        ? [
+            "We are preparing your card for dispatch.",
+            "We will email you as soon as it ships.",
+            "Delivery normally takes 3–5 business days.",
+            "Your card activates automatically once it is delivered.",
+          ]
+        : [
+            "Your card number, expiry date and CVV are available in the app.",
+            "Set a card PIN and a daily spending limit whenever you like.",
+            "You can freeze the card instantly if you ever need to.",
+          ],
+      subject: isPhysical
+        ? `Your card ending ${last4} has been approved and is being prepared`
+        : `Your card ending ${last4} is now active`,
+    }
   )
 
   return (updated!.toObject()) as unknown as Record<string, unknown>
@@ -418,14 +475,54 @@ export async function updateCardDelivery(
 
   await createAuditLog(adminId, adminEmail, "card.delivery_update", "CardApplication", cardId, { deliveryStatus }, req)
 
-  const msg =
-    deliveryStatus === "shipped"
-      ? `Your physical card ending in ${last4} has shipped and should arrive within 3–5 business days.`
-      : deliveryStatus === "delivered"
-        ? `Your physical card ending in ${last4} has been delivered and is now active.`
-        : `Your physical card ending in ${last4} is being processed for delivery.`
-  await notifyCardUser(String(card.userId), "Card delivery update", msg, cardId,
-    deliveryStatus === "delivered" ? "positive" : "neutral")
+  const DELIVERY_COPY = {
+    processing: {
+      title:   "Your card is being prepared",
+      message: `We are preparing your physical card ending in ${last4} for dispatch.`,
+      subject: `Your card ending ${last4} is being prepared for delivery`,
+      steps: [
+        "Your card is being personalised and packaged.",
+        "We will email you as soon as it ships.",
+        "Delivery normally takes 3–5 business days from dispatch.",
+      ],
+      tone: "neutral" as const,
+    },
+    shipped: {
+      title:   "Your card is on its way",
+      message: `Your physical card ending in ${last4} has shipped and is on its way to your delivery address.`,
+      subject: `Your card ending ${last4} has shipped`,
+      steps: [
+        "Delivery normally takes 3–5 business days.",
+        "Your card will activate automatically once it is delivered.",
+        "No action is needed from you until it arrives.",
+      ],
+      tone: "neutral" as const,
+    },
+    delivered: {
+      title:   "Your card is delivered and active",
+      message: `Your physical card ending in ${last4} has been delivered and is now active and ready to use.`,
+      subject: `Your card ending ${last4} has been delivered and is now active`,
+      steps: [
+        "Set or change your card PIN in the app before your first use.",
+        "Review your daily spending limit at any time.",
+        "You can freeze the card instantly if it is ever lost or stolen.",
+      ],
+      tone: "positive" as const,
+    },
+  }[deliveryStatus]
+
+  await notifyCardUser(
+    String(card.userId),
+    DELIVERY_COPY.title,
+    DELIVERY_COPY.message,
+    cardId,
+    DELIVERY_COPY.tone,
+    {
+      card: cardEmailDetails(card),
+      nextSteps: DELIVERY_COPY.steps,
+      subject: DELIVERY_COPY.subject,
+    }
+  )
 
   return (updated!.toObject()) as unknown as Record<string, unknown>
 }
@@ -453,7 +550,16 @@ export async function freezeCard(
   await createAuditLog(adminId, adminEmail, "card.freeze", "CardApplication", cardId, { reason }, req)
   await notifyCardUser(
     String(card.userId), "Card frozen",
-    `Your card ending in ${last4} has been frozen. Reason: ${reason}`, cardId, "warning"
+    `Your card ending in ${last4} has been temporarily frozen. Reason: ${reason}`, cardId, "warning",
+    {
+      card: cardEmailDetails(card),
+      nextSteps: [
+        "No payments can be made with this card while it is frozen.",
+        "Existing scheduled payments may be declined.",
+        "Contact us if you believe this was done in error.",
+      ],
+      subject: `Your card ending ${last4} has been frozen`,
+    }
   )
 
   return (updated!.toObject()) as unknown as Record<string, unknown>
@@ -481,7 +587,15 @@ export async function unfreezeCard(
   await createAuditLog(adminId, adminEmail, "card.unfreeze", "CardApplication", cardId, {}, req)
   await notifyCardUser(
     String(card.userId), "Card unfrozen",
-    `Your card ending in ${last4} has been unfrozen and is now active.`, cardId, "positive"
+    `Your card ending in ${last4} has been unfrozen and is active again.`, cardId, "positive",
+    {
+      card: cardEmailDetails(card),
+      nextSteps: [
+        "You can use this card for payments again straight away.",
+        "Review your daily spending limit in the app if you need to.",
+      ],
+      subject: `Your card ending ${last4} is active again`,
+    }
   )
 
   return (updated!.toObject()) as unknown as Record<string, unknown>
@@ -512,7 +626,16 @@ export async function blockCard(
   await createAuditLog(adminId, adminEmail, "card.block", "CardApplication", cardId, { reason }, req)
   await notifyCardUser(
     String(card.userId), "Card blocked",
-    `Your card ending in ${last4} has been blocked. Reason: ${reason}. Please contact support.`, cardId, "warning"
+    `Your card ending in ${last4} has been blocked. Reason: ${reason}`, cardId, "warning",
+    {
+      card: cardEmailDetails(card),
+      nextSteps: [
+        "This card can no longer be used for payments.",
+        "For your protection, only our team can lift this block.",
+        "Please contact support so we can review your account with you.",
+      ],
+      subject: `Your card ending ${last4} has been blocked`,
+    }
   )
 
   return (updated!.toObject()) as unknown as Record<string, unknown>
@@ -540,7 +663,15 @@ export async function unblockCard(
   await createAuditLog(adminId, adminEmail, "card.unblock", "CardApplication", cardId, {}, req)
   await notifyCardUser(
     String(card.userId), "Card unblocked",
-    `Your card ending in ${last4} has been unblocked and is now active.`, cardId, "positive"
+    `Your card ending in ${last4} has been unblocked and is active again.`, cardId, "positive",
+    {
+      card: cardEmailDetails(card),
+      nextSteps: [
+        "You can use this card for payments again straight away.",
+        "You can freeze it yourself at any time from the app.",
+      ],
+      subject: `Your card ending ${last4} is active again`,
+    }
   )
 
   return (updated!.toObject()) as unknown as Record<string, unknown>
@@ -567,10 +698,20 @@ export async function cancelCard(
     { new: true }
   )
 
+  const cancelLast4 = card.cardNumber?.slice(-4) ?? "****"
   await createAuditLog(adminId, adminEmail, "card.cancel", "CardApplication", cardId, { reason }, req)
   await notifyCardUser(
     String(card.userId), "Card cancelled",
-    "Your card has been cancelled. Contact support if you have questions.", cardId, "warning"
+    `Your card ending in ${cancelLast4} has been cancelled. Reason: ${reason}`, cardId, "warning",
+    {
+      card: cardEmailDetails(card),
+      nextSteps: [
+        "This card is permanently cancelled and can no longer be used.",
+        "Any recurring payments on this card will stop.",
+        "You can apply for a replacement card at any time in the app.",
+      ],
+      subject: `Your card ending ${cancelLast4} has been cancelled`,
+    }
   )
 
   return (updated!.toObject()) as unknown as Record<string, unknown>
@@ -601,7 +742,15 @@ export async function updateCardLimits(
   await createAuditLog(adminId, adminEmail, "card.limits_updated", "CardApplication", cardId, limits as Record<string, unknown>, req)
   await notifyCardUser(
     String(card.userId), "Card limits updated",
-    `Your card ending in ${last4} limits have been updated.`, cardId, "neutral"
+    `The spending limits on your card ending in ${last4} have been updated.`, cardId, "neutral",
+    {
+      card: cardEmailDetails(card),
+      nextSteps: [
+        "You can view your current limits in the app at any time.",
+        "Contact us if these limits do not look right to you.",
+      ],
+      subject: `Spending limits updated on your card ending ${last4}`,
+    }
   )
 
   return (updated!.toObject()) as unknown as Record<string, unknown>
@@ -681,9 +830,18 @@ export async function adminUpdateCard(
   await CardApplication.findByIdAndUpdate(cardId, { $set: set }, { new: true })
 
   await createAuditLog(adminId, adminEmail, "card.updated", "CardApplication", cardId, set, req)
+  const updatedLast4 = card.cardNumber?.slice(-4) ?? "****"
   await notifyCardUser(
-    String(card.userId), "Card updated",
-    `An administrator updated the details of your card.`, cardId, "neutral"
+    String(card.userId), "Card details updated",
+    `The details on your card ending in ${updatedLast4} have been updated by our team.`, cardId, "neutral",
+    {
+      card: cardEmailDetails(card),
+      nextSteps: [
+        "Review the updated details in the app.",
+        "Contact us straight away if you did not expect this change.",
+      ],
+      subject: `Details updated on your card ending ${updatedLast4}`,
+    }
   )
 
   return getCardById(cardId)
