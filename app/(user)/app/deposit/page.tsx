@@ -319,8 +319,10 @@ export default function DepositPage() {
     setSubmitting(false)
   }, [selectedMethod, amount, proofUrl, proofPublicId, proofFile, txReference, notes, uploadToCloudinary])
 
-  // Is credit card method?
-  const isCreditCard = selectedMethod?.type === "wire" || selectedMethod?.slug === "credit-card"
+  // Is credit card method? Only a method explicitly slugged "credit-card" collects
+  // card details. A wire transfer must show the admin's bank details (info step),
+  // NOT a card form — that was the bug that routed wire deposits into "Card Details".
+  const isCreditCard = selectedMethod?.slug === "credit-card"
   const isGiftCardStep = step === "giftcard"
 
   // Navigation
