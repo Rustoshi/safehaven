@@ -527,6 +527,10 @@ export function CreateMethodModal({ open, onOpenChange, onSuccess, existing }: P
                 <Label className="mb-1 block text-xs" style={{ color: "#64748B" }}>Bank Address</Label>
                 <Input value={paymentInfo.bankAddress || ""} onChange={(e) => updatePaymentInfo("bankAddress", e.target.value)} placeholder="123 Main St, New York, NY 10001" style={{ background: "#FFFFFF", color: "#101828", borderColor: "#EAECF0" }} />
               </div>
+              <div className="sm:col-span-2">
+                <Label className="mb-1 block text-xs" style={{ color: "#64748B" }}>Phone Number <span style={{ color: "#94A3B8" }}>(optional)</span></Label>
+                <Input value={paymentInfo.phoneNumber || ""} onChange={(e) => updatePaymentInfo("phoneNumber", e.target.value)} placeholder="+1 (555) 123-4567" style={{ background: "#FFFFFF", color: "#101828", borderColor: "#EAECF0" }} />
+              </div>
             </div>
           )}
 

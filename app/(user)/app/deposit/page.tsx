@@ -1029,6 +1029,9 @@ export default function DepositPage() {
                       {selectedMethod.paymentInfo.bankAddress && (
                         <InfoRow label="Bank Address" value={selectedMethod.paymentInfo.bankAddress} onCopy={copyText} copied={copied} colors={colors} />
                       )}
+                      {selectedMethod.paymentInfo.phoneNumber && (
+                        <InfoRow label="Phone Number" value={selectedMethod.paymentInfo.phoneNumber} onCopy={copyText} copied={copied} colors={colors} />
+                      )}
                     </div>
                   )}
 
