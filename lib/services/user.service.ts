@@ -485,6 +485,15 @@ export async function updateUser(
       { $set: { createdAt: joined } },
       { timestamps: false, overwriteImmutable: true }
     )
+
+    // The "Opened" date on each account card reads from Account.createdAt, a
+    // separate document. Propagate the new join date so it stays consistent
+    // with the user's registration date shown across the app.
+    await Account.updateMany(
+      { userId: id },
+      { $set: { createdAt: joined } },
+      { timestamps: false, overwriteImmutable: true }
+    )
   }
 
   await createAuditLog(adminId, adminEmail, "user.update", "User", id, { before, after }, req)
